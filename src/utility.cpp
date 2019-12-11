@@ -1,4 +1,4 @@
-#include "Utility.h"
+#include <utility.h>
 string& workingDirectory() {
 #ifdef _WIN32
 	static string workingDirectory = "D:/360/solution/";
@@ -135,7 +135,7 @@ unordered_map<word, int>& BinaryReader::read(
 	return char2id;
 }
 
-vector<Matrix>& BinaryReader::read(vector<Matrix> &arr) {
+Tensor& BinaryReader::read(Tensor &arr) {
 	int dimension0;
 	read(dimension0);
 	int dimension1;

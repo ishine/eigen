@@ -65,6 +65,10 @@ struct JInteger {
 		return vector<int>(ptr, ptr + this->length());
 	}
 
+	operator VectorI() const {
+		return Eigen::Map<VectorI>((int*)ptr, this->length());
+	}
+
 	jint operator [](size_t i) const {
 		return ptr[i];
 	}
@@ -102,6 +106,7 @@ jcharArray Object(JNIEnv *env, const vector<char> &s);
 jbyteArray Object(JNIEnv *env, const vector<byte> &s);
 jshortArray Object(JNIEnv *env, const vector<short> &s);
 jintArray Object(JNIEnv *env, const vector<int> &s);
+jintArray Object(JNIEnv *env, const VectorI &s);
 jfloatArray Object(JNIEnv *env, const vector<float> &s);
 jlongArray Object(JNIEnv *env, const vector<long> &s);
 jdoubleArray Object(JNIEnv *env, const vector<double> &s);

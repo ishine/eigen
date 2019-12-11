@@ -1,6 +1,5 @@
-#include "BidirectionalGRU.h"
-#include "Embedding.h"
-#include "DenseLayer.h"
+#include "keras.h"
+
 #include "matrix.h"
 
 struct Service {

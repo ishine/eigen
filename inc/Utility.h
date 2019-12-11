@@ -11,7 +11,7 @@ static_assert(sizeof(word) == 2, "sizeof(word) must be 2");
 static_assert(sizeof(dword) == 4, "sizeof(dword) must be 4");
 static_assert(sizeof(qword) == 8, "sizeof(qword) must be 8");
 
-template<typename _Ty, int b = 1>
+template<typename _Ty, int b = 2>
 struct color_ptr {
 	static const qword MASK = (1 << b) - 1;
 	typedef color_ptr _Myt;
@@ -36,7 +36,7 @@ struct color_ptr {
 	color_ptr() {
 	}
 
-	explicit color_ptr(value_type *ptr, bool color = false) {
+	explicit color_ptr(value_type *ptr, byte color = 0) {
 		this->reptr(ptr);
 		this->color = color;
 	}
@@ -171,19 +171,24 @@ struct object: color_ptr<_Ty> {
 	}
 };
 
+#include <vector>
+using std::vector;
+
+
 #include <Eigen/Dense>
 //${MINGW_HOME}\lib\gcc\x86_64-w64-mingw32\8.1.0\include\c++
-typedef Eigen::Matrix<double, -1, -1, 1> Matrix;
 typedef Eigen::Matrix<double, 1, -1, 1> Vector;
-typedef Eigen::Matrix<int, -1, -1, 1> MatrixI;
+typedef Eigen::Matrix<double, -1, -1, 1> Matrix;
+typedef vector<Matrix> Tensor;
+
 typedef Eigen::Matrix<int, 1, -1, 1> VectorI;
+typedef Eigen::Matrix<int, -1, -1, 1> MatrixI;
+typedef vector<MatrixI> TensorI;
+
 #include <fstream>
 using std::ifstream;
 using std::ofstream;
 using std::ios;
-
-#include <vector>
-using std::vector;
 
 #include <unordered_map>
 using std::unordered_map;

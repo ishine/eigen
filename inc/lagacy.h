@@ -5,6 +5,8 @@ extern "C" qword asm6args(qword rcx, qword rdx, qword r8, qword r9,
 
 extern "C" double relu(double x);
 
+extern "C" double gelu(double x);
+
 extern "C" void stosd(void *edi, dword eax, dword ecx);
 
 extern "C" long long gcd_long(long long rcx, long long rdx);

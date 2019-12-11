@@ -1,10 +1,5 @@
 #include "Utility.h"
-#include "Embedding.h"
-
-#include "BidirectionalLSTM.h"
-#include "Conv1D.h"
-
-#include "CRF.h"
+#include "keras.h"
 
 struct NERTagger {
 	typedef ::object<NERTagger> object;
@@ -17,11 +12,25 @@ struct NERTagger {
 
 	CRF wCRF;
 
-	vector<int>& predict(const String &predict_text,
-			vector<int> &repertoire_code);
+	VectorI& predict(const String &predict_text, VectorI &repertoire_code);
 
 	vector<vector<vector<double>>>& _predict(const String &predict_text,
-			vector<int> &repertoire_code, vector<vector<vector<double>>> &arr);
+			VectorI&repertoire_code, vector<vector<vector<double>>> &arr);
 
 	NERTagger(BinaryReader &dis);
+};
+
+struct NERTaggerDict {
+
+	static unordered_map<string, NERTagger::object> dict;
+
+	static NERTagger::object& getTagger(const string &service);
+
+	static vector<int> get_repertoire_code(const string &service,
+			const String &text);
+
+	static VectorI& predict(const string &service, const String &text,
+			VectorI&);
+	static vector<vector<vector<double>>>& _predict(const string &service,
+			const String &text, VectorI&, vector<vector<vector<double>>>&);
 };
