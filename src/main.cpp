@@ -19,11 +19,11 @@ int main(int argc, char *argv[]) {
 //	auto &qatype = Classifier::qatype_classifier();
 //	auto &y = qatype.predict(u"你很高吗?")[1];
 //	cout << y << endl;
-	return 0;
+//	return 0;
 	auto &paraphrase = Paraphrase::instance();
 
 	double score = paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些");
-	cout << score << endl;
+	cout << "score = " << score << endl;
 
 	return 0;
 }

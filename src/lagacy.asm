@@ -122,13 +122,18 @@ stosd:
 	mov eax, esi
 	mov rcx, rdx
 	rep stosd
-%else
-	push rdi
+%elifdef _DEBUG
 	mov rdi, rcx
 	mov eax, edx
 	mov rcx, r8
 	rep stosd
-	pop rdi
+%else
+;	push rdi
+	mov rdi, rcx
+	mov eax, edx
+	mov rcx, r8
+	rep stosd
+;	pop rdi
 %endif
 	ret
 
@@ -139,3 +144,5 @@ stosd:
 ;https://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/
 ;https://www.nasm.us/xdoc/2.11.02/html/nasmdoc6.html#section-6.2.1
 ;reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
+;https://blog.csdn.net/sivolin/article/details/41895701
+;https://www.cnblogs.com/volva/p/11814998.html
