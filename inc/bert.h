@@ -22,10 +22,10 @@ struct FeedForward {
 	Vector b1, b2;
 
 	Vector& operator()(const Vector &x, Vector &ret);
-	Vector& operator()(Vector &x);
+	Vector& operator()(const Vector &x);
 
 	Matrix& operator()(Matrix &x, Matrix &wDense);
-	Matrix& operator()(Matrix &x);
+	Matrix& operator()(const Matrix &x);
 
 	Tensor& operator()(const Tensor &x);
 	vector<Vector>& operator()(const vector<Vector> &x);
@@ -52,27 +52,32 @@ struct LayerNormalization {
 	Vector gamma, beta;
 
 	Tensor& operator()(Tensor &x);
+	Matrix& operator()(Matrix &x);
 	vector<Vector>& operator()(vector<Vector> &x);
+	Vector& operator()(Vector &x);
 };
 
 struct MidIndex {
-	MidIndex(int SEP = 102);
+//	MidIndex(int SEP = 102);
+	MidIndex(int SEP);
 	int SEP;
 	vector<int>& operator()(const vector<VectorI> &token);
+	int operator()(const VectorI &token);
 };
 
 struct MultiHeadAttention {
-	MultiHeadAttention(BinaryReader &dis);
+	MultiHeadAttention(BinaryReader &dis, int num_attention_heads);
 	MultiHeadAttention();
 
 	Tensor& operator()(const Tensor &sequence, const Tensor &attention_matrix,
 			const vector<Vector> &mask);
-
-	vector<Vector>& operator ()(const Tensor &sequence,
-			const vector<Vector> &mask);
+	Tensor& operator()(const Tensor &sequence, const vector<Vector> &mask);
+	Matrix& operator()(const Matrix &sequence);
 
 	vector<Vector>& operator ()(const Tensor &sequence,
 			const vector<Vector> &mask, vector<Vector> &y);
+
+	Vector& operator ()(const Matrix &sequence, Vector &y);
 
 	Matrix Wq, Wk, Wv, Wo;
 	Vector bq, bk, bv, bo;
@@ -83,11 +88,24 @@ struct MultiHeadAttention {
 			Tensor &value, const Tensor &attention_mask,
 			const vector<Vector> &mask);
 
+	Tensor& scaled_dot_product_attention(Tensor &query, Tensor &key,
+			Tensor &value, const vector<Vector> &mask);
+
+	Tensor& scaled_dot_product_attention(Tensor &query, Tensor &key,
+			Tensor &value);
+
 	vector<Vector>& scaled_dot_product_attention(vector<Vector> &query,
 			const Tensor &key, const Tensor &value, const vector<Vector> &mask);
 
-	Tensor& reshape_to_batches(Tensor&);
+	vector<Vector>& scaled_dot_product_attention(vector<Vector> &query,
+			const Tensor &key, const Tensor &value);
+
+	Tensor& reshape_to_batches(Tensor &x);
+	Tensor& reshape_to_batches(Matrix &x);
+
 	vector<Vector>& reshape_to_batches(vector<Vector>&);
+	vector<Vector>& reshape_to_batches(Vector&);
+
 	Tensor& reshape_from_batches(Tensor&);
 	vector<Vector>& reshape_from_batches(vector<Vector>&);
 };
@@ -100,7 +118,7 @@ struct PositionEmbedding {
 
 	Tensor& operator()(Tensor &sequence, const vector<int> &mid);
 	Tensor& operator()(Tensor &sequence);
-
+	Matrix& operator()(Matrix &sequence, int mid);
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
 
@@ -116,25 +134,28 @@ struct RevertMask {
 struct SegmentInput {
 	vector<VectorI>& operator()(const vector<VectorI> &token,
 			vector<int> &inputMid);
+	VectorI& operator()(const VectorI &token, int inputMid);
 };
 
 struct BertEmbedding {
 	BertEmbedding(BinaryReader &dis, int num_attention_heads,
-			bool symmetric_positional_embedding,
 			bool factorization_on_word_embedding_only);
 
-	bool factorization_on_word_embedding_only, symmetric_positional_embedding;
+	bool factorization_on_word_embedding_only;
 
-	Embedding WordEmbedding;
-	Embedding SegmentEmbedding;
-	::PositionEmbedding PositionEmbedding;
-	::LayerNormalization LayerNormalization;
-	DenseLayer Dense;
+	Embedding wordEmbedding;
+	Embedding segmentEmbedding;
+	PositionEmbedding positionEmbedding;
+	LayerNormalization layerNormalization;
+	DenseLayer embeddingMapping;
 	int embed_dim, hidden_size;
 
 	Tensor& operator ()(vector<VectorI> &inputToken,
 			const vector<int> &inputMid, const vector<VectorI> &inputSegment,
 			vector<Vector> &mask);
+
+	Matrix& operator ()(VectorI &inputToken, int inputMid,
+			const VectorI &inputSegment);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 
@@ -142,7 +163,7 @@ struct BertEmbedding {
 };
 
 struct Encoder {
-	Encoder(BinaryReader &dis);
+	Encoder(BinaryReader &dis, int num_attention_heads);
 	Encoder();
 	::MultiHeadAttention MultiHeadAttention;
 	LayerNormalization MultiHeadAttentionNorm;
@@ -152,26 +173,33 @@ struct Encoder {
 	Tensor& wrap_attention(Tensor &input_layer, const Tensor &attention_matrix,
 			const vector<Vector> &mask);
 
-	vector<Vector>& wrap_attention(Tensor &input_layer,
-			const vector<Vector> &mask);
+	Tensor& wrap_attention(Tensor &input_layer, const vector<Vector> &mask);
+	Matrix& wrap_attention(Matrix &input_layer);
 
 	vector<Vector>& wrap_attention(Tensor &input_layer,
 			const vector<Vector> &mask, vector<Vector> &y);
 
+	Vector& wrap_attention(Matrix &input_layer, Vector &y);
+
 	Tensor& wrap_feedforward(Tensor &input_layer);
+	Matrix& wrap_feedforward(Matrix &input_layer);
 	vector<Vector>& wrap_feedforward(vector<Vector> &input_layer);
+	Vector& wrap_feedforward(Vector &input_layer);
 
 	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
 			const vector<Vector> &mask);
-	vector<Vector>& operator ()(Tensor &input_layer,
-			const vector<Vector> &mask);
+	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
+	Matrix& operator ()(Matrix &input_layer);
+
+	Vector& operator ()(Matrix &input_layer, Vector &y);
+
 	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
 			vector<Vector> &y);
 };
 
 struct Transformer {
 	Transformer(BinaryReader &dis, bool cross_layer_parameter_sharing,
-			int num_hidden_layers);
+			int num_hidden_layers, int num_attention_heads);
 	int num_hidden_layers;
 	object<Encoder> encoder;
 	Encoder& operator [](int i);
@@ -180,8 +208,15 @@ struct Transformer {
 			const vector<MatrixI> &attention_matrix, RevertMask &fn,
 			const vector<Vector> &mask);
 
+	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
+
 	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
 			const vector<Vector> &mask);
+
+	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
+			vector<Vector> &y);
+
+	Vector& operator ()(Matrix &input_layer, Vector &y);
 
 	vector<Vector>& operator ()(Tensor &input_layer,
 			const vector<MatrixI> &attention_matrix, RevertMask &fn,
@@ -189,22 +224,90 @@ struct Transformer {
 
 };
 
+vector<String> whitespace_tokenize(String &text);
+
+struct BasicTokenizer {
+//    """Runs basic tokenization (punctuation splitting, lower casing, etc.)."""
+
+	BasicTokenizer(bool do_lower_case = true);
+//        """Constructs a BasicTokenizer.
+//        Args:
+	bool do_lower_case;
+
+	vector<String>& tokenize(String &text);
+
+	String& _run_strip_accents(String &text);
+
+	vector<String>& _run_split_on_punc(String &text);
+
+	String& _tokenize_chinese_chars(const String &text);
+
+	bool _is_punctuation(word cp);
+
+	bool _is_chinese_char(word cp);
+
+	String& _clean_text(String &text);
+};
+
+struct WordpieceTokenizer {
+//    """Runs WordPiece tokenziation."""
+	unordered_map<String, int> vocab;
+	String unk_token;
+	size_t max_input_chars_per_word;
+	unordered_map<String, int> unknownSet;
+	WordpieceTokenizer(const string &vocab_file);
+
+	static unordered_map<String, int>& load_vocab(const string &vocab_file);
+
+	WordpieceTokenizer(unordered_map<String, int> vocab,
+			String unk_token = u"[UNK]",
+			size_t max_input_chars_per_word = 200);
+
+	vector<String> tokenize(String &text);
+//    vector<String> unknown_words(){
+//        cout << "unknown characters:" << endl;
+//        items = [*unknownSet.items()];
+//        items.sort(key=lambda xy: xy[1], reverse=true);
+//        for (key, repetition in items){
+//            printf("%s = %s\n", key, repetition);
+////#             print('%s = %s' % (key, repetition), file='report.txt')
+//        }
+//        return [key for key, _ in items];
+//    }
+};
+
+struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
+	//Runs end-to-end tokenziation."""
+
+	FullTokenizer(const string &vocab_file, bool do_lower_case = true);
+
+	vector<String>& tokenize(String &text);
+
+	VectorI& convert_tokens_to_ids(vector<String> &items);
+};
+
 struct Paraphrase {
-	Paraphrase(BinaryReader &dis, int num_attention_heads,
-			bool symmetric_positional_embedding = false,
+	Paraphrase(BinaryReader &dis, const string &vocab, int num_attention_heads,
 			bool factorization_on_word_embedding_only = true,
 			bool cross_layer_parameter_sharing = true, int num_hidden_layers =
-					12, double cross_attention = 3.0);
-	::MidIndex MidIndex;
-	::SegmentInput SegmentInput;
-	::CrossAttentionMask CrossAttentionMask;
-	::RevertMask RevertMask;
-	::BertEmbedding BertEmbedding;
+					12);
+	FullTokenizer tokenizer;
 
-	::Transformer Transformer;
+	MidIndex midIndex;
+	SegmentInput segmentInput;
+//	::CrossAttentionMask CrossAttentionMask;
+//	::RevertMask RevertMask;
+	BertEmbedding bertEmbedding;
+
+	Transformer transformer;
 	DenseLayer poolerDense;
 	DenseLayer similarityDense;
 
 	vector<double>& operator ()(vector<VectorI> &input_ids);
+	double operator ()(VectorI &input_ids);
+
+	double operator ()(String &x, String &y);
+	double operator ()(const char16_t *x, const char16_t *y);
+	static Paraphrase& instance();
 };
 

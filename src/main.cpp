@@ -3,55 +3,28 @@
 
 #include <time.h>
 #include <utility.h>
-int main() {
+#include "classification.h"
+#include "bert.h"
+#include <string>
+#include <iostream>
+using namespace std;
+int main(int argc, char *argv[]) {
+	BinaryReader reader((cnModelsDirectory() + "bert/paraphrase/test.h5"));
+	reader.read_hdf5();
+//	Text::test_utf_unicode_conversion();
+//	auto &phatic = Classifier::phatic_classifier();
+//	auto y = phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式");
+//	cout << y << endl;
 
-//	cout << "gcd_long(a, b) = " << gcd_long(-10011001, -117) << endl;
-//	cout << "gcd_qword(a, b) = " << gcd_qword(10011001, 117) << endl;
-//	cout << "gcd_int(a, b) = " << gcd_int(-10011001, -117) << endl;
-//	cout << "gcd_dword(a, b) = " << gcd_dword(10011001, 117) << endl;
-//
-//	int size = 10000000;
-//	clock_t start = clock();
-//	int x = -1001100199;
-//	int y = -117;
-//	for (int i = 0; i < size; ++i) {
-//		gcd_int(x, y);
-//	}
-//	auto end = clock();
-//	cout << "duration = " << (end - start) << endl;
-//
-//	start = clock();
-//	for (int i = 0; i < size; ++i) {
-//		gcd(x, y);
-//	}
-//	end = clock();
-//	cout << "duration = " << (end - start)<< endl;
-//
-//	return 0;
-//	NERTaggerDict::getTagger("map");
-//	vector<int> repertoire_code = { 19, 18, 18, 7, 6, 6, 7, 6, 6, 7, 6, 6, 7, 6,
-//			7, 6, 7, 6, 6, 1, 1, 1, 1 };
-////	{code=瀵艰埅鍘�, poi=[灞辫タ鐪�, 涓囪崳鍘�, 閫氬寲闀�, 閫氬寲, 涓夋潙, 鏈濋槼宸穄}
-//	auto text = L"瀵艰埅鍘诲北瑗跨渷涓囪崳鍘块�氬寲闀囬�氬寲涓夋潙鏈濋槼宸�204鍙�";
-//
-//	for (int i = 0; i <= 23; ++i) {
-//		cout << text[i];
-//	}
-//	cout << endl;
-//	String s = (const word*) text;
-//	for (int i = 0; i <= 23; ++i) {
-//		cout << s[i];
-//	}
-//	cout << endl;
-//
-//	cout << "s.size = " << s.size() << endl;
-//
-//	repertoire_code = NERTaggerDict::predict("map", s, repertoire_code);
-//
-//	cout << "repertoire_code : " << endl;
-//	cout << repertoire_code << endl;
-//	[18, 17, 17, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-//	[18, 17, 17, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+//	auto &qatype = Classifier::qatype_classifier();
+//	auto &y = qatype.predict(u"你很高吗?")[1];
+//	cout << y << endl;
+	return 0;
+	auto &paraphrase = Paraphrase::instance();
+
+	double score = paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些");
+	cout << score << endl;
+
 	return 0;
 }
 

@@ -1,6 +1,6 @@
 #include "NERTagger.h"
 
-VectorI& NERTagger::predict(const String &predict_text,
+VectorI& NERTagger::predict(const VectorI &predict_text,
 		VectorI &repertoire_code) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 //	cout << "predict_text = " << predict_text.size() << endl;
@@ -15,12 +15,12 @@ VectorI& NERTagger::predict(const String &predict_text,
 	lEmbedding += lRepertoire;
 
 	Matrix lLSTM;
-	lstm.call_return_sequences(lEmbedding, lLSTM);
+	lstm(lEmbedding, lLSTM);
 
 	Matrix lCNN;
-	lCNN = con1D0.conv_same(lEmbedding, lCNN);
-	lCNN = con1D1.conv_same(lCNN, lEmbedding);
-	lCNN = con1D2.conv_same(lCNN, lEmbedding);
+	lCNN = con1D0(lEmbedding, lCNN);
+	lCNN = con1D1(lCNN, lEmbedding);
+	lCNN = con1D2(lCNN, lEmbedding);
 
 	Matrix lConcatenate(lLSTM.rows(), lLSTM.cols() + lCNN.cols());
 //	lConcatenate.resize();
@@ -33,7 +33,7 @@ vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
 		VectorI &repertoire_code, vector<vector<vector<double>>> &result) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Matrix lEmbedding;
-	embedding.call(predict_text, lEmbedding);
+	embedding(string2id(predict_text, this->word2id), lEmbedding);
 	result.push_back(convert2vector(lEmbedding)); // i = 0
 
 	Matrix lRepertoire;
@@ -44,17 +44,17 @@ vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
 	result.push_back(convert2vector(x)); // i = 2
 
 	Matrix lLSTM;
-	lstm.call_return_sequences(x, lLSTM);
+	lstm(x, lLSTM);
 	result.push_back(convert2vector(lLSTM)); // i = 3
 
 	Matrix lCNN;
-	lCNN = con1D0.conv_same(x, lCNN);
+	lCNN = con1D0(x, lCNN);
 	result.push_back(convert2vector(lCNN)); // i = 4
 
-	lCNN = con1D1.conv_same(lCNN, x);
+	lCNN = con1D1(lCNN, x);
 	result.push_back(convert2vector(lCNN)); // i = 5
 
-	lCNN = con1D2.conv_same(lCNN, x);
+	lCNN = con1D2(lCNN, x);
 	result.push_back(convert2vector(lCNN)); // i = 6
 
 	Matrix lConcatenate(lLSTM.rows(), lLSTM.cols() + lCNN.cols());
@@ -70,8 +70,8 @@ vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
 }
 
 NERTagger::NERTagger(BinaryReader &dis) :
-		embedding(Embedding(dis)), repertoire_embedding(Embedding(dis, false)), lstm(
-				BidirectionalLSTM(dis, merge_mode::sum)), con1D0(Conv1D(dis)), con1D1(
+		embedding(Embedding(dis)), repertoire_embedding(Embedding(dis)), lstm(
+				BidirectionalLSTM(dis, Bidirectional::sum)), con1D0(Conv1D(dis)), con1D1(
 				Conv1D(dis)), con1D2(Conv1D(dis)), wCRF(CRF(dis)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis.close();
@@ -97,8 +97,8 @@ vector<int> NERTaggerDict::get_repertoire_code(const string &service,
 VectorI& NERTaggerDict::predict(const string &service, const String &text,
 		VectorI &repertoire_code) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
-
-	return getTagger(service)->predict(text, repertoire_code);
+	auto &ptr = getTagger(service);
+	return ptr->predict(string2id(text, ptr->word2id), repertoire_code);
 }
 
 vector<vector<vector<double>>>& NERTaggerDict::_predict(const string &service,
@@ -106,42 +106,6 @@ vector<vector<vector<double>>>& NERTaggerDict::_predict(const string &service,
 		vector<vector<vector<double>>> &arr) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	return getTagger(service)->_predict(text, repertoire_code, arr);
-}
-
-extern "C" VectorI& cpp_ner(const char *service, const word *text,
-		VectorI &repertoire_code) {
-	cout << "in " << __FUNCTION__ << endl;
-	cout << "service = " << service << endl;
-	String words = text;
-	cout << "text.size = " << words.size() << endl;
-	cout << "repertoire_code.size = " << repertoire_code.size() << endl;
-	cout << "repertoire_code = " << repertoire_code << endl;
-	assert(words.size() == (size_t )repertoire_code.size());
-	auto &ret = NERTaggerDict::predict(service, words, repertoire_code);
-	cout << "repertoire_code = " << repertoire_code << endl;
-	cout << "ret = " << ret << endl;
-	if (&ret == &repertoire_code) {
-		cout << "same memory" << endl;
-	} else {
-		cout << "not same memory" << endl;
-	}
-	cout << &repertoire_code << endl;
-	return ret;
-}
-
-extern "C" vector<vector<vector<double>>>& _cpp_ner(const char *service,
-		const word *text, VectorI &repertoire_code,
-		vector<vector<vector<double>>> &arr) {
-//	arr.resize(0);
-	cout << "in " << __FUNCTION__ << endl;
-	cout << "service = " << service << endl;
-	String words = text;
-	cout << "text.size = " << words.size() << endl;
-	cout << "repertoire_code.size = " << repertoire_code.size() << endl;
-	cout << "repertoire_code = " << repertoire_code << endl;
-	assert(words.size() == (size_t)repertoire_code.size());
-
-	return NERTaggerDict::_predict(service, words, repertoire_code, arr);
 }
 
 extern "C" void cpp_ner_initialize(const char *service) {

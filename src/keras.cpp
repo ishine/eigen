@@ -29,7 +29,7 @@ Matrix& CRF::viterbi_one_hot(const Matrix &X, Matrix &oneHot) {
 VectorI& CRF::call(const Matrix &X, VectorI &best_paths) {
 	//add a row vector to a matrix
 	Matrix x = X * kernel;
-	x.rowwise() += bias;
+	add(x, bias);
 
 	x.row(0) += left_boundary;
 
@@ -43,7 +43,7 @@ VectorI& CRF::call(const Matrix &X, VectorI &best_paths) {
 
 	while (i < length) {
 		Matrix energy = G;
-		energy.rowwise() += min_energy;
+		add(energy, min_energy);
 
 		min_energy = min(energy, min_energy, argmin_tables[i - 1]);
 		min_energy += x.row(i++);
@@ -73,12 +73,7 @@ CRF::CRF(BinaryReader &dis) {
 	dis.read(right_boundary);
 }
 
-Conv1D::Conv1D(const Tensor &w, const Vector &bias, MatrixActivator activate) :
-		w(w), bias(bias), activate(activate) {
-}
-
-Conv1D::Conv1D(BinaryReader &dis, bool bias, MatrixActivator activate) :
-		activate(activate) {
+Conv1D::Conv1D(BinaryReader &dis, bool bias) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis.read(w);
 
@@ -97,8 +92,13 @@ int Conv1D::initial_offset(int xshape, int yshape, int wshape, int sshape) {
 		return -((xshape - wshape) / 2);
 }
 
+Matrix& Conv1D::operator()(const Matrix &x, int s) {
+	static Matrix y;
+	return (*this)(x, y, s);
+}
+
 //	#stride=(1,1)
-Matrix& Conv1D::conv_same(const Matrix &x, Matrix &y, int s) {
+Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) {
 	int yshape0 = (x.rows() + s - 1) / s;
 	y = Matrix::Zero(yshape0, x.cols());
 
@@ -114,9 +114,7 @@ Matrix& Conv1D::conv_same(const Matrix &x, Matrix &y, int s) {
 			y.row(i) += bias;
 	}
 
-	if (activate) {
-		activate(y);
-	}
+	activate(y);
 
 	return y;
 }
@@ -129,9 +127,9 @@ Vector& DenseLayer::operator()(const Vector &x, Vector &ret) {
 Vector& DenseLayer::operator()(Vector &x) {
 
 	x *= wDense;
-//		cout << "bDense.data() = " << bDense.data() << endl;
 	if (bDense.data())
 		x += bDense;
+	activation(x);
 	return x;
 }
 
@@ -143,7 +141,7 @@ Matrix& DenseLayer::operator()(Matrix &x, Matrix &wDense) {
 Matrix& DenseLayer::operator()(Matrix &x) {
 	x *= wDense;
 	if (bDense.data())
-		x += bDense;
+		add(x, bDense);
 	return x;
 }
 
@@ -161,69 +159,22 @@ Tensor& DenseLayer::operator()(Tensor &x) {
 	return x;
 }
 
-DenseLayer::DenseLayer(BinaryReader &dis, bool use_bias) {
+DenseLayer::DenseLayer(BinaryReader &dis, bool use_bias, Activator activation) :
+		activation( { activation }) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis.read(wDense);
 
 	if (use_bias)
 		dis.read(bDense);
 }
 
-Matrix& Embedding::operator()(String &words, Matrix &wordEmbedding,
-		size_t max_length) {
-	if (max_length && words.length() > max_length) {
-		words = words.substr(0, max_length);
-	}
-	return operator()(words, wordEmbedding);
-}
-
-Matrix& Embedding::operator()(const String &words, Matrix &wordEmbedding) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
-
-	int length = words.size();
-//	cout << "length = " << length << endl;
-
-	wordEmbedding.resize(length, wEmbedding.cols());
-
-	for (int j = 0; j < wordEmbedding.rows(); ++j) {
-		int index = 1;
-		word ch = words[j];
-		if (char2id.count(ch))
-			index = char2id[ch];
-
-		wordEmbedding.row(j) = wEmbedding.row(index);
-	}
-	return wordEmbedding;
-}
-
-Matrix& Embedding::call(const String &words, Matrix &wordEmbedding) {
-
-	int length = words.size();
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	cout << "length = " << length << endl;
-
-	wordEmbedding.resize(length, wEmbedding.cols());
-
-	for (int j = 0; j < wordEmbedding.rows(); ++j) {
-		int index = 1;
-		word ch = words[j];
-
-		if (char2id.count(ch))
-			index = char2id[ch];
-
-		wordEmbedding.row(j) = this->wEmbedding.row(index);
-	}
-
-	return wordEmbedding;
-}
-
 Matrix& Embedding::operator()(const VectorI &words, Matrix &wordEmbedding) {
-
 	int length = words.size();
+
 	wordEmbedding.resize(length, wEmbedding.cols());
 
-	for (int j = 0; j < wordEmbedding.rows(); ++j) {
-		int index = words[j];
-		wordEmbedding.row(j) = wEmbedding.row(index);
+	for (int j = 0; j < length; ++j) {
+		wordEmbedding.row(j) = wEmbedding.row(words[j]);
 	}
 	return wordEmbedding;
 }
@@ -234,7 +185,14 @@ Tensor& Embedding::operator()(const vector<VectorI> &words) {
 	return wordEmbedding;
 }
 
-Tensor& Embedding::operator()(const vector<VectorI> &words, Tensor &wordEmbedding) {
+Matrix& Embedding::operator()(const VectorI &words) {
+	static Matrix wordEmbedding;
+	operator ()(words, wordEmbedding);
+	return wordEmbedding;
+}
+
+Tensor& Embedding::operator()(const vector<VectorI> &words,
+		Tensor &wordEmbedding) {
 
 	int batch_size = words.size();
 	wordEmbedding.resize(batch_size);
@@ -251,36 +209,22 @@ Matrix& Embedding::operator()(const VectorI &words, Matrix &wordEmbedding,
 	return this->operator ()(words, wordEmbedding);
 }
 
-Matrix& Embedding::operator()(const String &words, Matrix &wordEmbedding,
-		Matrix &wEmbedding) {
-	wEmbedding = this->wEmbedding;
-	return this->operator ()(words, wordEmbedding);
+Matrix& Embedding::operator()(VectorI &word, Matrix &wordEmbedding,
+		size_t max_length) {
+	word.resize(max_length);
+	return (*this)(word, wordEmbedding);
+
 }
 
-void Embedding::initialize(BinaryReader &dis, bool dic) {
+void Embedding::initialize(BinaryReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-
-	if (dic) {
-		dis.read(char2id);
-	}
 
 	dis.read(wEmbedding);
-}
-//
-Embedding::Embedding(BinaryReader &dis, bool dic) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	initialize(dis, dic);
-}
-
-Embedding::Embedding(unordered_map<word, int> &char2id, Matrix &wEmbedding) :
-		char2id(char2id), wEmbedding(wEmbedding) {
 }
 
 Embedding::Embedding(BinaryReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-//	cout << "in " << __func__ << endl;
-
-	initialize(dis, true);
+	initialize(dis);
 }
 
 LSTM::LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi,
@@ -301,8 +245,8 @@ LSTM::LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi,
 	this->bc = bc;
 	this->bo = bo;
 
-	this->sigmoid = ::hard_sigmoid;
-	this->tanh = ::tanh;
+//	this->sigmoid = ::hard_sigmoid;
+//	this->tanh = ::tanh;
 }
 
 Vector& LSTM::call(const Matrix &x, Vector &h) {
@@ -333,22 +277,32 @@ Vector& LSTM::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 
 LSTM::LSTM(BinaryReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.read(Wxi);
-	dis.read(Wxf);
-	dis.read(Wxc);
-	dis.read(Wxo);
+	Matrix Wx;
+	dis.read(Wx);
+	Wxi.resize(Wx.rows(), Wx.cols() / 4);
+	Wxf.resize(Wx.rows(), Wx.cols() / 4);
+	Wxc.resize(Wx.rows(), Wx.cols() / 4);
+	Wxo.resize(Wx.rows(), Wx.cols() / 4);
+	Wx >> Wxi, Wxf, Wxc, Wxo;
 
-	dis.read(Whi);
-	dis.read(Whf);
-	dis.read(Whc);
-	dis.read(Who);
+	Matrix Wh;
+	dis.read(Wh);
+	Whi.resize(Wh.rows(), Wh.cols() / 4);
+	Whf.resize(Wh.rows(), Wh.cols() / 4);
+	Whc.resize(Wh.rows(), Wh.cols() / 4);
+	Who.resize(Wh.rows(), Wh.cols() / 4);
+	Wh >> Whi, Whf, Whc, Who;
 
-	dis.read(bi);
-	dis.read(bf);
-	dis.read(bc);
-	dis.read(bo);
-	sigmoid = ::hard_sigmoid;
-	tanh = ::tanh;
+	Vector b;
+	dis.read(b);
+	bi.resize(b.size() / 4);
+	bf.resize(b.size() / 4);
+	bc.resize(b.size() / 4);
+	bo.resize(b.size() / 4);
+	b >> bi, bf, bc, bo;
+
+//	sigmoid = ::hard_sigmoid;
+//	tanh = ::tanh;
 }
 
 Matrix& LSTM::call_return_sequences(const Matrix &x, Matrix &arr) {
@@ -386,7 +340,7 @@ Vector& LSTM::call_reverse(const Matrix &x, Vector &h) {
 	return h;
 }
 
-Matrix& Bidirectional::call_return_sequences(const Matrix &x, Matrix &ret) {
+Matrix& Bidirectional::operator ()(const Matrix &x, Matrix &ret) {
 	Matrix forward;
 	this->forward->call_return_sequences(x, forward);
 	Matrix backward;
@@ -409,7 +363,7 @@ Matrix& Bidirectional::call_return_sequences(const Matrix &x, Matrix &ret) {
 	return ret;
 }
 
-Vector& Bidirectional::call(const Matrix &x, Vector &ret) {
+Vector& Bidirectional::operator()(const Matrix &x, Vector &ret) {
 	Vector forward;
 	this->forward->call(x, forward);
 	Vector backward;
@@ -433,7 +387,7 @@ Vector& Bidirectional::call(const Matrix &x, Vector &ret) {
 	return ret;
 }
 
-Vector& Bidirectional::call(const Matrix &x, Vector &ret,
+Vector& Bidirectional::operator()(const Matrix &x, Vector &ret,
 		vector<vector<double>> &arr) {
 	Vector forward;
 	forward = this->forward->call(x, forward, arr);
@@ -598,9 +552,9 @@ GRU::GRU(BinaryReader &dis) {
 	dis.read(br);
 	dis.read(bh);
 
-	this->sigmoid = ::hard_sigmoid;
-	this->tanh = ::tanh;
-	this->softmax = ::softmax;
+//	this->sigmoid = ::hard_sigmoid;
+//	this->tanh = ::tanh;
+//	this->softmax = ::softmax;
 
 }
 

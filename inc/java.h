@@ -1,7 +1,7 @@
 #pragma once
 
 #include <jni.h>
-#include "Utility.h"
+#include "utility.h"
 
 struct CString {
 	CString(JNIEnv *env, jstring str) :

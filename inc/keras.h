@@ -1,5 +1,5 @@
 #pragma once
-#include "Utility.h"
+#include "utility.h"
 #include "matrix.h"
 
 struct CRF {
@@ -8,7 +8,7 @@ struct CRF {
 	Matrix kernel;
 	Vector left_boundary;
 	Vector right_boundary;
-	VectorActivator activation = nullptr;
+	Activation activation;
 
 	CRF(Matrix kernel, Matrix G, Vector bias, Vector left_boundary,
 			Vector right_boundary);
@@ -20,20 +20,17 @@ struct CRF {
 };
 
 struct Conv1D {
-
-	Conv1D(const Tensor &w, const Vector &bias, MatrixActivator activate = relu);
-
 	Tensor w;
 	Vector bias;
-	MatrixActivator activate;
+	Activation activate = { Activator::relu };
 
-	Conv1D(BinaryReader &dis, bool bias = true,
-			MatrixActivator activate = relu);
+	Conv1D(BinaryReader &dis, bool bias = true);
 
 	static int initial_offset(int xshape, int yshape, int wshape, int sshape);
 
 //	#stride=(1,1)
-	Matrix& conv_same(const Matrix &x, Matrix &y, int s = 1);
+	Matrix& operator()(const Matrix &x, Matrix &y, int s = 1);
+	Matrix& operator()(const Matrix &x, int s = 1);
 };
 
 struct DenseLayer {
@@ -43,6 +40,7 @@ struct DenseLayer {
 
 	Matrix wDense;
 	Vector bDense;
+	Activation activation = { Activator::tanh };
 
 	Vector& operator()(const Vector &x, Vector &ret);
 	Vector& operator()(Vector &x);
@@ -52,22 +50,15 @@ struct DenseLayer {
 	Tensor& operator()(Tensor &x);
 	vector<Vector>& operator()(vector<Vector> &x);
 
-	DenseLayer(BinaryReader &dis, bool use_bias = true);
+	DenseLayer(BinaryReader &dis, bool use_bias = true, Activator activator =
+			Activator::tanh);
 	void init(BinaryReader &dis, bool use_bias = true);
 };
 
-
 struct Embedding {
-	unordered_map<word, int> char2id;
 	Matrix wEmbedding;
-	Matrix& call(const String &word, Matrix &wordEmbedding);
 
-	Matrix& operator()(String &word, Matrix &wordEmbedding, size_t max_length);
-
-	Matrix& operator()(const String &word, Matrix &wordEmbedding);
-
-	Matrix& operator()(const String &word, Matrix &wordEmbedding,
-			Matrix &wEmbedding);
+	Matrix& operator()(VectorI &word, Matrix &wordEmbedding, size_t max_length);
 
 	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding);
 
@@ -76,16 +67,18 @@ struct Embedding {
 
 	Tensor& operator()(const vector<VectorI> &word, Tensor &y);
 	Tensor& operator()(const vector<VectorI> &word);
+	Matrix& operator()(const VectorI &word);
 
-	void initialize(BinaryReader &dis, bool dic);
+	void initialize(BinaryReader &dis);
 
 	Embedding(BinaryReader &dis);
-	Embedding(unordered_map<word, int> &char2id, Matrix &wEmbedding);
-	Embedding(BinaryReader &dis, bool dic);
 };
 
 struct RNN {
 	typedef ::object<RNN> object;
+
+	Activation sigmoid = { Activator::hard_sigmoid };
+	Activation tanh = { Activator::tanh };
 
 	virtual ~RNN() {
 	}
@@ -117,26 +110,25 @@ struct RNN {
 		return ret;
 	}
 
-	virtual vector<vector<vector<double>>> & weight(
+	virtual vector<vector<vector<double>>>& weight(
 			vector<vector<vector<double>>> &arr) {
 		return arr;
 	}
 };
 
-
-enum merge_mode {
-	sum, mul, ave, concat
-};
-
 struct Bidirectional {
 	RNN::object forward, backward;
+	enum merge_mode {
+		sum, mul, ave, concat
+	};
 
 	merge_mode mode;
 
-	Matrix& call_return_sequences(const Matrix &x, Matrix &ret);
+	Matrix& operator()(const Matrix &x, Matrix &ret);
 
-	Vector& call(const Matrix &x, Vector &ret);
-	Vector& call(const Matrix &x, Vector &ret, vector<vector<double>> &arr);
+	Vector& operator()(const Matrix &x, Vector &ret);
+	Vector& operator()(const Matrix &x, Vector &ret,
+			vector<vector<double>> &arr);
 //private:
 //	Bidirectional(RNN *forward, RNN *backward, merge_mode mode);
 };
@@ -150,7 +142,7 @@ struct BidirectionalGRU: Bidirectional {
 	BidirectionalGRU(BinaryReader &dis, merge_mode mode);
 };
 
-struct BidirectionalLSTM : Bidirectional {
+struct BidirectionalLSTM: Bidirectional {
 	BidirectionalLSTM(BinaryReader &dis, merge_mode mode);
 };
 
@@ -159,11 +151,6 @@ struct BidirectionalLSTM : Bidirectional {
  */
 
 struct GRU: RNN {
-
-	VectorActivator sigmoid;
-	VectorActivator tanh;
-	VectorActivator softmax;
-
 	Matrix Wxu;
 	Matrix Whu;
 	Vector bu;
@@ -189,7 +176,7 @@ struct GRU: RNN {
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 			vector<vector<double>> &arr);
 
-	vector<vector<vector<double>>> &weight(vector<vector<vector<double>>> &arr);
+	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
 	GRU(BinaryReader &dis);
 };
@@ -214,12 +201,6 @@ struct LSTM: RNN {
 	Matrix Who;
 	Matrix Wco;
 	Vector bo;
-
-	Matrix Why;
-	Vector by;
-
-	VectorActivator sigmoid;
-	VectorActivator tanh;
 
 	LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi, Matrix Whf,
 			Matrix Whc, Matrix Who, Vector bi, Vector bf, Vector bc, Vector bo);

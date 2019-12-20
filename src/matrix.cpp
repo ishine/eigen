@@ -1,8 +1,40 @@
 #include <math.h>
 #include <matrix.h>
 #include "lagacy.h"
+
+Vector& aggregate(const Matrix &x, Vector &v, vector<int> &arg,
+		double (Matrix::ConstRowXpr::*aggregate)(int*) const) {
+	int m = x.rows();
+	v.resize(m);
+	arg.resize(m);
+	for (int i = 0; i < m; ++i) {
+		v[i] = (x.row(i).*aggregate)(&arg[i]);
+	}
+	return v;
+}
+
+Vector& max(const Matrix &x, Vector &max, vector<int> &argmax) {
+	return aggregate(x, max, argmax, &Matrix::ConstRowXpr::maxCoeff);
+}
+
+Vector& min(const Matrix &x, Vector &min, vector<int> &argmin) {
+	return aggregate(x, min, argmin, &Matrix::ConstRowXpr::minCoeff);
+}
+
+Vector& max(const Matrix &x) {
+	static Vector y;
+	static vector<int> argmax;
+	return max(x, y, argmax);
+}
+
+Vector& min(const Matrix &x) {
+	static Vector y;
+	static vector<int> argmax;
+	return min(x, y, argmax);
+}
 //eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
 //http://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
+//https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#abstract
 
 //double hard_sigmoid(double x) {
 //	if (x < -2.5)
@@ -23,7 +55,7 @@ double inverse(double x) {
 	return 1 / x;
 }
 
-double logistic(double x) {
+double sigmoid(double x) {
 	return 1 / (1 + exp(-x));
 }
 
@@ -66,20 +98,20 @@ Tensor& function(Tensor &x, double (*fptr)(double)) {
 	return x;
 }
 
+Matrix& sigmoid(Matrix &x) {
+	return function(x, sigmoid);
+}
+
+Vector& sigmoid(Vector &x) {
+	return function(x, sigmoid);
+}
+
 Matrix& hard_sigmoid(Matrix &x) {
 	return function(x, hard_sigmoid);
 }
 
 Vector& hard_sigmoid(Vector &x) {
 	return function(x, hard_sigmoid);
-}
-
-Matrix& logistic(Matrix &x) {
-	return function(x, logistic);
-}
-
-Vector& logistic(Vector &x) {
-	return function(x, logistic);
 }
 
 Matrix& tanh(Matrix &x) {
@@ -112,6 +144,14 @@ vector<Vector>& gelu(vector<Vector> &x) {
 	return function(x, gelu);
 }
 
+Matrix& gelu(Matrix &x) {
+	return function(x, gelu);
+}
+
+Vector& gelu(Vector &x) {
+	return function(x, gelu);
+}
+
 Tensor& gelu(Tensor &x) {
 	return function(x, gelu);
 }
@@ -119,7 +159,7 @@ Tensor& gelu(Tensor &x) {
 Matrix& softmax(Matrix &x) {
 	int rows = x.rows();
 
-	x = exp(x);
+	x = exp(subt(x, max(x)));
 	for (int i = 0; i < rows; ++i) {
 		x.row(i) /= x.row(i).sum();
 	}
@@ -144,7 +184,7 @@ vector<Vector>& softmax(vector<Vector> &x) {
 }
 
 Vector& softmax(Vector &x) {
-	x = exp(x);
+	x = exp(x -= x.maxCoeff());
 	x /= x.sum();
 	return x;
 }
@@ -183,7 +223,7 @@ MatrixI& operator !=(MatrixI &x, int y) {
 	return x;
 }
 
-vector<VectorI>& operator !=(vector<VectorI>&x, int y) {
+vector<VectorI>& operator !=(vector<VectorI> &x, int y) {
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
 		x[k] = x[k] != y;
@@ -192,7 +232,7 @@ vector<VectorI>& operator !=(vector<VectorI>&x, int y) {
 	return x;
 }
 
-VectorI& operator !=(VectorI&x, int y) {
+VectorI& operator !=(VectorI &x, int y) {
 	int cols = x.cols();
 	for (int j = 0; j < cols; ++j) {
 		x[j] = x[j] != y;
@@ -222,6 +262,13 @@ vector<Vector>& mean(const Tensor &x) {
 	return mean;
 }
 
+Vector& mean(const Matrix &x) {
+	static Vector mean;
+	mean = x.rowwise().mean();
+
+	return mean;
+}
+
 vector<double>& mean(const vector<Vector> &x) {
 	static vector<double> mean;
 	int batch_size = x.size();
@@ -247,6 +294,17 @@ Tensor& square(Tensor &x) {
 	return x;
 }
 
+Matrix& square(Matrix &x) {
+	x = x.array().square();
+
+	return x;
+}
+
+Vector& square(Vector &x) {
+	x = x.array().square();
+	return x;
+}
+
 vector<Vector>& square(vector<Vector> &x) {
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
@@ -256,6 +314,14 @@ vector<Vector>& square(vector<Vector> &x) {
 }
 
 vector<Vector>& sqrt(vector<Vector> &x) {
+	return function(x, sqrt);
+}
+
+Matrix& sqrt(Matrix &x) {
+	return function(x, sqrt);
+}
+
+Vector& sqrt(Vector &x) {
 	return function(x, sqrt);
 }
 
@@ -325,6 +391,11 @@ Matrix& operator +=(Matrix &x, double y) {
 	return x;
 }
 
+Vector& operator +=(Vector &x, double y) {
+	x.array() += y;
+	return x;
+}
+
 MatrixI& operator -(int x, MatrixI &y) {
 	y.array() -= x - y.array();
 	return y;
@@ -333,6 +404,15 @@ MatrixI& operator -(int x, MatrixI &y) {
 MatrixI& operator -=(MatrixI &x, int y) {
 	x.array() -= y;
 	return x;
+}
+
+Vector& operator -=(Vector &x, double y) {
+	x.array() -= y;
+	return x;
+}
+
+Vector& operator -(Vector &x, double y) {
+	return x -= y;
 }
 
 vector<VectorI>& operator -=(vector<VectorI> &x, int y) {
@@ -378,7 +458,7 @@ vector<Vector>& operator -=(vector<Vector> &x, const vector<double> &y) {
 	return x;
 }
 
-vector<Vector> &operator *(double x, const vector<VectorI> &y) {
+vector<Vector>& operator *(double x, const vector<VectorI> &y) {
 	static vector<Vector> out;
 	int batch_size = y.size();
 	out.resize(batch_size);
@@ -388,7 +468,7 @@ vector<Vector> &operator *(double x, const vector<VectorI> &y) {
 	return out;
 }
 
-Matrix &operator *(double x, const MatrixI &y) {
+Matrix& operator *(double x, const MatrixI &y) {
 	static Matrix out;
 	out = x * y.cast<double>();
 	return out;
@@ -468,24 +548,19 @@ vector<Vector>& operator /=(vector<Vector> &x, const vector<double> &y) {
 	return x;
 }
 
-Tensor& batch_dot(const Tensor &x, const Tensor &y, bool transpose) {
-	static Tensor out;
+Tensor& batch_dot(Tensor &x, const Tensor &y, bool transpose) {
 	int batch_size = x.size();
-	out.resize(batch_size);
-
 	for (int k = 0; k < batch_size; ++k) {
 		if (transpose)
-			out[k] = x[k] * y[k].transpose();
+			x[k] *= y[k].transpose();
 		else
-			out[k] = x[k] * y[k];
+			x[k] *= y[k];
 	}
-	return out;
+	return x;
 }
 
 vector<Vector>& batch_dot(vector<Vector> &x, const Tensor &y, bool transpose) {
-	static vector<Vector> out;
 	int batch_size = x.size();
-	out.resize(batch_size);
 
 	for (int k = 0; k < batch_size; ++k) {
 		if (transpose)
@@ -493,7 +568,7 @@ vector<Vector>& batch_dot(vector<Vector> &x, const Tensor &y, bool transpose) {
 		else
 			x[k] *= y[k];
 	}
-	return out;
+	return x;
 }
 
 vector<Vector>& extract(const Tensor &x, int index) {
@@ -509,4 +584,57 @@ vector<Vector>& extract(const Tensor &x, int index, vector<Vector> &out) {
 		out[k] = x[k].row(index);
 	}
 	return out;
+}
+
+Matrix& subt(Matrix &x, const Vector &y) {
+	for (int i = 0; i < x.rows(); ++i) {
+		x.row(i).array() -= y(i);
+	}
+	return x;
+}
+
+Matrix& mult(Matrix &x, const Vector &y) {
+	for (int i = 0; i < x.rows(); ++i) {
+		x.row(i).array() -= y(i);
+	}
+	return x;
+}
+
+Matrix& divt(Matrix &x, const Vector &y) {
+	for (int i = 0; i < x.rows(); ++i) {
+		x.row(i).array() /= y(i);
+	}
+	return x;
+}
+
+Matrix& addt(Matrix &x, const Vector &y) {
+	for (int i = 0; i < x.rows(); ++i) {
+		x.row(i).array() += y(i);
+	}
+	return x;
+}
+
+Matrix& sub(Matrix &x, const Vector &y) {
+	x.rowwise() -= y;
+	return x;
+}
+
+Matrix& mul(Matrix &x, const Vector &y) {
+	x.array().rowwise() *= y.array();
+	return x;
+}
+
+Vector& mul(Vector &x, const Vector &y) {
+	x.array() *= y.array();
+	return x;
+}
+
+Matrix& div(Matrix &x, const Vector &y) {
+	x.array().rowwise() /= y.array();
+	return x;
+}
+
+Matrix& add(Matrix &x, const Vector &y) {
+	x.rowwise() += y;
+	return x;
 }

@@ -1,4 +1,4 @@
-#include "Utility.h"
+#include "utility.h"
 
 extern "C" qword asm6args(qword rcx, qword rdx, qword r8, qword r9,
 		qword fifthArg, qword sixthArg);
@@ -7,7 +7,7 @@ extern "C" double relu(double x);
 
 extern "C" double gelu(double x);
 
-extern "C" void stosd(void *edi, dword eax, dword ecx);
+extern "C" void stosd(void *edi, dword eax, qword rcx);
 
 extern "C" long long gcd_long(long long rcx, long long rdx);
 extern "C" qword gcd_qword(qword rcx, qword rdx);

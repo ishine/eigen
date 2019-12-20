@@ -1,9 +1,10 @@
-#include "Utility.h"
+#include "utility.h"
 #include "keras.h"
 
 struct NERTagger {
 	typedef ::object<NERTagger> object;
 
+	unordered_map<String, int> word2id;
 	Embedding embedding, repertoire_embedding;
 
 	BidirectionalLSTM lstm;
@@ -12,7 +13,7 @@ struct NERTagger {
 
 	CRF wCRF;
 
-	VectorI& predict(const String &predict_text, VectorI &repertoire_code);
+	VectorI& predict(const VectorI &predict_text, VectorI &repertoire_code);
 
 	vector<vector<vector<double>>>& _predict(const String &predict_text,
 			VectorI&repertoire_code, vector<vector<vector<double>>> &arr);

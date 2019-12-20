@@ -3,14 +3,18 @@
 #include <stdio.h>
 #include <cstring>
 #include "java.h"
+#include "bert.h"
+#include "NERTagger.h"
+#include "lagacy.h"
+#include <classification.h>
 
-extern "C" void JNICALL Java_com_util_Native_displayHelloWorld(JNIEnv *env,
-		jobject obj) {
+extern "C" {
+void JNICALL Java_com_util_Native_displayHelloWorld(JNIEnv *env, jobject obj) {
 	cout << "Hello world!" << endl;
 }
 
-extern "C" jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env,
-		jobject obj, jstring str) {
+jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env, jobject obj,
+		jstring str) {
 	String s = JString(env, str);
 	size_t length = s.size();
 	for (size_t i = 0; i < length / 2; ++i) {
@@ -20,65 +24,63 @@ extern "C" jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env,
 	return Object(env, s);
 }
 
-#include "lagacy.h"
-
-extern "C" jint JNICALL Java_com_util_Native_asm6args(JNIEnv *env, jobject obj,
-		jint rcx, jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg) {
+jint JNICALL Java_com_util_Native_asm6args(JNIEnv *env, jobject obj, jint rcx,
+		jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg) {
 	return asm6args(rcx, rdx, r8, r9, fifthArg, sixthArg);
 }
 
-extern "C" jdouble JNICALL Java_com_util_Native_relu(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_relu(JNIEnv *env, jobject obj,
 		jdouble rcx) {
 	return relu(rcx);
 }
 
-extern "C" jint JNICALL Java_com_util_Native_gcdint(JNIEnv *env, jobject obj,
-		jint rcx, jint rdx) {
+jint JNICALL Java_com_util_Native_gcdint(JNIEnv *env, jobject obj, jint rcx,
+		jint rdx) {
 	return gcd_int(rcx, rdx);
 }
 
-extern "C" jlong JNICALL Java_com_util_Native_gcdlong(JNIEnv *env, jobject obj,
-		jlong rcx, jlong rdx) {
+jlong JNICALL Java_com_util_Native_gcdlong(JNIEnv *env, jobject obj, jlong rcx,
+		jlong rdx) {
 	return gcd_long(rcx, rdx);
 }
 
-extern "C" jint JNICALL Java_com_util_Native_gcdinttemplate(JNIEnv *env,
-		jobject obj, jint rcx, jint rdx) {
+jint JNICALL Java_com_util_Native_gcdinttemplate(JNIEnv *env, jobject obj,
+		jint rcx, jint rdx) {
 	return gcd(rcx, rdx);
 }
 
-extern "C" jlong JNICALL Java_com_util_Native_gcdlongtemplate(JNIEnv *env,
-		jobject obj, jlong rcx, jlong rdx) {
+jlong JNICALL Java_com_util_Native_gcdlongtemplate(JNIEnv *env, jobject obj,
+		jlong rcx, jlong rdx) {
 	return gcd(rcx, rdx);
 }
 
-#include "Service.h"
-
-extern "C" jint JNICALL Java_com_util_Native_service(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_qatype(JNIEnv *env, jobject obj,
 		jstring str) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	String s = JString(env, str);
-	return Service::instance().predict(s);
-}
-
-extern "C" jdouble JNICALL Java_com_util_Native_phatics(JNIEnv *env,
-		jobject obj, jstring str) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	return 0.5;
-}
-
-extern "C" jobjectArray JNICALL Java_com_util_Native_SERVICE(JNIEnv *env,
-		jobject obj, jstring str) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, str);
-	cout << "s.size() = " << s.size() << endl;
-	vector<vector<double>> debug;
-	return Object(env, Service::INSTANCE().predict(s, debug));
+	return Classifier::qatype_classifier().predict(s)[1];
 }
 
-#include "NERTagger.h"
+jdouble JNICALL Java_com_util_Native_phatic(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::phatic_classifier().predict(s)[1];
+}
 
-extern "C" jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
+		jstring x, jstring y) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s1 = JString(env, x);
+	String s2 = JString(env, y);
+
+	cout << "s1 = " << s1 << endl;
+	cout << "s2 = " << s2 << endl;
+
+	return Paraphrase::instance()(s1, s2);
+}
+
+jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
 		jstring _service, jstring _text, jintArray _code) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	string service = CString(env, _service);
@@ -93,8 +95,8 @@ extern "C" jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
 	return Object(env, arr);
 }
 
-extern "C" jobjectArray JNICALL Java_com_util_Native_NER(JNIEnv *env,
-		jobject obj, jstring _service, jstring _text, jintArray _code) {
+jobjectArray JNICALL Java_com_util_Native_NER(JNIEnv *env, jobject obj,
+		jstring _service, jstring _text, jintArray _code) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	string service = CString(env, _service);
 	String text = JString(env, _text);
@@ -108,13 +110,15 @@ extern "C" jobjectArray JNICALL Java_com_util_Native_NER(JNIEnv *env,
 	NERTaggerDict::_predict(service, text, arr, debug);
 	return Object(env, debug);
 }
+}
 
 jstring Object(JNIEnv *env, const string &s) {
 	return env->NewStringUTF(s.data());
 }
 
 jstring Object(JNIEnv *env, const String &s) {
-	return env->NewString(s.data(), s.size());
+	static_assert(sizeof (jchar) == sizeof (char16_t), "jchar and char16_t must have same sizes");
+	return env->NewString((const jchar*)s.data(), s.size());
 }
 
 jintArray SetIntArrayRegion(JNIEnv *env, jsize size, const jint *array) {

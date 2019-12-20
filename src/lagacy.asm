@@ -118,12 +118,19 @@ CalcDist_:
 	ret
 
 stosd:
+%ifdef linux
+	mov eax, esi
+	mov rcx, rdx
+	rep stosd
+%else
+	push rdi
 	mov rdi, rcx
 	mov eax, edx
 	mov rcx, r8
 	rep stosd
+	pop rdi
+%endif
 	ret
-
 
 ;https://blog.csdn.net/celerychen2009/article/details/8934972
 ;https://stackoverflow.com/questions/40820814/relocation-r-x86-64-32s-against-bss-can-not-be-used-when-making-a-shared-obj
@@ -131,3 +138,4 @@ stosd:
 ;http://www.csee.umbc.edu/~chang/cs313.f04/nasmdoc/html/nasmdoc8.html#section-8.2
 ;https://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/
 ;https://www.nasm.us/xdoc/2.11.02/html/nasmdoc6.html#section-6.2.1
+;reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
