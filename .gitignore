@@ -1,2 +1,5 @@
 /Debug
 /Release
+*.o
+*.dll
+*.exe
