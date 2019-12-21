@@ -123,15 +123,15 @@ FeedForward::FeedForward() {
 
 }
 
-FeedForward::FeedForward(BinaryReader &dis, bool use_bias) {
-	dis.read(W1);
+FeedForward::FeedForward(HDF5Reader &dis, bool use_bias) {
+	dis >> W1;
 	if (use_bias) {
-		dis.read(b1);
+		dis >> b1;
 	}
 
-	dis.read(W2);
+	dis >> W2;
 	if (use_bias) {
-		dis.read(b2);
+		dis >> b2;
 	}
 }
 
@@ -184,10 +184,10 @@ Vector& LayerNormalization::operator()(Vector &x) {
 LayerNormalization::LayerNormalization() {
 }
 
-LayerNormalization::LayerNormalization(BinaryReader &dis) {
+LayerNormalization::LayerNormalization(HDF5Reader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.read(gamma);
-	dis.read(beta);
+	dis >> gamma;
+	dis >> beta;
 }
 
 const double LayerNormalization::epsilon = 1e-12;
@@ -480,21 +480,21 @@ MultiHeadAttention::MultiHeadAttention() {
 
 }
 
-MultiHeadAttention::MultiHeadAttention(BinaryReader &dis,
+MultiHeadAttention::MultiHeadAttention(HDF5Reader &dis,
 		int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.read(Wq);
-	dis.read(bq);
+	dis >> Wq;
+	dis >> bq;
 
-	dis.read(Wk);
-	dis.read(bk);
+	dis >> Wk;
+	dis >> bk;
 
-	dis.read(Wv);
-	dis.read(bv);
+	dis >> Wv;
+	dis >> bv;
 
-	dis.read(Wo);
-	dis.read(bo);
+	dis >> Wo;
+	dis >> bo;
 }
 
 Tensor& PositionEmbedding::operator ()(Tensor &sequence,
@@ -546,9 +546,9 @@ vector<Vector>& PositionEmbedding::compute_mask(vector<VectorI> &inputToken) {
 	return revert_mask(mask, 10000.0);
 }
 
-PositionEmbedding::PositionEmbedding(BinaryReader &dis, int num_attention_heads) :
+PositionEmbedding::PositionEmbedding(HDF5Reader &dis, int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
-	dis.read(embeddings);
+	dis >> embeddings;
 }
 
 Tensor& RevertMask::operator ()(const vector<MatrixI> &attention_mask) {
@@ -609,7 +609,7 @@ VectorI& SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 	return inputSegment;
 }
 
-BertEmbedding::BertEmbedding(BinaryReader &dis, int num_attention_heads,
+BertEmbedding::BertEmbedding(HDF5Reader &dis, int num_attention_heads,
 		bool factorization_on_word_embedding_only) :
 		factorization_on_word_embedding_only(
 				factorization_on_word_embedding_only), wordEmbedding(dis), segmentEmbedding(
@@ -620,7 +620,7 @@ BertEmbedding::BertEmbedding(BinaryReader &dis, int num_attention_heads,
 	hidden_size = embeddingMapping.wDense.cols();
 
 	if (factorization(false)) {
-		dis.read(embeddingMapping.bDense);
+		dis >> embeddingMapping.bDense;
 	}
 }
 
@@ -679,7 +679,7 @@ Matrix& BertEmbedding::operator ()(VectorI &input_ids, int inputMid,
 	return embeddings;
 }
 
-Encoder::Encoder(BinaryReader &dis, int num_attention_heads) :
+Encoder::Encoder(HDF5Reader &dis, int num_attention_heads) :
 		MultiHeadAttention(dis, num_attention_heads), MultiHeadAttentionNorm(
 				dis), FeedForward(dis), FeedForwardNorm(dis) {
 }
@@ -762,7 +762,7 @@ Vector& Encoder::operator ()(Matrix &input_layer, Vector &y) {
 	return wrap_feedforward(inputs);
 }
 
-Transformer::Transformer(BinaryReader &dis, bool cross_layer_parameter_sharing,
+Transformer::Transformer(HDF5Reader &dis, bool cross_layer_parameter_sharing,
 		int num_hidden_layers, int num_attention_heads) :
 		num_hidden_layers(num_hidden_layers) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
@@ -827,7 +827,7 @@ Vector& Transformer::operator ()(Matrix &input_layer, Vector &y) {
 	return y;
 }
 
-Paraphrase::Paraphrase(BinaryReader &dis, const string &vocab,
+Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
 		int num_attention_heads, bool factorization_on_word_embedding_only,
 		bool cross_layer_parameter_sharing, int num_hidden_layers) :
 		tokenizer(vocab), midIndex(tokenizer.vocab.at(u"[SEP]")), bertEmbedding(
@@ -840,8 +840,8 @@ Paraphrase::Paraphrase(BinaryReader &dis, const string &vocab,
 
 Paraphrase& Paraphrase::instance() {
 	static Paraphrase inst(
-			(BinaryReader&) (const BinaryReader&) BinaryReader(
-					cnModelsDirectory() + "bert/paraphrase/paraphrase.bin.h5"),
+			(HDF5Reader&) (const HDF5Reader&) HDF5Reader(
+					cnModelsDirectory() + "bert/paraphrase/paraphrase.h5"),
 			cnModelsDirectory() + "bert/vocab.txt", 12, false, true, 4);
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	return inst;

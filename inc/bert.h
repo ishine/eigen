@@ -29,7 +29,7 @@ struct FeedForward {
 
 	Tensor& operator()(const Tensor &x);
 	vector<Vector>& operator()(const vector<Vector> &x);
-	FeedForward(BinaryReader &dis, bool bias = true);
+	FeedForward(HDF5Reader &dis, bool bias = true);
 	FeedForward();
 };
 
@@ -46,7 +46,7 @@ struct CrossAttentionMask {
 };
 
 struct LayerNormalization {
-	LayerNormalization(BinaryReader &dis);
+	LayerNormalization(HDF5Reader &dis);
 	LayerNormalization();
 	const static double epsilon;
 	Vector gamma, beta;
@@ -66,7 +66,7 @@ struct MidIndex {
 };
 
 struct MultiHeadAttention {
-	MultiHeadAttention(BinaryReader &dis, int num_attention_heads);
+	MultiHeadAttention(HDF5Reader &dis, int num_attention_heads);
 	MultiHeadAttention();
 
 	Tensor& operator()(const Tensor &sequence, const Tensor &attention_matrix,
@@ -111,7 +111,7 @@ struct MultiHeadAttention {
 };
 
 struct PositionEmbedding {
-	PositionEmbedding(BinaryReader &dis, int num_attention_heads);
+	PositionEmbedding(HDF5Reader &dis, int num_attention_heads);
 
 	Matrix embeddings;
 	int num_attention_heads;
@@ -138,7 +138,7 @@ struct SegmentInput {
 };
 
 struct BertEmbedding {
-	BertEmbedding(BinaryReader &dis, int num_attention_heads,
+	BertEmbedding(HDF5Reader &dis, int num_attention_heads,
 			bool factorization_on_word_embedding_only);
 
 	bool factorization_on_word_embedding_only;
@@ -163,7 +163,7 @@ struct BertEmbedding {
 };
 
 struct Encoder {
-	Encoder(BinaryReader &dis, int num_attention_heads);
+	Encoder(HDF5Reader &dis, int num_attention_heads);
 	Encoder();
 	::MultiHeadAttention MultiHeadAttention;
 	LayerNormalization MultiHeadAttentionNorm;
@@ -198,7 +198,7 @@ struct Encoder {
 };
 
 struct Transformer {
-	Transformer(BinaryReader &dis, bool cross_layer_parameter_sharing,
+	Transformer(HDF5Reader &dis, bool cross_layer_parameter_sharing,
 			int num_hidden_layers, int num_attention_heads);
 	int num_hidden_layers;
 	object<Encoder> encoder;
@@ -287,7 +287,7 @@ struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
 };
 
 struct Paraphrase {
-	Paraphrase(BinaryReader &dis, const string &vocab, int num_attention_heads,
+	Paraphrase(HDF5Reader &dis, const string &vocab, int num_attention_heads,
 			bool factorization_on_word_embedding_only = true,
 			bool cross_layer_parameter_sharing = true, int num_hidden_layers =
 					12);

@@ -89,19 +89,19 @@ vector<vector<double>>& Classifier::predict(String &predict_text,
 
 Classifier::Classifier(const string &binaryFilePath,
 		const string &vocabFilePath) :
-		Classifier((BinaryReader&)(const BinaryReader&)BinaryReader(binaryFilePath)) {
+		Classifier((HDF5Reader&)(const HDF5Reader&)HDF5Reader(binaryFilePath)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Text(vocabFilePath) >> word2id;
 }
 
 #include "lagacy.h"
 
-Classifier::Classifier(BinaryReader &dis) :
+Classifier::Classifier(HDF5Reader &dis) :
 		embedding(Embedding(dis)), con1D0(dis), con1D1(dis), con1D2(dis), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(DenseLayer(dis, true, Activator::softmax)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.close();
+//	dis.close();
 
 	cout << "constants in assembly language:" << endl;
 	cout << "zero = " << zero << endl;
@@ -110,7 +110,7 @@ Classifier::Classifier(BinaryReader &dis) :
 	cout << "half =  " << half << endl;
 }
 
-Classifier::Classifier(BinaryReader &dis, const string &vocab) :
+Classifier::Classifier(HDF5Reader &dis, const string &vocab) :
 		Classifier(dis) {
 
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
@@ -119,14 +119,14 @@ Classifier::Classifier(BinaryReader &dis, const string &vocab) :
 
 Classifier& Classifier::qatype_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "qatype/qatype.bin.h5", cnModelsDirectory() + "qatype/vocab.txt");
+	static Classifier service(cnModelsDirectory() + "qatype/qatype.h5", cnModelsDirectory() + "qatype/vocab.txt");
 
 	return service;
 }
 
 Classifier& Classifier::phatic_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "phatic/phatic.bin.h5", cnModelsDirectory() + "phatic/vocab.txt");
+	static Classifier service(cnModelsDirectory() + "phatic/phatic.h5", cnModelsDirectory() + "phatic/vocab.txt");
 
 	return service;
 }

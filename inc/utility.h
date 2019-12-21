@@ -221,30 +221,21 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-struct BinaryReader {
-	ifstream dis;
-	string s_FilePath;
-	BinaryReader(const string &s_FilePath);
+#include "H5Cpp.h"
+struct HDF5Reader {
+	H5::H5File hdf5;
+	vector<string> layer_names;
+	int layer_index;
+	H5::Group group;
+	int weight_index;
+	vector<string> weight_names;
 
-	int read(int &x);
-	void* read(void *x, int size);
-	word read(word &x);
-	float read(float &x);
-	double read(double &x);
-	long long read(long long &x);
-	Vector& read(Vector &arr);
-	Matrix& read(Matrix &arr);
-	vector<Matrix>& read(vector<Matrix> &arr);
+	HDF5Reader& operator >>(std::pair<vector<int>, vector<double>>&);
+	HDF5Reader(const string &s_FilePath);
 
-	unordered_map<word, int>& read(unordered_map<word, int> &word2id);
-
-	vector<vector<vector<double>>>& read(vector<vector<vector<double>>>&);
-
-	BinaryReader &operator >> (int &x);
-	BinaryReader &operator >> (Vector &arr);
-	BinaryReader &operator >> (Matrix &arr);
-	void read_hdf5();
-	void close();
+	HDF5Reader& operator >>(Vector &arr);
+	HDF5Reader& operator >>(Matrix &arr);
+	HDF5Reader& operator >>(Tensor &arr);
 };
 
 string& workingDirectory();
@@ -309,7 +300,7 @@ vector<VectorI>& string2id(const vector<String> &s,
 
 std::ostream& operator <<(std::ostream &cout, const String &v);
 
-vector<String> &split(const String &in);
+vector<String>& split(const String &in);
 
 #include "wchar.h"
 
@@ -376,7 +367,8 @@ vector<_Ty>& operator <<(vector<_Ty> &out, const _Ty &in) {
 }
 
 template<class _Ty>
-vector<std::basic_string<_Ty>>& operator <<(vector<std::basic_string<_Ty>> &out, const _Ty *in) {
+vector<std::basic_string<_Ty>>& operator <<(vector<std::basic_string<_Ty>> &out,
+		const _Ty *in) {
 	return out << std::basic_string<_Ty>(in);
 }
 

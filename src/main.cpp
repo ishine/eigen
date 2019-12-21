@@ -8,22 +8,22 @@
 #include <string>
 #include <iostream>
 using namespace std;
-int main(int argc, char *argv[]) {
-	BinaryReader reader((cnModelsDirectory() + "bert/paraphrase/test.h5"));
-	reader.read_hdf5();
-//	Text::test_utf_unicode_conversion();
-//	auto &phatic = Classifier::phatic_classifier();
-//	auto y = phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式");
-//	cout << y << endl;
 
-//	auto &qatype = Classifier::qatype_classifier();
-//	auto &y = qatype.predict(u"你很高吗?")[1];
-//	cout << y << endl;
-//	return 0;
+int create_hdf5_file();
+
+int main(int argc, char *argv[]) {
+
+//	reader.read_hdf5();
+//	Text::test_utf_unicode_conversion();
+	auto &phatic = Classifier::phatic_classifier();
+	cout << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式")[1] << endl;
+
+	auto &qatype = Classifier::qatype_classifier();
+	cout << qatype.predict(u"你很高吗?")[1] << endl;
+
 	auto &paraphrase = Paraphrase::instance();
 
-	double score = paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些");
-	cout << "score = " << score << endl;
+	cout << "score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
 
 	return 0;
 }

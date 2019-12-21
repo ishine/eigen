@@ -18,7 +18,7 @@ struct NERTagger {
 	vector<vector<vector<double>>>& _predict(const String &predict_text,
 			VectorI&repertoire_code, vector<vector<vector<double>>> &arr);
 
-	NERTagger(BinaryReader &dis);
+	NERTagger(HDF5Reader &dis);
 };
 
 struct NERTaggerDict {

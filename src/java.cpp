@@ -1,8 +1,11 @@
 //"${JAVA_HOME}/include"
 //"${JAVA_HOME}/include/win32"
+#include "utility.h"
 #include <stdio.h>
 #include <cstring>
+
 #include "java.h"
+
 #include "bert.h"
 #include "NERTagger.h"
 #include "lagacy.h"

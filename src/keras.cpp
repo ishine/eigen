@@ -64,21 +64,21 @@ VectorI& CRF::call(const Matrix &X, VectorI &best_paths) {
 	return best_paths;
 }
 
-CRF::CRF(BinaryReader &dis) {
+CRF::CRF(HDF5Reader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.read(kernel);
-	dis.read(G);
-	dis.read(bias);
-	dis.read(left_boundary);
-	dis.read(right_boundary);
+	dis >> kernel;
+	dis >> G;
+	dis >> bias;
+	dis >> left_boundary;
+	dis >> right_boundary;
 }
 
-Conv1D::Conv1D(BinaryReader &dis, bool bias) {
+Conv1D::Conv1D(HDF5Reader &dis, bool bias) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.read(w);
+	dis >> w;
 
 	if (bias)
-		dis.read(this->bias);
+		dis >> this->bias;
 }
 
 int Conv1D::initial_offset(int xshape, int yshape, int wshape, int sshape) {
@@ -159,13 +159,13 @@ Tensor& DenseLayer::operator()(Tensor &x) {
 	return x;
 }
 
-DenseLayer::DenseLayer(BinaryReader &dis, bool use_bias, Activator activation) :
+DenseLayer::DenseLayer(HDF5Reader &dis, bool use_bias, Activator activation) :
 		activation( { activation }) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.read(wDense);
+	dis >> wDense;
 
 	if (use_bias)
-		dis.read(bDense);
+		dis >> bDense;
 }
 
 Matrix& Embedding::operator()(const VectorI &words, Matrix &wordEmbedding) {
@@ -216,13 +216,13 @@ Matrix& Embedding::operator()(VectorI &word, Matrix &wordEmbedding,
 
 }
 
-void Embedding::initialize(BinaryReader &dis) {
+void Embedding::initialize(HDF5Reader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 
-	dis.read(wEmbedding);
+	dis >> wEmbedding;
 }
 
-Embedding::Embedding(BinaryReader &dis) {
+Embedding::Embedding(HDF5Reader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	initialize(dis);
 }
@@ -275,10 +275,10 @@ Vector& LSTM::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 	return h;
 }
 
-LSTM::LSTM(BinaryReader &dis) {
+LSTM::LSTM(HDF5Reader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Matrix Wx;
-	dis.read(Wx);
+	dis >> Wx;
 	Wxi.resize(Wx.rows(), Wx.cols() / 4);
 	Wxf.resize(Wx.rows(), Wx.cols() / 4);
 	Wxc.resize(Wx.rows(), Wx.cols() / 4);
@@ -286,7 +286,7 @@ LSTM::LSTM(BinaryReader &dis) {
 	Wx >> Wxi, Wxf, Wxc, Wxo;
 
 	Matrix Wh;
-	dis.read(Wh);
+	dis >> Wh;
 	Whi.resize(Wh.rows(), Wh.cols() / 4);
 	Whf.resize(Wh.rows(), Wh.cols() / 4);
 	Whc.resize(Wh.rows(), Wh.cols() / 4);
@@ -294,7 +294,7 @@ LSTM::LSTM(BinaryReader &dis) {
 	Wh >> Whi, Whf, Whc, Who;
 
 	Vector b;
-	dis.read(b);
+	dis >> b;
 	bi.resize(b.size() / 4);
 	bf.resize(b.size() / 4);
 	bc.resize(b.size() / 4);
@@ -415,14 +415,14 @@ Vector& Bidirectional::operator()(const Matrix &x, Vector &ret,
 	return ret;
 }
 
-BidirectionalGRU::BidirectionalGRU(BinaryReader &dis, merge_mode mode) {
+BidirectionalGRU::BidirectionalGRU(HDF5Reader &dis, merge_mode mode) {
 //enforce the construction order of forward and backward! never to use the member initializer list of the super class!
 	this->forward = new GRU(dis);
 	this->backward = new GRU(dis);
 	this->mode = mode;
 }
 
-BidirectionalLSTM::BidirectionalLSTM(BinaryReader &dis, merge_mode mode) {
+BidirectionalLSTM::BidirectionalLSTM(HDF5Reader &dis, merge_mode mode) {
 	//enforce the construction order of forward and backward! never to use the member initializer list of the super class!
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	this->forward = new LSTM(dis);
@@ -539,18 +539,18 @@ Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x,
 	return h;
 }
 
-GRU::GRU(BinaryReader &dis) {
-	dis.read(Wxu);
-	dis.read(Wxr);
-	dis.read(Wxh);
+GRU::GRU(HDF5Reader &dis) {
+	dis >> Wxu;
+	dis >> Wxr;
+	dis >> Wxh;
 
-	dis.read(Whu);
-	dis.read(Whr);
-	dis.read(Whh);
+	dis >> Whu;
+	dis >> Whr;
+	dis >> Whh;
 
-	dis.read(bu);
-	dis.read(br);
-	dis.read(bh);
+	dis >> bu;
+	dis >> br;
+	dis >> bh;
 
 //	this->sigmoid = ::hard_sigmoid;
 //	this->tanh = ::tanh;

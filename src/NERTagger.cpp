@@ -69,18 +69,18 @@ vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
 	return result;
 }
 
-NERTagger::NERTagger(BinaryReader &dis) :
+NERTagger::NERTagger(HDF5Reader &dis) :
 		embedding(Embedding(dis)), repertoire_embedding(Embedding(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D0(Conv1D(dis)), con1D1(
 				Conv1D(dis)), con1D2(Conv1D(dis)), wCRF(CRF(dis)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis.close();
+//	dis.close();
 }
 
 NERTagger::object& NERTaggerDict::getTagger(const string &service) {
 	if (!dict.count(service)) {
 		cout << "in " << __PRETTY_FUNCTION__ << endl;
-		BinaryReader dis(nerBinary(service));
+		HDF5Reader dis(nerBinary(service));
 		dict[service] = new NERTagger(dis);
 	}
 

@@ -16,7 +16,7 @@ struct CRF {
 	Matrix& viterbi_one_hot(const Matrix &X, Matrix &oneHot);
 
 	VectorI& call(const Matrix &X, VectorI &best_paths);
-	CRF(BinaryReader &dis);
+	CRF(HDF5Reader &dis);
 };
 
 struct Conv1D {
@@ -24,7 +24,7 @@ struct Conv1D {
 	Vector bias;
 	Activation activate = { Activator::relu };
 
-	Conv1D(BinaryReader &dis, bool bias = true);
+	Conv1D(HDF5Reader &dis, bool bias = true);
 
 	static int initial_offset(int xshape, int yshape, int wshape, int sshape);
 
@@ -50,9 +50,9 @@ struct DenseLayer {
 	Tensor& operator()(Tensor &x);
 	vector<Vector>& operator()(vector<Vector> &x);
 
-	DenseLayer(BinaryReader &dis, bool use_bias = true, Activator activator =
+	DenseLayer(HDF5Reader &dis, bool use_bias = true, Activator activator =
 			Activator::tanh);
-	void init(BinaryReader &dis, bool use_bias = true);
+	void init(HDF5Reader &dis, bool use_bias = true);
 };
 
 struct Embedding {
@@ -69,9 +69,9 @@ struct Embedding {
 	Tensor& operator()(const vector<VectorI> &word);
 	Matrix& operator()(const VectorI &word);
 
-	void initialize(BinaryReader &dis);
+	void initialize(HDF5Reader &dis);
 
-	Embedding(BinaryReader &dis);
+	Embedding(HDF5Reader &dis);
 };
 
 struct RNN {
@@ -139,11 +139,11 @@ struct Bidirectional {
 
 struct BidirectionalGRU: Bidirectional {
 
-	BidirectionalGRU(BinaryReader &dis, merge_mode mode);
+	BidirectionalGRU(HDF5Reader &dis, merge_mode mode);
 };
 
 struct BidirectionalLSTM: Bidirectional {
-	BidirectionalLSTM(BinaryReader &dis, merge_mode mode);
+	BidirectionalLSTM(HDF5Reader &dis, merge_mode mode);
 };
 
 /**
@@ -178,7 +178,7 @@ struct GRU: RNN {
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
-	GRU(BinaryReader &dis);
+	GRU(HDF5Reader &dis);
 };
 
 struct LSTM: RNN {
@@ -208,7 +208,7 @@ struct LSTM: RNN {
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 			Vector &c);
 
-	LSTM(BinaryReader &dis);
+	LSTM(HDF5Reader &dis);
 	Matrix& call_return_sequences(const Matrix &x, Matrix &arr);
 	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr);
 	Vector& call_reverse(const Matrix &x, Vector &h);

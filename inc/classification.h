@@ -18,8 +18,8 @@ struct Classifier {
 			vector<vector<double>> &arr);
 
 	Classifier(const string &binaryFilePath, const string &vocabFilePath);
-	Classifier(BinaryReader &dis);
-	Classifier(BinaryReader &dis, const string &vocab);
+	Classifier(HDF5Reader &dis);
+	Classifier(HDF5Reader &dis, const string &vocab);
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 

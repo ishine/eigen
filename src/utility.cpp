@@ -56,133 +56,178 @@ string nerBinary(const string &service) {
 	return nerModelsDirectory() + service + ".bin";
 }
 
-BinaryReader::BinaryReader(const string &s_FilePath) :
-		dis(s_FilePath.c_str(), ios::in | std::ios_base::binary) {
+vector<string> openAttribute(const H5::Group &group, const char *name);
+
+HDF5Reader::HDF5Reader(const string &s_FilePath) :
+		hdf5(s_FilePath, H5F_ACC_RDONLY), layer_names(
+				openAttribute(hdf5, "layer_names")), layer_index(0), group(
+				hdf5.openGroup(layer_names[layer_index])), weight_index(-1) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	this->s_FilePath = s_FilePath;
+
+//	this->s_FilePath = s_FilePath;
 }
 
-Vector& BinaryReader::read(Vector &arr) {
+HDF5Reader& HDF5Reader::operator >>(Vector &arr) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	int dimension;
-	read(dimension);
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	assert(shape.size() == 1);
+
+	int dimension = shape[0];
 	cout << "x = " << dimension << endl;
+
 	arr.resize(dimension);
 	assert(arr.cols() == dimension);
 	for (int i = 0; i < dimension; ++i) {
-		read(arr[i]);
+		arr[i] = weight[i];
 	}
-	return arr;
+	return *this;
 }
 
 //https://bitbucket.hdfgroup.org/projects/HDFFV/repos/hdf5/browse
+//https://portal.hdfgroup.org/display/support/HDF5+1.10.5
 //https://blog.csdn.net/renyhui/article/details/77735314
 //http://web.mit.edu/fwtools_v3.1.0/www/H5.intro.html#Intro-TOC
 //http://web.mit.edu/fwtools_v3.1.0/www/cpplus_RM/files.html
-void BinaryReader::read_hdf5() {
-	vector<int> content;
-	int x;
-	dis.seekg(0, std::ios::end);
-	int size = dis.tellg();
-	cout << "size = " << size << endl;
-	dis.seekg(0, std::ios::beg);
+//void HDF5Reader::read_hdf5() {
+//	vector<int> content;
+//	int x;
+//	dis.seekg(0, std::ios::end);
+//	int size = dis.tellg();
+//	cout << "size = " << size << endl;
+//	dis.seekg(0, std::ios::beg);
+//
+//	for (int i = 0; i < size / 4; ++i) {
+//		this->dis.read((char*) &x, 4);
+//		content.push_back(x);
+//	}
+//
+//	int _size = dis.tellg();
+//	assert(_size == size);
+//	cout << "finish reading " << endl;
+//}
 
-	for (int i = 0; i < size / 4; ++i) {
-		this->dis.read((char*) &x, 4);
-		content.push_back(x);
-	}
+//void* HDF5Reader::read(void *x, int size) {
+//	char *arr = (char*) x;
+//	this->dis.read(arr, size);
+//	for (int i = 0, length = size / 2; i < length; ++i) {
+//		std::swap(arr[i], arr[size - 1 - i]);
+//	}
+//	return x;
+//}
+//
+//int HDF5Reader::read(int &x) {
+//	this->read(&x, sizeof(int));
+//	return x;
+//}
 
-	int _size = dis.tellg();
-	assert (_size == size);
-	cout << "finish reading " << endl;
-}
+//double HDF5Reader::read(double &x) {
+//	this->read(&x, sizeof(double));
+//	return x;
+//}
+//
+//float HDF5Reader::read(float &x) {
+//	this->read(&x, sizeof(float));
+//	return x;
+//}
+//
+//word HDF5Reader::read(word &x) {
+//	this->read(&x, sizeof(word));
+//	return x;
+//}
+//
 
-void* BinaryReader::read(void *x, int size) {
-	char *arr = (char*) x;
-	this->dis.read(arr, size);
-	for (int i = 0, length = size / 2; i < length; ++i) {
-		std::swap(arr[i], arr[size - 1 - i]);
-	}
-	return x;
-}
-
-int BinaryReader::read(int &x) {
-	this->read(&x, sizeof(int));
-	return x;
-}
-
-double BinaryReader::read(double &x) {
-	this->read(&x, sizeof(double));
-	return x;
-}
-
-float BinaryReader::read(float &x) {
-	this->read(&x, sizeof(float));
-	return x;
-}
-
-word BinaryReader::read(word &x) {
-	this->read(&x, sizeof(word));
-	return x;
-}
-
-Matrix& BinaryReader::read(Matrix &arr) {
+HDF5Reader& HDF5Reader::operator >>(Matrix &arr) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	int dimension0;
-	read(dimension0);
-	int dimension1;
-	read(dimension1);
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	assert(shape.size() == 2);
+
+	int dimension0 = shape[0];
+	int dimension1 = shape[1];
 	cout << "x = " << dimension0 << ", " << "y = " << dimension1 << endl;
+
 	arr.resize(dimension0, dimension1);
+	int index = 0;
 	for (int i0 = 0; i0 < dimension0; ++i0) {
 		for (int i1 = 0; i1 < dimension1; ++i1) {
-			read(arr(i0, i1));
+			arr(i0, i1) = weight[index++];
 		}
 	}
-	return arr;
+	return *this;
 }
 
-unordered_map<word, int>& BinaryReader::read(
-		unordered_map<word, int> &char2id) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	int length;
-	read(length);
+//unordered_map<word, int>& HDF5Reader::read(unordered_map<word, int> &char2id) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	int length;
+//	read(length);
+//
+//	cout << "length = " << length << endl;
+////	print_primitive_type_size();
+//
+//	assert(length >= 0);
+//
+//	for (int i = 0; i < length; ++i) {
+//		word key;
+//		read(key);
+//		read(char2id[key]);
+//
+////		cout << "char2id[" << key << "] = " << char2id[key] << endl;
+//	}
+//	return char2id;
+//}
 
-	cout << "length = " << length << endl;
-//	print_primitive_type_size();
+HDF5Reader& HDF5Reader::operator >>(
+		std::pair<vector<int>, vector<double>> &tuple) {
+	std::pair<vector<int>, vector<double>>& read_keras_model(
+			const H5::H5File &file, const H5::Group &group,
+			const string &weight_name,
+			std::pair<vector<int>, vector<double>> &tuple);
 
-	assert(length >= 0);
+	while (true) {
+		if (++weight_index < (int) weight_names.size()) {
+			break;
+		}
 
-	for (int i = 0; i < length; ++i) {
-		word key;
-		read(key);
-		read(char2id[key]);
+		assert(++layer_index < (int ) layer_names.size());
+		group = hdf5.openGroup(layer_names[layer_index]);
 
-//		cout << "char2id[" << key << "] = " << char2id[key] << endl;
+		this->weight_names = openAttribute(group, "weight_names");
+		weight_index = -1;
 	}
-	return char2id;
+	read_keras_model(hdf5, group, weight_names[weight_index], tuple);
+	return *this;
 }
 
-Tensor& BinaryReader::read(Tensor &arr) {
-	int dimension0;
-	read(dimension0);
-	int dimension1;
-	read(dimension1);
-	int dimension2;
-	read(dimension2);
+HDF5Reader& HDF5Reader::operator >>(Tensor &arr) {
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	assert(shape.size() == 3);
+
+	int dimension0 = shape[0];
+	int dimension1 = shape[1];
+	int dimension2 = shape[2];
+
 	printf("d0 = %d, d1 = %d, d2 = %d\n", dimension0, dimension1, dimension2);
 	arr.resize(dimension0);
 
+	int index = 0;
 	for (int i0 = 0; i0 < dimension0; ++i0) {
 		arr[i0].resize(dimension1, dimension2);
 		for (int i1 = 0; i1 < dimension1; ++i1) {
 			for (int i2 = 0; i2 < dimension2; ++i2) {
-				read(arr[i0](i1, i2));
+				arr[i0](i1, i2) = weight[index++];
 			}
 		}
 	}
-//			System.out.println(Utility.toString(arr[0][0]));
-	return arr;
+
+	return *this;
 }
 
 void print_primitive_type_size() {
@@ -234,28 +279,28 @@ vector<double> convert2vector(const Vector &m) {
 	return v;
 }
 
-void BinaryReader::close() {
-	int size = dis.tellg();
-	dis.seekg(0, std::ios::end);
-	int _size = dis.tellg();
-	assert(_size == size);;
-
-	dis.close();
-}
+//void HDF5Reader::close() {
+//	int size = dis.tellg();
+//	dis.seekg(0, std::ios::end);
+//	int _size = dis.tellg();
+//	assert(_size == size);;
+//
+//	dis.close();
+//}
 
 size_t Text::get_utf8_char_len(char byte) {
-	// return 0 表示错误
-	// return 1-6 表示正确值
-	// 不会 return 其他值
+// return 0 表示错误
+// return 1-6 表示正确值
+// 不会 return 其他值
 
-	//UTF8 编码格式：
-	//                              0        1        2        3        4        5
-	//     U-00000000 - U-0000007F: 0xxxxxxx
-	//     U-00000080 - U-000007FF: 110xxxxx 10xxxxxx
-	//     U-00000800 - U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
-	//     U-00010000 - U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-	//     U-00200000 - U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-	//     U-04000000 - U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+//UTF8 编码格式：
+//                              0        1        2        3        4        5
+//     U-00000000 - U-0000007F: 0xxxxxxx
+//     U-00000080 - U-000007FF: 110xxxxx 10xxxxxx
+//     U-00000800 - U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
+//     U-00010000 - U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+//     U-00200000 - U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+//     U-04000000 - U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 
 	size_t len = 0;
 	unsigned char mask = 0x80;
@@ -556,3 +601,11 @@ vector<String>& split(const String &in) {
 }
 
 //#include <locale>         // std::wstring_convert
+
+extern "C" int H5detect();
+extern "C" int H5make_libsettings();
+
+void hdf5_setup() {
+	H5detect();
+	H5make_libsettings();
+}

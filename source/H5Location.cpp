@@ -1062,9 +1062,9 @@ void H5Location::link(const char *curr_name, const Group& new_loc,
              const char *new_name, const LinkCreatPropList& lcpl, const LinkAccPropList& lapl) const
 {
     herr_t ret_value = -1;
-//    hid_t new_loc_id = new_loc.getId();
-//    hid_t lcpl_id = lcpl.getId();
-//    hid_t lapl_id = lapl.getId();
+    hid_t new_loc_id = new_loc.getId();
+    hid_t lcpl_id = lcpl.getId();
+    hid_t lapl_id = lapl.getId();
 
     ret_value = H5Lcreate_hard(getId(), curr_name, new_loc.getId(), new_name, H5P_DEFAULT, H5P_DEFAULT);
    if (ret_value < 0)
@@ -1106,8 +1106,8 @@ void H5Location::link(const char *curr_name, const hid_t same_loc,
              const char *new_name, const LinkCreatPropList& lcpl, const LinkAccPropList& lapl) const
 {
     herr_t ret_value = -1;
-//    hid_t lcpl_id = lcpl.getId();
-//    hid_t lapl_id = lapl.getId();
+    hid_t lcpl_id = lcpl.getId();
+    hid_t lapl_id = lapl.getId();
 
     ret_value = H5Lcreate_hard(getId(), curr_name, same_loc, new_name, H5P_DEFAULT, H5P_DEFAULT);
 
