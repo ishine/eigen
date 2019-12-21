@@ -95,10 +95,6 @@ void BinaryReader::read_hdf5() {
 	int _size = dis.tellg();
 	assert (_size == size);
 	cout << "finish reading " << endl;
-	std::ofstream fout("binary.txt", ios::out);
-	for (int a : content){
-		fout << a << endl;
-	}
 }
 
 void* BinaryReader::read(void *x, int size) {

@@ -871,29 +871,29 @@ vector<double>& Paraphrase::operator ()(vector<VectorI> &input_ids) {
 }
 
 double Paraphrase::operator ()(VectorI &input_ids) {
-	cout << "input_ids = " << input_ids << endl;
+//	cout << "input_ids = " << input_ids << endl;
 
 	auto inputMid = midIndex(input_ids);
 
-	cout << "inputMid = " << inputMid << endl;
+//	cout << "inputMid = " << inputMid << endl;
 
 	auto &inputSegment = segmentInput(input_ids, inputMid);
 
-	cout << "inputSegment = " << inputSegment << endl;
+//	cout << "inputSegment = " << inputSegment << endl;
 
 //	auto &matrixAttention = CrossAttentionMask(inputSegment);
 
 	auto &embed_layer = bertEmbedding(input_ids, inputMid, inputSegment);
-	cout << "embed_layer = " << embed_layer << endl;
+//	cout << "embed_layer = " << embed_layer << endl;
 
 	Vector clsEmbedding;
 	transformer(embed_layer, clsEmbedding);
 
-	cout << "clsEmbedding = " << clsEmbedding << endl;
+//	cout << "clsEmbedding = " << clsEmbedding << endl;
 
 	auto &sent = poolerDense(clsEmbedding);
 
-	cout << "poolerDense = " << sent << endl;
+//	cout << "poolerDense = " << sent << endl;
 
 	sent = similarityDense(sent);
 
