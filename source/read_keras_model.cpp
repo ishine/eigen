@@ -5,7 +5,7 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
-
+#include<string.h>
 #include "H5Cpp.h"
 using namespace H5;
 

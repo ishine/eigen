@@ -12,8 +12,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*keep this declaration near the top of this file -RPM*/
-static const char *FileHeader =
-		"\n\
+static const char *FileHeader = "\n\
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n\
  * Copyright by The HDF Group.                                               *\n\
  * Copyright by the Board of Trustees of the University of Illinois.         *\n\
@@ -46,12 +45,6 @@ static const char *FileHeader =
 #include "H5private.h"
 #include "H5Tpublic.h"
 #include "H5Rpublic.h"
-#include "H5Tmodule.h"          /* This source code file is part of the H5T module */
-
-#include "H5Eprivate.h"        /* Error handling              */
-#include "H5FLprivate.h"    /* Free Lists                */
-#include "H5Iprivate.h"        /* IDs                      */
-#include "H5Tpkg.h"        /* Datatypes                 */
 
 #if defined(__has_attribute)
 # if __has_attribute(no_sanitize_address)
@@ -89,49 +82,50 @@ static const char *FileHeader =
 #define STA_NoALIGNMENT        0x0001  /* No ALIGNMENT Test */
 #define STA_NoHandlerVerify    0x0002  /* No signal handler Tests */
 
+
 /*
  * This structure holds information about a type that
  * was detected.
  */
 typedef struct detected_t {
-	const char *varname;
-	unsigned int size; /* total byte size                  */
-	unsigned int precision; /* meaningful bits                  */
-	unsigned int offset; /* bit offset to meaningful bits    */
-	int perm[32]; /* for detection of byte order      */
-	hbool_t is_vax; /* for vax (float & double) only    */
-	unsigned int sign; /* location of sign bit             */
-	unsigned int mpos, msize, imp; /* information about mantissa       */
-	unsigned int epos, esize; /* information about exponent       */
-	unsigned long bias; /* exponent bias for floating pt    */
-	unsigned int align; /* required byte alignment          */
-	unsigned int comp_align; /* alignment for structure          */
+    const char *varname;
+    unsigned int size;                  /* total byte size                  */
+    unsigned int precision;             /* meaningful bits                  */
+    unsigned int offset;                /* bit offset to meaningful bits    */
+    int perm[32];                       /* for detection of byte order      */
+    hbool_t is_vax;                     /* for vax (float & double) only    */
+    unsigned int sign;                  /* location of sign bit             */
+    unsigned int mpos, msize, imp;      /* information about mantissa       */
+    unsigned int epos, esize;           /* information about exponent       */
+    unsigned long bias;                 /* exponent bias for floating pt    */
+    unsigned int align;                 /* required byte alignment          */
+    unsigned int comp_align;            /* alignment for structure          */
 } detected_t;
 
 /* This structure holds structure alignment for pointers, hvl_t, hobj_ref_t,
  * hdset_reg_ref_t */
 typedef struct malign_t {
-	const char *name;
-	unsigned int comp_align; /* alignment for structure          */
+    const char          *name;
+    unsigned int         comp_align;    /* alignment for structure          */
 } malign_t;
 
-FILE *rawoutstream = NULL;
+FILE       *rawoutstream = NULL;
 
 /* global variables types detection code */
-H5_GCC_DIAG_OFF(larger-than=)static detected_t d_g[MAXDETECT];
-H5_GCC_DIAG_ON(larger-than=)static malign_t m_g[MAXDETECT];
+H5_GCC_DIAG_OFF(larger-than=)
+static detected_t d_g[MAXDETECT];
+H5_GCC_DIAG_ON(larger-than=)
+static malign_t m_g[MAXDETECT];
 static volatile int nd_g = 0, na_g = 0;
 
 static void print_results(int nd, detected_t *d, int na, malign_t *m);
-static void iprint(detected_t*);
-static int byte_cmp(int, const void*, const void*, const unsigned char*);
-static unsigned int bit_cmp(unsigned int, int*, void*, void*,
-		const unsigned char*);
-static void fix_order(int, int, int*, const char**);
-static unsigned int imp_bit(unsigned int, int*, void*, void*,
-		const unsigned char*);
-static unsigned int find_bias(unsigned int, unsigned int, int*, void*);
-static void precision(detected_t*);
+static void iprint(detected_t *);
+static int byte_cmp(int, const void *, const void *, const unsigned char *);
+static unsigned int bit_cmp(unsigned int, int *, void *, void *, const unsigned char *);
+static void fix_order(int, int, int *, const char **);
+static unsigned int imp_bit(unsigned int, int *, void *, void *, const unsigned char *);
+static unsigned int find_bias(unsigned int, unsigned int, int *, void *);
+static void precision (detected_t*);
 static void print_header(void);
 static void detect_C89_integers(void);
 static void detect_C89_floats(void);
@@ -142,18 +136,19 @@ static void detect_C99_integers16(void);
 static void detect_C99_integers32(void);
 static void detect_C99_integers64(void);
 static void detect_alignments(void);
-static unsigned int align_g[] = { 1, 2, 4, 8, 16 };
-static int align_status_g = 0; /* ALIGNMENT Signal Status */
-static int sigbus_handler_called_g = 0; /* how many times called */
-static int sigsegv_handler_called_g = 0; /* how many times called */
-static int sigill_handler_called_g = 0; /* how many times called */
-static int signal_handler_tested_g = 0; /* how many times tested */
+static unsigned int align_g[] = {1, 2, 4, 8, 16};
+static int align_status_g = 0;             /* ALIGNMENT Signal Status */
+static int sigbus_handler_called_g = 0;    /* how many times called */
+static int sigsegv_handler_called_g = 0;   /* how many times called */
+static int sigill_handler_called_g = 0;    /* how many times called */
+static int signal_handler_tested_g = 0;    /* how many times tested */
 #if defined(H5SETJMP) && defined(H5_HAVE_SIGNAL)
 static int verify_signal_handlers(int signum, void (*handler)(int));
 #endif
 #ifdef H5JMP_BUF
 static H5JMP_BUF jbuf_g;
 #endif
+
 
 
 /*-------------------------------------------------------------------------
@@ -164,43 +159,48 @@ static H5JMP_BUF jbuf_g;
  * Return:      void
  *-------------------------------------------------------------------------
  */
-static void precision(detected_t *d) {
-	unsigned int n;
+static void
+precision (detected_t *d)
+{
+    unsigned int n;
 
-	if (0 == d->msize) {
-		/*
-		 * An integer.    The permutation can have negative values at the
-		 * beginning or end which represent padding of bytes.  We must adjust
-		 * the precision and offset accordingly.
-		 */
-		if (d->perm[0] < 0) {
-			/*
-			 * Lower addresses are padded.
-			 */
-			for (n = 0; n < d->size && d->perm[n] < 0; n++)
-				/*void*/;
-			d->precision = 8 * (d->size - n);
-			d->offset = 0;
-		} else if (d->perm[d->size - 1] < 0) {
-			/*
-			 * Higher addresses are padded.
-			 */
-			for (n = 0; n < d->size && d->perm[d->size - (n + 1)]; n++)
-				/*void*/;
-			d->precision = 8 * (d->size - n);
-			d->offset = 8 * n;
-		} else {
-			/*
-			 * No padding.
-			 */
-			d->precision = 8 * d->size;
-			d->offset = 0;
-		}
-	} else {
-		/* A floating point */
-		d->offset = MIN3(d->mpos, d->epos, d->sign);
-		d->precision = d->msize + d->esize + 1;
-	}
+    if(0 == d->msize) {
+        /*
+         * An integer.    The permutation can have negative values at the
+         * beginning or end which represent padding of bytes.  We must adjust
+         * the precision and offset accordingly.
+         */
+        if(d->perm[0] < 0) {
+            /*
+             * Lower addresses are padded.
+             */
+            for(n = 0; n < d->size && d->perm[n] < 0; n++)
+                /*void*/;
+            d->precision = 8 * (d->size - n);
+            d->offset = 0;
+        }
+        else if(d->perm[d->size - 1] < 0) {
+            /*
+             * Higher addresses are padded.
+             */
+            for (n = 0; n < d->size && d->perm[d->size - (n + 1)]; n++)
+                /*void*/;
+            d->precision = 8 * (d->size - n);
+            d->offset = 8 * n;
+        }
+        else {
+            /*
+             * No padding.
+             */
+            d->precision = 8 * d->size;
+            d->offset = 0;
+        }
+    }
+    else {
+        /* A floating point */
+        d->offset = MIN3(d->mpos, d->epos, d->sign);
+        d->precision = d->msize + d->esize + 1;
+    }
 }
 
 
@@ -448,6 +448,7 @@ static void precision(detected_t *d) {
 }
 #endif
 
+
 #if defined(H5LONGJMP) && defined(H5_HAVE_SIGNAL)
 
 /*-------------------------------------------------------------------------
@@ -461,7 +462,9 @@ static void precision(detected_t *d) {
  * Return:      Returns via H5LONGJMP to jbuf_g.
  *-------------------------------------------------------------------------
  */
-static void sigsegv_handler(int H5_ATTR_UNUSED signo) {
+static void
+sigsegv_handler(int H5_ATTR_UNUSED signo)
+{
 #if !defined(H5HAVE_SIGJMP) && defined(H5_HAVE_SIGPROCMASK)
     /* Use sigprocmask to unblock the signal if sigsetjmp/siglongjmp are not */
     /* supported. */
@@ -472,11 +475,12 @@ static void sigsegv_handler(int H5_ATTR_UNUSED signo) {
     HDsigprocmask(SIG_UNBLOCK, &set, NULL);
 #endif
 
-	sigsegv_handler_called_g++;
-	HDsignal(SIGSEGV, sigsegv_handler);
-	H5LONGJMP(jbuf_g, SIGSEGV);
+    sigsegv_handler_called_g++;
+    HDsignal(SIGSEGV, sigsegv_handler);
+    H5LONGJMP(jbuf_g, SIGSEGV);
 }
 #endif
+
 
 #if defined(H5LONGJMP) && defined(H5_HAVE_SIGNAL)
 
@@ -491,7 +495,9 @@ static void sigsegv_handler(int H5_ATTR_UNUSED signo) {
  * Return:      Returns via H5LONGJMP to jbuf_g.
  *-------------------------------------------------------------------------
  */
-static void sigbus_handler(int H5_ATTR_UNUSED signo) {
+static void
+sigbus_handler(int H5_ATTR_UNUSED signo)
+{
 #if !defined(H5HAVE_SIGJMP) && defined(H5_HAVE_SIGPROCMASK)
     /* Use sigprocmask to unblock the signal if sigsetjmp/siglongjmp are not */
     /* supported. */
@@ -502,11 +508,12 @@ static void sigbus_handler(int H5_ATTR_UNUSED signo) {
     HDsigprocmask(SIG_UNBLOCK, &set, NULL);
 #endif
 
-	sigbus_handler_called_g++;
-	HDsignal(SIGBUS, sigbus_handler);
-	H5LONGJMP(jbuf_g, SIGBUS);
+    sigbus_handler_called_g++;
+    HDsignal(SIGBUS, sigbus_handler);
+    H5LONGJMP(jbuf_g, SIGBUS);
 }
 #endif
+
 
 #if defined(H5LONGJMP) && defined(H5_HAVE_SIGNAL)
 
@@ -521,7 +528,9 @@ static void sigbus_handler(int H5_ATTR_UNUSED signo) {
  * Return:      Returns via H5LONGJMP to jbuf_g.
  *-------------------------------------------------------------------------
  */
-static void sigill_handler(int H5_ATTR_UNUSED signo) {
+static void
+sigill_handler(int H5_ATTR_UNUSED signo)
+{
 #if !defined(H5HAVE_SIGJMP) && defined(H5_HAVE_SIGPROCMASK)
     /* Use sigprocmask to unblock the signal if sigsetjmp/siglongjmp are not */
     /* supported. */
@@ -532,9 +541,9 @@ static void sigill_handler(int H5_ATTR_UNUSED signo) {
     HDsigprocmask(SIG_UNBLOCK, &set, NULL);
 #endif
 
-	sigill_handler_called_g++;
-	HDsignal(SIGILL, sigill_handler);
-	H5LONGJMP(jbuf_g, SIGILL);
+    sigill_handler_called_g++;
+    HDsignal(SIGILL, sigill_handler);
+    H5LONGJMP(jbuf_g, SIGILL);
 }
 #endif
 
@@ -547,13 +556,14 @@ static void sigill_handler(int H5_ATTR_UNUSED signo) {
  * Return:      void
  *-------------------------------------------------------------------------
  */
-static void print_results(int nd, detected_t *d, int na, malign_t *misc_align) {
-	int byte_order = 0; /*byte order of data types*/
-	int i, j;
+static void
+print_results(int nd, detected_t *d, int na, malign_t *misc_align)
+{
+    int         byte_order=0;   /*byte order of data types*/
+    int        i, j;
 
-	/* Include files */
-	fprintf(rawoutstream,
-			"\
+    /* Include files */
+    fprintf(rawoutstream, "\
 /****************/\n\
 /* Module Setup */\n\
 /****************/\n\
@@ -606,16 +616,15 @@ static void print_results(int nd, detected_t *d, int na, malign_t *misc_align) {
 /*********************/\n\
 \n\
 \n");
-	fprintf(rawoutstream,
-			"\n\
+    fprintf(rawoutstream, "\n\
 /*******************/\n\
 /* Local Variables */\n\
 /*******************/\n\
 \n");
 
-	/* The interface initialization function */
-	fprintf(rawoutstream,
-			"\n\
+
+    /* The interface initialization function */
+    fprintf(rawoutstream, "\n\
 \n\
 /*-------------------------------------------------------------------------\n\
  * Function:    H5T__init_native\n\
@@ -639,73 +648,67 @@ H5T__init_native(void)\n\
 \n\
     FUNC_ENTER_PACKAGE\n");
 
-	for (i = 0; i < nd; i++) {
-		/* The native endianness of this machine */
-		/* The INFO.perm now contains `-1' for bytes that aren't used and
-		 * are always zero.  This happens on the Cray for `short' where
-		 * sizeof(short) is 8, but only the low-order 4 bytes are ever used.
-		 */
-		if (d[i].is_vax) /* the type is a VAX floating number */
-			byte_order = -1;
-		else {
-			for (j = 0; j < 32; j++) {
-				/*Find the 1st containing valid data*/
-				if (d[i].perm[j] > -1) {
-					byte_order = d[i].perm[j];
-					break;
-				}
-			}
-		}
+    for(i = 0; i < nd; i++) {
+        /* The native endianness of this machine */
+        /* The INFO.perm now contains `-1' for bytes that aren't used and
+         * are always zero.  This happens on the Cray for `short' where
+         * sizeof(short) is 8, but only the low-order 4 bytes are ever used.
+         */
+        if(d[i].is_vax)    /* the type is a VAX floating number */
+            byte_order=-1;
+        else {
+            for(j=0; j<32; j++) {
+                /*Find the 1st containing valid data*/
+                if(d[i].perm[j]>-1) {
+                    byte_order=d[i].perm[j];
+                    break;
+                }
+            }
+        }
 
-		/* Print a comment to describe this section of definitions. */
-		fprintf(rawoutstream, "\n   /*\n");
-		iprint(d + i);
-		fprintf(rawoutstream, "    */\n");
+    /* Print a comment to describe this section of definitions. */
+    fprintf(rawoutstream, "\n   /*\n");
+    iprint(d+i);
+    fprintf(rawoutstream, "    */\n");
 
-		/* The part common to fixed and floating types */
-		fprintf(rawoutstream,
-				"\
+    /* The part common to fixed and floating types */
+    fprintf(rawoutstream, "\
     if(NULL == (dt = H5T__alloc()))\n\
         HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL, \"datatype allocation failed\")\n\
     dt->shared->state = H5T_STATE_IMMUTABLE;\n\
     dt->shared->type = H5T_%s;\n\
     dt->shared->size = %d;\n",
-				d[i].msize ? "FLOAT" : "INTEGER",/*class            */
-				d[i].size); /*size            */
+        d[i].msize ? "FLOAT" : "INTEGER",/*class            */
+        d[i].size);            /*size            */
 
-		if (byte_order == -1)
-			fprintf(rawoutstream,
-					"\
+        if(byte_order==-1)
+            fprintf(rawoutstream, "\
     dt->shared->u.atomic.order = H5T_ORDER_VAX;\n");
-		else if (byte_order == 0)
-			fprintf(rawoutstream,
-					"\
+        else if(byte_order==0)
+            fprintf(rawoutstream, "\
     dt->shared->u.atomic.order = H5T_ORDER_LE;\n");
-		else
-			fprintf(rawoutstream,
-					"\
+        else
+            fprintf(rawoutstream, "\
     dt->shared->u.atomic.order = H5T_ORDER_BE;\n");
 
-		fprintf(rawoutstream,
-				"\
+        fprintf(rawoutstream, "\
     dt->shared->u.atomic.offset = %d;\n\
     dt->shared->u.atomic.prec = %d;\n\
     dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;\n\
     dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;\n",
-				d[i].offset, /*offset        */
-				d[i].precision); /*precision        */
-		/*HDassert((d[i].perm[0]>0)==(byte_order>0));*//* Double-check that byte-order doesn't change */
+        d[i].offset,            /*offset        */
+        d[i].precision);            /*precision        */
+    /*HDassert((d[i].perm[0]>0)==(byte_order>0));*/   /* Double-check that byte-order doesn't change */
 
-		if (0 == d[i].msize) {
-			/* The part unique to fixed point types */
-			fprintf(rawoutstream,
-					"\
+    if(0 == d[i].msize) {
+        /* The part unique to fixed point types */
+        fprintf(rawoutstream, "\
     dt->shared->u.atomic.u.i.sign = H5T_SGN_%s;\n",
-					d[i].sign ? "2" : "NONE");
-		} else {
-			/* The part unique to floating point types */
-			fprintf(rawoutstream,
-					"\
+        d[i].sign ? "2" : "NONE");
+    }
+    else {
+        /* The part unique to floating point types */
+        fprintf(rawoutstream, "\
     dt->shared->u.atomic.u.f.sign = %d;\n\
     dt->shared->u.atomic.u.f.epos = %d;\n\
     dt->shared->u.atomic.u.f.esize = %d;\n\
@@ -714,59 +717,51 @@ H5T__init_native(void)\n\
     dt->shared->u.atomic.u.f.msize = %d;\n\
     dt->shared->u.atomic.u.f.norm = H5T_NORM_%s;\n\
     dt->shared->u.atomic.u.f.pad = H5T_PAD_ZERO;\n",
-					d[i].sign, /*sign location */
-					d[i].epos, /*exponent loc    */
-					d[i].esize, /*exponent size */
-					(unsigned long) (d[i].bias), /*exponent bias */
-					d[i].mpos, /*mantissa loc    */
-					d[i].msize, /*mantissa size */
-					d[i].imp ? "IMPLIED" : "NONE"); /*normalization */
-		}
+        d[i].sign,    /*sign location */
+        d[i].epos,    /*exponent loc    */
+        d[i].esize,    /*exponent size */
+        (unsigned long)(d[i].bias),     /*exponent bias */
+        d[i].mpos,    /*mantissa loc    */
+        d[i].msize,    /*mantissa size */
+        d[i].imp ? "IMPLIED" : "NONE");    /*normalization */
+    }
 
-		/* Atomize the type */
-		fprintf(rawoutstream,
-				"\
+    /* Atomize the type */
+    fprintf(rawoutstream, "\
     if((H5T_NATIVE_%s_g = H5I_register(H5I_DATATYPE, dt, FALSE)) < 0)\n\
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL, \"can't register ID for built-in datatype\")\n",
-				d[i].varname);
-		fprintf(rawoutstream, "    H5T_NATIVE_%s_ALIGN_g = %lu;\n",
-				d[i].varname, (unsigned long) (d[i].align));
+        d[i].varname);
+    fprintf(rawoutstream, "    H5T_NATIVE_%s_ALIGN_g = %lu;\n",
+        d[i].varname, (unsigned long)(d[i].align));
 
-		/* Variables for alignment of compound datatype */
-		if (!HDstrcmp(d[i].varname,
-				"SCHAR") || !HDstrcmp(d[i].varname, "SHORT") ||
-				!HDstrcmp(d[i].varname, "INT") || !HDstrcmp(d[i].varname, "LONG") ||
-				!HDstrcmp(d[i].varname, "LLONG") || !HDstrcmp(d[i].varname, "FLOAT") ||
-				!HDstrcmp(d[i].varname, "DOUBLE") || !HDstrcmp(d[i].varname, "LDOUBLE")) {
-			fprintf(rawoutstream, "    H5T_NATIVE_%s_COMP_ALIGN_g = %lu;\n",
-					d[i].varname, (unsigned long) (d[i].comp_align));
-		}
-	}
+        /* Variables for alignment of compound datatype */
+        if(!HDstrcmp(d[i].varname, "SCHAR")  || !HDstrcmp(d[i].varname, "SHORT") ||
+            !HDstrcmp(d[i].varname, "INT")   || !HDstrcmp(d[i].varname, "LONG")  ||
+            !HDstrcmp(d[i].varname, "LLONG") || !HDstrcmp(d[i].varname, "FLOAT") ||
+            !HDstrcmp(d[i].varname, "DOUBLE") || !HDstrcmp(d[i].varname, "LDOUBLE")) {
+            fprintf(rawoutstream, "    H5T_NATIVE_%s_COMP_ALIGN_g = %lu;\n",
+                    d[i].varname, (unsigned long)(d[i].comp_align));
+        }
+    }
 
-	/* Consider VAX a little-endian machine */
-	if (byte_order == 0 || byte_order == -1) {
-		fprintf(rawoutstream,
-				"\n\
+    /* Consider VAX a little-endian machine */
+    if(byte_order==0 || byte_order==-1) {
+        fprintf(rawoutstream, "\n\
     /* Set the native order for this machine */\n\
-    H5T_native_order_g = H5T_ORDER_%s;\n",
-				"LE");
-	} else {
-		fprintf(rawoutstream,
-				"\n\
+    H5T_native_order_g = H5T_ORDER_%s;\n", "LE");
+    }
+    else {
+        fprintf(rawoutstream, "\n\
     /* Set the native order for this machine */\n\
-    H5T_native_order_g = H5T_ORDER_%s;\n",
-				"BE");
-	}
+    H5T_native_order_g = H5T_ORDER_%s;\n", "BE");
+    }
 
-	/* Structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */
-	fprintf(rawoutstream,
-			"\n    /* Structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */\n");
-	for (j = 0; j < na; j++)
-		fprintf(rawoutstream, "    H5T_%s_COMP_ALIGN_g = %lu;\n",
-				misc_align[j].name, (unsigned long) (misc_align[j].comp_align));
+    /* Structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */
+    fprintf(rawoutstream, "\n    /* Structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */\n");
+    for(j=0; j<na; j++)
+        fprintf(rawoutstream, "    H5T_%s_COMP_ALIGN_g = %lu;\n", misc_align[j].name, (unsigned long)(misc_align[j].comp_align));
 
-	fprintf(rawoutstream,
-			"\
+    fprintf(rawoutstream, "\
 \n\
 done:\n\
     if(ret_value < 0) {\n\
@@ -778,62 +773,57 @@ done:\n\
 \n\
     FUNC_LEAVE_NOAPI(ret_value);\n} /* end H5T__init_native() */\n");
 
-	/* Print the ALIGNMENT and signal-handling status as comments */
-	fprintf(rawoutstream, "\n"
-			"/****************************************/\n"
-			"/* ALIGNMENT and signal-handling status */\n"
-			"/****************************************/\n");
-	if (align_status_g & STA_NoALIGNMENT)
-		fprintf(rawoutstream, "/* ALIGNAMENT test is not available */\n");
-	if (align_status_g & STA_NoHandlerVerify)
-		fprintf(rawoutstream,
-				"/* Signal handlers verify test is not available */\n");
-	/* The following is available in H5pubconf.h. Printing them here for */
-	/* convenience. */
+    /* Print the ALIGNMENT and signal-handling status as comments */
+    fprintf(rawoutstream, "\n"
+    "/****************************************/\n"
+    "/* ALIGNMENT and signal-handling status */\n"
+    "/****************************************/\n");
+    if (align_status_g & STA_NoALIGNMENT)
+    fprintf(rawoutstream, "/* ALIGNAMENT test is not available */\n");
+    if (align_status_g & STA_NoHandlerVerify)
+    fprintf(rawoutstream, "/* Signal handlers verify test is not available */\n");
+    /* The following is available in H5pubconf.h. Printing them here for */
+    /* convenience. */
 #ifdef H5_HAVE_SIGNAL
-	fprintf(rawoutstream, "/* Signal() support: yes */\n");
+    fprintf(rawoutstream, "/* Signal() support: yes */\n");
 #else
     fprintf(rawoutstream, "/* Signal() support: no */\n");
 #endif
 #ifdef H5_HAVE_SETJMP
-	fprintf(rawoutstream, "/* setjmp() support: yes */\n");
+    fprintf(rawoutstream, "/* setjmp() support: yes */\n");
 #else
     fprintf(rawoutstream, "/* setjmp() support: no */\n");
 #endif
 #ifdef H5_HAVE_LONGJMP
-	fprintf(rawoutstream, "/* longjmp() support: yes */\n");
+    fprintf(rawoutstream, "/* longjmp() support: yes */\n");
 #else
     fprintf(rawoutstream, "/* longjmp() support: no */\n");
 #endif
 #ifdef H5_HAVE_SIGSETJMP
     fprintf(rawoutstream, "/* sigsetjmp() support: yes */\n");
 #else
-	fprintf(rawoutstream, "/* sigsetjmp() support: no */\n");
+    fprintf(rawoutstream, "/* sigsetjmp() support: no */\n");
 #endif
 #ifdef H5_HAVE_SIGLONGJMP
     fprintf(rawoutstream, "/* siglongjmp() support: yes */\n");
 #else
-	fprintf(rawoutstream, "/* siglongjmp() support: no */\n");
+    fprintf(rawoutstream, "/* siglongjmp() support: no */\n");
 #endif
 #ifdef H5_HAVE_SIGPROCMASK
     fprintf(rawoutstream, "/* sigprocmask() support: yes */\n");
 #else
-	fprintf(rawoutstream, "/* sigprocmask() support: no */\n");
+    fprintf(rawoutstream, "/* sigprocmask() support: no */\n");
 #endif
 
-	/* Print the statics of signal handlers called for debugging */
-	fprintf(rawoutstream, "\n"
-			"/******************************/\n"
-			"/* signal handlers statistics */\n"
-			"/******************************/\n");
-	fprintf(rawoutstream, "/* signal_handlers tested: %d times */\n",
-			signal_handler_tested_g);
-	fprintf(rawoutstream, "/* sigbus_handler called: %d times */\n",
-			sigbus_handler_called_g);
-	fprintf(rawoutstream, "/* sigsegv_handler called: %d times */\n",
-			sigsegv_handler_called_g);
-	fprintf(rawoutstream, "/* sigill_handler called: %d times */\n",
-			sigill_handler_called_g);
+    /* Print the statics of signal handlers called for debugging */
+    fprintf(rawoutstream, "\n"
+    "/******************************/\n"
+    "/* signal handlers statistics */\n"
+    "/******************************/\n");
+    fprintf(rawoutstream, "/* signal_handlers tested: %d times */\n", signal_handler_tested_g);
+    fprintf(rawoutstream, "/* sigbus_handler called: %d times */\n", sigbus_handler_called_g);
+    fprintf(rawoutstream, "/* sigsegv_handler called: %d times */\n", sigsegv_handler_called_g);
+    fprintf(rawoutstream, "/* sigill_handler called: %d times */\n", sigill_handler_called_g);
 } /* end print_results() */
 
 
@@ -846,76 +836,83 @@ done:\n\
 
  *-------------------------------------------------------------------------
  */
-static void iprint(detected_t *d) {
-	unsigned int pass;
+static void
+iprint(detected_t *d)
+{
+    unsigned int pass;
 
-	for (pass = (d->size - 1) / 4;; --pass) {
-		unsigned int i, k;
-		/*
-		 * Print the byte ordering above the bit fields.
-		 */
-		fprintf(rawoutstream, "    * ");
-		for (i = MIN(pass * 4 + 3, d->size - 1); i >= pass * 4; --i) {
-			fprintf(rawoutstream, "%4d", d->perm[i]);
-			if (i > pass * 4)
-				HDfputs("     ", stdout);
-			if (!i)
-				break;
-		}
+    for(pass = (d->size - 1) / 4; ; --pass) {
+        unsigned int i, k;
+        /*
+         * Print the byte ordering above the bit fields.
+         */
+        fprintf(rawoutstream, "    * ");
+        for(i = MIN(pass * 4 + 3, d->size - 1); i >= pass * 4; --i) {
+            fprintf(rawoutstream, "%4d", d->perm[i]);
+            if(i > pass * 4)
+                HDfputs("     ", stdout);
+            if(!i)
+                break;
+        }
 
-		/*
-		 * Print the bit fields
-		 */
-		fprintf(rawoutstream, "\n    * ");
-		for (i = MIN(pass * 4 + 3, d->size - 1), k = MIN(pass * 32 + 31,
-				8 * d->size - 1); i >= pass * 4; --i) {
-			unsigned int j;
+        /*
+         * Print the bit fields
+         */
+        fprintf(rawoutstream, "\n    * ");
+        for(i = MIN(pass * 4 + 3, d->size - 1), k = MIN(pass * 32 + 31,
+                8 * d->size - 1); i >= pass * 4; --i) {
+            unsigned int j;
 
-			for (j = 8; j > 0; --j) {
-				if (k == d->sign && d->msize) {
-					HDfputc('S', rawoutstream);
-				} else if (k >= d->epos && k < d->epos + d->esize) {
-					HDfputc('E', rawoutstream);
-				} else if (k >= d->mpos && k < d->mpos + d->msize) {
-					HDfputc('M', rawoutstream);
-				} else if (d->msize) {
-					HDfputc('?', rawoutstream); /*unknown floating point bit */
-				} else if (d->sign) {
-					HDfputc('I', rawoutstream);
-				} else {
-					HDfputc('U', rawoutstream);
-				}
-				--k;
-			}
-			if (i > pass * 4)
-				HDfputc(' ', rawoutstream);
-			if (!i)
-				break;
-		}
-		HDfputc('\n', rawoutstream);
-		if (!pass)
-			break;
-	}
+            for(j = 8; j > 0; --j) {
+                if(k == d->sign && d->msize) {
+                    HDfputc('S', rawoutstream);
+                }
+                else if(k >= d->epos && k < d->epos + d->esize) {
+                    HDfputc('E', rawoutstream);
+                }
+                else if(k >= d->mpos && k < d->mpos + d->msize) {
+                    HDfputc('M', rawoutstream);
+                }
+                else if(d->msize) {
+                    HDfputc('?', rawoutstream); /*unknown floating point bit */
+                }
+                else if(d->sign) {
+                    HDfputc('I', rawoutstream);
+                }
+                else {
+                    HDfputc('U', rawoutstream);
+                }
+                --k;
+            }
+            if(i > pass * 4)
+                HDfputc(' ', rawoutstream);
+            if(!i)
+                break;
+        }
+        HDfputc('\n', rawoutstream);
+        if(!pass)
+            break;
+    }
 
-	/*
-	 * Is there an implicit bit in the mantissa.
-	 */
-	if (d->msize) {
-		fprintf(rawoutstream, "    * Implicit bit? %s\n",
-				d->imp ? "yes" : "no");
-	}
+    /*
+     * Is there an implicit bit in the mantissa.
+     */
+    if(d->msize) {
+        fprintf(rawoutstream, "    * Implicit bit? %s\n", d->imp ? "yes" : "no");
+    }
 
-	/*
-	 * Alignment
-	 */
-	if (0 == d->align) {
-		fprintf(rawoutstream, "    * Alignment: NOT CALCULATED\n");
-	} else if (1 == d->align) {
-		fprintf(rawoutstream, "    * Alignment: none\n");
-	} else {
-		fprintf(rawoutstream, "    * Alignment: %lu\n",
-				(unsigned long) (d->align));
-	}
+    /*
+     * Alignment
+     */
+    if(0 == d->align) {
+        fprintf(rawoutstream, "    * Alignment: NOT CALCULATED\n");
+    }
+    else if(1 == d->align) {
+        fprintf(rawoutstream, "    * Alignment: none\n");
+    }
+    else {
+        fprintf(rawoutstream, "    * Alignment: %lu\n", (unsigned long) (d->align));
+    }
 
 }
 
@@ -932,17 +929,18 @@ static void iprint(detected_t *d) {
  *              Failure:    -1 if all bytes are the same.
  *-------------------------------------------------------------------------
  */
-static int byte_cmp(int n, const void *_a, const void *_b,
-		const unsigned char *pad_mask) {
-	int i;
-	const unsigned char *a = (const unsigned char*) _a;
-	const unsigned char *b = (const unsigned char*) _b;
+static int
+byte_cmp(int n, const void *_a, const void *_b, const unsigned char *pad_mask)
+{
+    int i;
+    const unsigned char *a = (const unsigned char *) _a;
+    const unsigned char *b = (const unsigned char *) _b;
 
-	for (i = 0; i < n; i++)
-		if ((a[i] & pad_mask[i]) != (b[i] & pad_mask[i]))
-			return i;
+    for(i = 0; i < n; i++)
+        if((a[i] & pad_mask[i]) != (b[i] & pad_mask[i]))
+            return i;
 
-	return -1;
+    return -1;
 }
 
 
@@ -959,30 +957,31 @@ static int byte_cmp(int n, const void *_a, const void *_b,
  *
  *-------------------------------------------------------------------------
  */
-static unsigned int bit_cmp(unsigned int nbytes, int *perm, void *_a, void *_b,
-		const unsigned char *pad_mask) {
-	unsigned int i;
-	unsigned char *a = (unsigned char*) _a;
-	unsigned char *b = (unsigned char*) _b;
-	unsigned char aa, bb;
+static unsigned int
+bit_cmp(unsigned int nbytes, int *perm, void *_a, void *_b,
+        const unsigned char *pad_mask)
+{
+    unsigned int i;
+    unsigned char *a = (unsigned char *) _a;
+    unsigned char *b = (unsigned char *) _b;
+    unsigned char aa, bb;
 
-	for (i = 0; i < nbytes; i++) {
-		HDassert(perm[i] < (int ) nbytes);
-		if ((aa = (unsigned char) (a[perm[i]] & pad_mask[perm[i]])) != (bb =
-				(unsigned char) (b[perm[i]] & pad_mask[perm[i]]))) {
-			unsigned int j;
+    for(i = 0; i < nbytes; i++) {
+        HDassert(perm[i] < (int) nbytes);
+        if((aa = (unsigned char) (a[perm[i]] & pad_mask[perm[i]]))
+                != (bb = (unsigned char) (b[perm[i]] & pad_mask[perm[i]]))) {
+            unsigned int j;
 
-			for (j = 0; j < 8; j++, aa >>= 1, bb >>= 1) {
-				if ((aa & 1) != (bb & 1))
-					return i * 8 + j;
-			}
-			fprintf(stderr, "INTERNAL ERROR");
-			HDabort();
-		}
-	}
-	fprintf(stderr, "INTERNAL ERROR");
-	HDabort();
-	return 0;
+            for(j = 0; j < 8; j++, aa >>= 1, bb >>= 1) {
+                if((aa & 1) != (bb & 1)) return i * 8 + j;
+            }
+            fprintf(stderr, "INTERNAL ERROR");
+            HDabort();
+        }
+    }
+    fprintf(stderr, "INTERNAL ERROR");
+    HDabort();
+    return 0;
 }
 
 
@@ -1000,52 +999,57 @@ static unsigned int bit_cmp(unsigned int nbytes, int *perm, void *_a, void *_b,
  * Return:      void
  *-------------------------------------------------------------------------
  */
-static void fix_order(int n, int last, int *perm, const char **mesg) {
-	int i;
+static void
+fix_order(int n, int last, int *perm, const char **mesg)
+{
+    int        i;
 
-	if (last > 1) {
-		/*
-		 * We have at least three points to consider.
-		 */
-		if (perm[last] < perm[last - 1] && perm[last - 1] < perm[last - 2]) {
-			/*
-			 * Little endian.
-			 */
-			if (mesg)
-				*mesg = "Little-endian";
-			for (i = 0; i < n; i++)
-				perm[i] = i;
+    if(last > 1) {
+        /*
+         * We have at least three points to consider.
+         */
+        if(perm[last] < perm[last - 1] && perm[last - 1] < perm[last - 2]) {
+            /*
+             * Little endian.
+             */
+            if(mesg)
+                *mesg = "Little-endian";
+            for(i = 0; i < n; i++)
+                perm[i] = i;
 
-		} else if (perm[last] > perm[last - 1]
-				&& perm[last - 1] > perm[last - 2]) {
-			/*
-			 * Big endian.
-			 */
-			if (mesg)
-				*mesg = "Big-endian";
-			for (i = 0; i < n; i++)
-				perm[i] = (n - 1) - i;
+        }
+        else if(perm[last] > perm[last - 1]
+                && perm[last - 1] > perm[last - 2]) {
+            /*
+             * Big endian.
+             */
+            if(mesg)
+                *mesg = "Big-endian";
+            for(i = 0; i < n; i++)
+                perm[i] = (n - 1) - i;
 
-		} else {
-			/*
-			 * Bi-endian machines like VAX.
-			 * (NOTE: This is not an actual determination of the VAX-endianness.
-			 *          It could have some other endianness and fall into this
-			 *          case - JKM & QAK)
-			 */
-			HDassert(0 == n % 2);
-			if (mesg)
-				*mesg = "VAX";
-			for (i = 0; i < n; i += 2) {
-				perm[i] = (n - 2) - i;
-				perm[i + 1] = (n - 1) - i;
-			}
-		}
-	} else {
-		fprintf(stderr,
-				"Failed to detect byte order of %d-byte floating point.\n", n);
-		HDexit(1);
-	}
+        }
+        else {
+            /*
+             * Bi-endian machines like VAX.
+             * (NOTE: This is not an actual determination of the VAX-endianness.
+             *          It could have some other endianness and fall into this
+             *          case - JKM & QAK)
+             */
+            HDassert(0 == n % 2);
+            if(mesg)
+                *mesg = "VAX";
+            for(i = 0; i < n; i += 2) {
+                perm[i] = (n - 2) - i;
+                perm[i + 1] = (n - 1) - i;
+            }
+        }
+    }
+    else {
+        fprintf(stderr,
+            "Failed to detect byte order of %d-byte floating point.\n", n);
+        HDexit(1);
+    }
 }
 
 
@@ -1076,29 +1080,30 @@ static void fix_order(int n, int last, int *perm, const char **mesg) {
  *
  *-------------------------------------------------------------------------
  */
-static unsigned int imp_bit(unsigned int n, int *perm, void *_a, void *_b,
-		const unsigned char *pad_mask) {
-	unsigned char *a = (unsigned char*) _a;
-	unsigned char *b = (unsigned char*) _b;
-	unsigned int changed, major, minor;
-	unsigned int msmb; /* most significant mantissa bit */
+static unsigned int
+imp_bit(unsigned int n, int *perm, void *_a, void *_b, const unsigned char *pad_mask)
+{
+    unsigned char *a = (unsigned char *) _a;
+    unsigned char *b = (unsigned char *) _b;
+    unsigned int changed, major, minor;
+    unsigned int msmb; /* most significant mantissa bit */
 
-	/*
-	 * Look for the least significant bit that has changed between
-	 * A and B.  This is the least significant bit of the exponent.
-	 */
-	changed = bit_cmp(n, perm, a, b, pad_mask);
+    /*
+     * Look for the least significant bit that has changed between
+     * A and B.  This is the least significant bit of the exponent.
+     */
+    changed = bit_cmp(n, perm, a, b, pad_mask);
 
-	/*
-	 * The bit to the right (less significant) of the changed bit should
-	 * be the most significant bit of the mantissa.  If it is non-zero
-	 * then the format does not remove the leading `1' of the mantissa.
-	 */
-	msmb = changed - 1;
-	major = msmb / 8;
-	minor = msmb % 8;
+    /*
+     * The bit to the right (less significant) of the changed bit should
+     * be the most significant bit of the mantissa.  If it is non-zero
+     * then the format does not remove the leading `1' of the mantissa.
+     */
+    msmb = changed - 1;
+    major = msmb / 8;
+    minor = msmb % 8;
 
-	return (a[perm[major]] >> minor) & 0x01 ? 0 : 1;
+    return (a[perm[major]] >> minor) & 0x01 ? 0 : 1;
 }
 
 
@@ -1112,23 +1117,24 @@ static unsigned int imp_bit(unsigned int n, int *perm, void *_a, void *_b,
  *
  *-------------------------------------------------------------------------
  */
-H5_ATTR_PURE static unsigned int find_bias(unsigned int epos,
-		unsigned int esize, int *perm, void *_a) {
-	unsigned char *a = (unsigned char*) _a;
-	unsigned char mask;
-	unsigned int b, shift = 0, nbits, bias = 0;
+H5_ATTR_PURE static unsigned int
+find_bias(unsigned int epos, unsigned int esize, int *perm, void *_a)
+{
+    unsigned char *a = (unsigned char *) _a;
+    unsigned char mask;
+    unsigned int b, shift = 0, nbits, bias = 0;
 
-	while (esize > 0) {
-		nbits = MIN(esize, (8 - epos % 8));
-		mask = (unsigned char) ((1 << nbits) - 1);
-		b = (unsigned int) (a[perm[epos / 8]] >> (epos % 8)) & mask;
-		bias |= b << shift;
+    while(esize > 0) {
+        nbits = MIN(esize, (8 - epos % 8));
+        mask = (unsigned char) ((1 << nbits) - 1);
+        b = (unsigned int) (a[perm[epos / 8]] >> (epos % 8)) & mask;
+        bias |= b << shift;
 
-		shift += nbits;
-		esize -= nbits;
-		epos += nbits;
-	}
-	return bias;
+        shift += nbits;
+        esize -= nbits;
+        epos += nbits;
+    }
+    return bias;
 }
 
 
@@ -1140,23 +1146,26 @@ H5_ATTR_PURE static unsigned int find_bias(unsigned int epos,
  * Return:      void
  *-------------------------------------------------------------------------
  */
-static void print_header(void) {
+static void
+print_header(void)
+{
 
-	time_t now = HDtime(NULL);
-	struct tm *tm = HDlocaltime(&now);
-	char real_name[30];
-	char host_name[256];
-	int i;
-	const char *s;
+    time_t         now = HDtime(NULL);
+    struct tm     *tm = HDlocaltime(&now);
+    char           real_name[30];
+    char           host_name[256];
+    int            i;
+    const char    *s;
 #ifdef H5_HAVE_GETPWUID
     struct passwd *pwd = NULL;
 #else
-	int pwd = 1;
+    int            pwd = 1;
 #endif
-	static const char *month_name[] = { "Jan", "Feb", "Mar", "Apr", "May",
-			"Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-	static const char *purpose =
-			"\
+    static const char    *month_name[] =
+    {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    static const char    *purpose = "\
 This machine-generated source code contains\n\
 information about the various integer and\n\
 floating point numeric formats found on this\n\
@@ -1194,9 +1203,9 @@ the radix point is still assumed to be\n\
 before the first `M' but after the implicit\n\
 bit.\n";
 
-	/*
-	 * The real name is the first item from the passwd gecos field.
-	 */
+    /*
+     * The real name is the first item from the passwd gecos field.
+     */
 #ifdef H5_HAVE_GETPWUID
     {
         size_t n;
@@ -1216,57 +1225,56 @@ bit.\n";
             real_name[0] = '\0';
     }
 #else
-	real_name[0] = '\0';
+    real_name[0] = '\0';
 #endif
 
-	/*
-	 * The FQDM of this host or the empty string.
-	 */
+    /*
+     * The FQDM of this host or the empty string.
+     */
 #ifdef H5_HAVE_GETHOSTNAME
     if(HDgethostname(host_name, sizeof(host_name)) < 0) {
         host_name[0] = '\0';
     }
 #else
-	host_name[0] = '\0';
+    host_name[0] = '\0';
 #endif
 
-	/*
-	 * The file header: warning, copyright notice, build information.
-	 */
-	fprintf(rawoutstream,
-			"/* Generated automatically by H5detect -- do not edit */\n\n\n");
-	HDfputs(FileHeader, rawoutstream); /*the copyright notice--see top of this file */
+    /*
+     * The file header: warning, copyright notice, build information.
+     */
+    fprintf(rawoutstream, "/* Generated automatically by H5detect -- do not edit */\n\n\n");
+    HDfputs(FileHeader, rawoutstream);        /*the copyright notice--see top of this file */
 
-	fprintf(rawoutstream, " *\n * Created:\t\t%s %2d, %4d\n",
-			month_name[tm->tm_mon], tm->tm_mday, 1900 + tm->tm_year);
-	if (pwd || real_name[0] || host_name[0]) {
-		fprintf(rawoutstream, " *\t\t\t");
-		if (real_name[0])
-			fprintf(rawoutstream, "%s <", real_name);
+    fprintf(rawoutstream, " *\n * Created:\t\t%s %2d, %4d\n",
+    month_name[tm->tm_mon], tm->tm_mday, 1900 + tm->tm_year);
+    if(pwd || real_name[0] || host_name[0]) {
+        fprintf(rawoutstream, " *\t\t\t");
+        if(real_name[0])
+            fprintf(rawoutstream, "%s <", real_name);
 #ifdef H5_HAVE_GETPWUID
         if(pwd) HDfputs(pwd->pw_name, rawoutstream);
 #endif
-		if (host_name[0])
-			fprintf(rawoutstream, "@%s", host_name);
-		if (real_name[0])
-			fprintf(rawoutstream, ">");
-		HDfputc('\n', rawoutstream);
-	}
-	fprintf(rawoutstream, " *\n * Purpose:\t\t");
-	for (s = purpose; *s; s++) {
-		HDfputc(*s, rawoutstream);
-		if ('\n' == *s && s[1])
-			fprintf(rawoutstream, " *\t\t\t");
-	}
+        if(host_name[0])
+            fprintf(rawoutstream, "@%s", host_name);
+        if(real_name[0])
+            fprintf(rawoutstream, ">");
+        HDfputc('\n', rawoutstream);
+    }
+    fprintf(rawoutstream, " *\n * Purpose:\t\t");
+    for(s = purpose; *s; s++) {
+        HDfputc(*s, rawoutstream);
+        if('\n' == *s && s[1])
+            fprintf(rawoutstream, " *\t\t\t");
+    }
 
-	fprintf(rawoutstream, " *\n * Modifications:\n *\n");
-	fprintf(rawoutstream, " *\tDO NOT MAKE MODIFICATIONS TO THIS FILE!\n");
-	fprintf(rawoutstream, " *\tIt was generated by code in `H5detect.c'.\n");
+    fprintf(rawoutstream, " *\n * Modifications:\n *\n");
+    fprintf(rawoutstream, " *\tDO NOT MAKE MODIFICATIONS TO THIS FILE!\n");
+    fprintf(rawoutstream, " *\tIt was generated by code in `H5detect.c'.\n");
 
-	fprintf(rawoutstream, " *\n *");
-	for (i = 0; i < 73; i++)
-		HDfputc('-', rawoutstream);
-	fprintf(rawoutstream, "\n */\n\n");
+    fprintf(rawoutstream, " *\n *");
+    for(i = 0; i < 73; i++)
+        HDfputc('-', rawoutstream);
+    fprintf(rawoutstream, "\n */\n\n");
 
 }
 
@@ -1280,23 +1288,16 @@ bit.\n";
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C89_integers(void) {
-	DETECT_BYTE(signed char, SCHAR, d_g[nd_g]);
-	nd_g++;
-	DETECT_BYTE(unsigned char, UCHAR, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(short, SHORT, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(unsigned short, USHORT, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(int, INT, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(unsigned int, UINT, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(long, LONG, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(unsigned long, ULONG, d_g[nd_g]);
-	nd_g++;
+detect_C89_integers(void)
+{
+    DETECT_BYTE(signed char,   SCHAR,        d_g[nd_g]); nd_g++;
+    DETECT_BYTE(unsigned char, UCHAR,        d_g[nd_g]); nd_g++;
+    DETECT_I(short,            SHORT,        d_g[nd_g]); nd_g++;
+    DETECT_I(unsigned short,   USHORT,       d_g[nd_g]); nd_g++;
+    DETECT_I(int,              INT,          d_g[nd_g]); nd_g++;
+    DETECT_I(unsigned int,     UINT,         d_g[nd_g]); nd_g++;
+    DETECT_I(long,             LONG,         d_g[nd_g]); nd_g++;
+    DETECT_I(unsigned long,    ULONG,        d_g[nd_g]); nd_g++;
 }
 
 
@@ -1309,11 +1310,10 @@ detect_C89_integers(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C89_floats(void) {
-	DETECT_F(float, FLOAT, d_g[nd_g]);
-	nd_g++;
-	DETECT_F(double, DOUBLE, d_g[nd_g]);
-	nd_g++;
+detect_C89_floats(void)
+{
+    DETECT_F(float,     FLOAT,      d_g[nd_g]); nd_g++;
+    DETECT_F(double,    DOUBLE,     d_g[nd_g]); nd_g++;
 }
 
 
@@ -1326,52 +1326,47 @@ detect_C89_floats(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C99_integers8(void) {
+detect_C99_integers8(void)
+{
 #if H5_SIZEOF_INT8_T>0
-#if H5_SIZEOF_INT8_T==1
-	DETECT_BYTE(int8_t, INT8, d_g[nd_g]);
-	nd_g++;
-#else
+  #if H5_SIZEOF_INT8_T==1
+    DETECT_BYTE(int8_t,         INT8,         d_g[nd_g]); nd_g++;
+  #else
     DETECT_I(int8_t,            INT8,         d_g[nd_g]); nd_g++;
   #endif
 #endif
 #if H5_SIZEOF_UINT8_T>0
-#if H5_SIZEOF_UINT8_T==1
-	DETECT_BYTE(uint8_t, UINT8, d_g[nd_g]);
-	nd_g++;
-#else
+  #if H5_SIZEOF_UINT8_T==1
+    DETECT_BYTE(uint8_t,        UINT8,        d_g[nd_g]); nd_g++;
+  #else
     DETECT_I(uint8_t,           UINT8,        d_g[nd_g]); nd_g++;
   #endif
 #endif
 #if H5_SIZEOF_INT_LEAST8_T>0
-#if H5_SIZEOF_INT_LEAST8_T==1
-	DETECT_BYTE(int_least8_t, INT_LEAST8, d_g[nd_g]);
-	nd_g++;
-#else
+  #if H5_SIZEOF_INT_LEAST8_T==1
+    DETECT_BYTE(int_least8_t,   INT_LEAST8,   d_g[nd_g]); nd_g++;
+  #else
     DETECT_I(int_least8_t,      INT_LEAST8,   d_g[nd_g]); nd_g++;
   #endif
 #endif
 #if H5_SIZEOF_UINT_LEAST8_T>0
-#if H5_SIZEOF_UINT_LEAST8_T==1
-	DETECT_BYTE(uint_least8_t, UINT_LEAST8, d_g[nd_g]);
-	nd_g++;
-#else
+  #if H5_SIZEOF_UINT_LEAST8_T==1
+    DETECT_BYTE(uint_least8_t,  UINT_LEAST8,  d_g[nd_g]); nd_g++;
+  #else
     DETECT_I(uint_least8_t,     UINT_LEAST8,  d_g[nd_g]); nd_g++;
   #endif
 #endif
 #if H5_SIZEOF_INT_FAST8_T>0
-#if H5_SIZEOF_INT_FAST8_T==1
-	DETECT_BYTE(int_fast8_t, INT_FAST8, d_g[nd_g]);
-	nd_g++;
-#else
+  #if H5_SIZEOF_INT_FAST8_T==1
+    DETECT_BYTE(int_fast8_t,    INT_FAST8,    d_g[nd_g]); nd_g++;
+  #else
     DETECT_I(int_fast8_t,       INT_FAST8,    d_g[nd_g]); nd_g++;
   #endif
 #endif
 #if H5_SIZEOF_UINT_FAST8_T>0
-#if H5_SIZEOF_UINT_FAST8_T==1
-	DETECT_BYTE(uint_fast8_t, UINT_FAST8, d_g[nd_g]);
-	nd_g++;
-#else
+  #if H5_SIZEOF_UINT_FAST8_T==1
+    DETECT_BYTE(uint_fast8_t,   UINT_FAST8,   d_g[nd_g]); nd_g++;
+  #else
     DETECT_I(uint_fast8_t,      UINT_FAST8,   d_g[nd_g]); nd_g++;
   #endif
 #endif
@@ -1387,30 +1382,25 @@ detect_C99_integers8(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C99_integers16(void) {
+detect_C99_integers16(void)
+{
 #if H5_SIZEOF_INT16_T>0
-	DETECT_I(int16_t, INT16, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int16_t,           INT16,        d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT16_T>0
-	DETECT_I(uint16_t, UINT16, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint16_t,          UINT16,       d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_INT_LEAST16_T>0
-	DETECT_I(int_least16_t, INT_LEAST16, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int_least16_t,     INT_LEAST16,  d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT_LEAST16_T>0
-	DETECT_I(uint_least16_t, UINT_LEAST16, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint_least16_t,    UINT_LEAST16, d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_INT_FAST16_T>0
-	DETECT_I(int_fast16_t, INT_FAST16, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int_fast16_t,      INT_FAST16,   d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT_FAST16_T>0
-	DETECT_I(uint_fast16_t, UINT_FAST16, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint_fast16_t,     UINT_FAST16,  d_g[nd_g]); nd_g++;
 #endif
 }
 
@@ -1424,30 +1414,25 @@ detect_C99_integers16(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C99_integers32(void) {
+detect_C99_integers32(void)
+{
 #if H5_SIZEOF_INT32_T>0
-	DETECT_I(int32_t, INT32, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int32_t,           INT32,        d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT32_T>0
-	DETECT_I(uint32_t, UINT32, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint32_t,          UINT32,       d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_INT_LEAST32_T>0
-	DETECT_I(int_least32_t, INT_LEAST32, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int_least32_t,     INT_LEAST32,  d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT_LEAST32_T>0
-	DETECT_I(uint_least32_t, UINT_LEAST32, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint_least32_t,    UINT_LEAST32, d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_INT_FAST32_T>0
-	DETECT_I(int_fast32_t, INT_FAST32, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int_fast32_t,      INT_FAST32,   d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT_FAST32_T>0
-	DETECT_I(uint_fast32_t, UINT_FAST32, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint_fast32_t,     UINT_FAST32,  d_g[nd_g]); nd_g++;
 #endif
 }
 
@@ -1462,37 +1447,30 @@ detect_C99_integers32(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C99_integers64(void) {
+detect_C99_integers64(void)
+{
 #if H5_SIZEOF_INT64_T>0
-	DETECT_I(int64_t, INT64, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int64_t,           INT64,        d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT64_T>0
-	DETECT_I(uint64_t, UINT64, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint64_t,          UINT64,       d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_INT_LEAST64_T>0
-	DETECT_I(int_least64_t, INT_LEAST64, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int_least64_t,     INT_LEAST64,  d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT_LEAST64_T>0
-	DETECT_I(uint_least64_t, UINT_LEAST64, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint_least64_t,    UINT_LEAST64, d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_INT_FAST64_T>0
-	DETECT_I(int_fast64_t, INT_FAST64, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(int_fast64_t,      INT_FAST64,   d_g[nd_g]); nd_g++;
 #endif
 #if H5_SIZEOF_UINT_FAST64_T>0
-	DETECT_I(uint_fast64_t, UINT_FAST64, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(uint_fast64_t,     UINT_FAST64,  d_g[nd_g]); nd_g++;
 #endif
 
 #if H5_SIZEOF_LONG_LONG>0
-	DETECT_I(long long, LLONG, d_g[nd_g]);
-	nd_g++;
-	DETECT_I(unsigned long long, ULLONG, d_g[nd_g]);
-	nd_g++;
+    DETECT_I(long long,          LLONG,        d_g[nd_g]); nd_g++;
+    DETECT_I(unsigned long long, ULLONG,       d_g[nd_g]); nd_g++;
 #else
     /*
      * This architecture doesn't support an integer type larger than `long'
@@ -1514,13 +1492,14 @@ detect_C99_integers64(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C99_integers(void) {
-	/* break it down to more subroutines so that each module subroutine */
-	/* is smaller and takes less time to compile with optimization on.  */
-	detect_C99_integers8();
-	detect_C99_integers16();
-	detect_C99_integers32();
-	detect_C99_integers64();
+detect_C99_integers(void)
+{
+    /* break it down to more subroutines so that each module subroutine */
+    /* is smaller and takes less time to compile with optimization on.  */
+    detect_C99_integers8();
+    detect_C99_integers16();
+    detect_C99_integers32();
+    detect_C99_integers64();
 }
 
 
@@ -1533,7 +1512,8 @@ detect_C99_integers(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_C99_floats(void) {
+detect_C99_floats(void)
+{
 #if H5_SIZEOF_DOUBLE == H5_SIZEOF_LONG_DOUBLE
     /*
      * If sizeof(double)==sizeof(long double) then assume that `long double'
@@ -1543,8 +1523,7 @@ detect_C99_floats(void) {
      */
     DETECT_F(double,          LDOUBLE,      d_g[nd_g]); nd_g++;
 #elif H5_SIZEOF_LONG_DOUBLE !=0
-	DETECT_F(long double, LDOUBLE, d_g[nd_g]);
-	nd_g++;
+    DETECT_F(long double,      LDOUBLE,      d_g[nd_g]); nd_g++;
 #endif
 }
 
@@ -1558,17 +1537,15 @@ detect_C99_floats(void) {
  *-------------------------------------------------------------------------
  */
 static void HDF_NO_UBSAN
-detect_alignments(void) {
-	/* Detect structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */
-	DETECT_M(void *, POINTER, m_g[na_g]);
-	na_g++;
-	DETECT_M(hvl_t, HVL, m_g[na_g]);
-	na_g++;
-	DETECT_M(hobj_ref_t, HOBJREF, m_g[na_g]);
-	na_g++;
-	DETECT_M(hdset_reg_ref_t, HDSETREGREF, m_g[na_g]);
-	na_g++;
+detect_alignments(void)
+{
+    /* Detect structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */
+    DETECT_M(void *,              POINTER,      m_g[na_g]); na_g++;
+    DETECT_M(hvl_t,               HVL,          m_g[na_g]); na_g++;
+    DETECT_M(hobj_ref_t,          HOBJREF,      m_g[na_g]); na_g++;
+    DETECT_M(hdset_reg_ref_t,     HDSETREGREF,  m_g[na_g]); na_g++;
 }
+
 
 #if defined(H5SETJMP) && defined(H5_HAVE_SIGNAL)
 /* Verify the signal handler for signal signum works correctly multiple times.
@@ -1576,7 +1553,8 @@ detect_alignments(void) {
  * changed to SIG_DFL after H5LONGJMP.
  * Return  0 for success, -1 for failure.
  */
-static int verify_signal_handlers(int signum, void (*handler)(int)) {
+static int verify_signal_handlers(int signum, void (*handler)(int))
+{
 #if defined(__has_feature) /* Clang */
 #if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
     /* Under the address and thread sanitizers, don't raise any signals. */
@@ -1585,41 +1563,44 @@ static int verify_signal_handlers(int signum, void (*handler)(int)) {
 #elif defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__) /* GCC */
     return 0;
 #endif
-	void (*save_handler)(int) = HDsignal(signum, handler);
-	volatile int i, val;
-	int ntries = 5;
-	volatile int nfailures = 0;
-	volatile int nsuccesses = 0;
+    void    (*save_handler)(int) = HDsignal(signum, handler);
+    volatile int i, val;
+    int          ntries = 5;
+    volatile int nfailures = 0;
+    volatile int nsuccesses = 0;
 
-	for (i = 0; i < ntries; i++) {
-		val = H5SETJMP(jbuf_g);
-		if (val == 0) {
-			/* send self the signal to trigger the handler */
-			signal_handler_tested_g++;
-			HDraise(signum);
-			/* Should not reach here. Record error. */
-			nfailures++;
-		} else {
-			if (val == signum) {
-				/* return from signum handler. Record a sucess. */
-				nsuccesses++;
-			} else {
-				fprintf(stderr, "Unknown return value (%d) from H5SETJMP", val);
-				nfailures++;
-			}
-		}
-	}
-	/* restore save handler, check results and report failures */
-	HDsignal(signum, save_handler);
-	if (nfailures > 0 || nsuccesses != ntries) {
-		fprintf(stderr, "verify_signal_handlers for signal %d did %d tries. "
-				"Found %d failures and %d successes\n", signum, ntries,
-				nfailures, nsuccesses);
-		return -1;
-	} else {
-		/* all succeeded */
-		return 0;
-	}
+    for(i=0;i<ntries; i++) {
+        val=H5SETJMP(jbuf_g);
+        if(val==0) {
+            /* send self the signal to trigger the handler */
+            signal_handler_tested_g++;
+            HDraise(signum);
+            /* Should not reach here. Record error. */
+            nfailures++;
+        }
+        else {
+            if(val==signum) {
+                /* return from signum handler. Record a sucess. */
+                nsuccesses++;
+            }
+            else {
+                fprintf(stderr, "Unknown return value (%d) from H5SETJMP", val);
+                nfailures++;
+            }
+        }
+    }
+    /* restore save handler, check results and report failures */
+    HDsignal(signum, save_handler);
+    if(nfailures>0 || nsuccesses != ntries) {
+        fprintf(stderr, "verify_signal_handlers for signal %d did %d tries. "
+            "Found %d failures and %d successes\n",
+            signum, ntries, nfailures, nsuccesses);
+        return -1;
+    }
+    else {
+        /* all succeeded */
+        return 0;
+    }
 }
 #endif
 
@@ -1640,19 +1621,23 @@ static int verify_signal_handlers(int signum, void (*handler)(int)) {
  *-------------------------------------------------------------------------
  */
 int HDF_NO_UBSAN
-H5detect() {
-	const char *fname = "H5detect.c";
-	FILE *f; /* temporary holding place for the stream pointer
-	 * so that rawoutstream is changed only when succeeded */
+H5detect(int argc, char *argv[])
+{
+    char    *fname = NULL;
+    FILE    *f;    /* temporary holding place for the stream pointer
+                    * so that rawoutstream is changed only when succeeded */
 
-	/* First check if filename is string "NULL" */
-	if (fname != NULL) {
-		/* binary output */
-		if ((f = HDfopen(fname, "w")) != NULL)
-			rawoutstream = f;
-	}
-	if (!rawoutstream)
-		rawoutstream = stdout;
+    if(argc > 1)
+        fname = argv[1];
+
+    /* First check if filename is string "NULL" */
+    if(fname != NULL) {
+        /* binary output */
+        if((f = HDfopen(fname, "w")) != NULL)
+            rawoutstream = f;
+    }
+    if(!rawoutstream)
+        rawoutstream = stdout;
 
 #if defined(H5_HAVE_SETSYSINFO) && defined(SSI_NVPAIRS)
 #if defined(UAC_NOPRINT) && defined(UAC_SIGBUS)
@@ -1671,1041 +1656,49 @@ H5detect() {
 #endif
 
 #if defined(H5SETJMP) && defined(H5_HAVE_SIGNAL)
-	/* verify the SIGBUS and SIGSEGV handlers work properly */
-	if (verify_signal_handlers(SIGBUS, sigbus_handler) != 0) {
-		fprintf(stderr, "Signal handler %s for signal %d failed\n",
-				"sigbus_handler", SIGBUS);
-	}
-	if (verify_signal_handlers(SIGSEGV, sigsegv_handler) != 0) {
-		fprintf(stderr, "Signal handler %s for signal %d failed\n",
-				"sigsegv_handler", SIGSEGV);
-	}
-	if (verify_signal_handlers(SIGILL, sigill_handler) != 0) {
-		fprintf(stderr, "Signal handler %s for signal %d failed\n",
-				"sigill_handler", SIGILL);
-	}
+    /* verify the SIGBUS and SIGSEGV handlers work properly */
+    if(verify_signal_handlers(SIGBUS, sigbus_handler) != 0) {
+        fprintf(stderr, "Signal handler %s for signal %d failed\n",
+                "sigbus_handler", SIGBUS);
+    }
+    if(verify_signal_handlers(SIGSEGV, sigsegv_handler) != 0) {
+        fprintf(stderr, "Signal handler %s for signal %d failed\n",
+                "sigsegv_handler", SIGSEGV);
+    }
+    if(verify_signal_handlers(SIGILL, sigill_handler) != 0) {
+        fprintf(stderr, "Signal handler %s for signal %d failed\n",
+                "sigill_handler", SIGILL);
+    }
 #else
     align_status_g |= STA_NoHandlerVerify;
 #endif
 
-	print_header();
+    print_header();
 
-	/* C89 integer types */
-	detect_C89_integers();
+    /* C89 integer types */
+    detect_C89_integers();
 
-	/* C99 integer types */
-	detect_C99_integers();
+    /* C99 integer types */
+    detect_C99_integers();
 
-	/* C89 floating point types */
-	detect_C89_floats();
+    /* C89 floating point types */
+    detect_C89_floats();
 
-	/* C99 floating point types */
-	detect_C99_floats();
+    /* C99 floating point types */
+    detect_C99_floats();
 
-	/* Detect structure alignment */
-	detect_alignments();
+    /* Detect structure alignment */
+    detect_alignments();
 
-	print_results(nd_g, d_g, na_g, m_g);
+    print_results (nd_g, d_g, na_g, m_g);
 
-	if (rawoutstream && rawoutstream != stdout) {
-		if (HDfclose(rawoutstream))
-			fprintf(stderr, "closing rawoutstream");
-		else
-			rawoutstream = NULL;
-	}
+    if(rawoutstream && rawoutstream != stdout) {
+        if(HDfclose(rawoutstream))
+            fprintf(stderr, "closing rawoutstream");
+        else
+            rawoutstream = NULL;
+    }
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
-
-/****************/
-/* Local Macros */
-/****************/
-
-/******************/
-/* Local Typedefs */
-/******************/
-
-/********************/
-/* Package Typedefs */
-/********************/
-
-/********************/
-/* Local Prototypes */
-/********************/
-
-/********************/
-/* Public Variables */
-/********************/
-
-/*****************************/
-/* Library Private Variables */
-/*****************************/
-
-/*********************/
-/* Package Variables */
-/*********************/
-
-/*******************/
-/* Local Variables */
-/*******************/
-
-/*-------------------------------------------------------------------------
- * Function:    H5T__init_native
- *
- * Purpose:    Initialize pre-defined native datatypes from code generated
- *              during the library configuration by H5detect.
- *
- * Return:    Success:    non-negative
- *        Failure:    negative
- *
- * Programmer:    Robb Matzke
- *              Wednesday, December 16, 1998
- *
- *-------------------------------------------------------------------------
- */
-herr_t H5T__init_native(void) {
-	H5T_t *dt = NULL;
-	herr_t ret_value = SUCCEED;
-
-	FUNC_ENTER_PACKAGE
-
-		/*
-		 *    0
-		 * IIIIIIII
-		 * Alignment: none
-		 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_SCHAR_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_SCHAR_ALIGN_g = 1;
-			H5T_NATIVE_SCHAR_COMP_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UCHAR_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UCHAR_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_SHORT_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_SHORT_ALIGN_g = 1;
-			H5T_NATIVE_SHORT_COMP_ALIGN_g = 2;
-
-			/*
-			 *    1   0
-			 * UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_USHORT_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_USHORT_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_g = H5I_register(H5I_DATATYPE, dt, FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_ALIGN_g = 1;
-			H5T_NATIVE_INT_COMP_ALIGN_g = 4;
-
-			/*
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_g = H5I_register(H5I_DATATYPE, dt, FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_LONG_g = H5I_register(H5I_DATATYPE, dt, FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_LONG_ALIGN_g = 1;
-			H5T_NATIVE_LONG_COMP_ALIGN_g = 4;
-
-			/*
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_ULONG_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_ULONG_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT8_g = H5I_register(H5I_DATATYPE, dt, FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT8_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT8_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT8_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_LEAST8_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_LEAST8_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_LEAST8_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_LEAST8_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_FAST8_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_FAST8_ALIGN_g = 1;
-
-			/*
-			 *    0
-			 * UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 1;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 8;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_FAST8_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_FAST8_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT16_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT16_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT16_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT16_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_LEAST16_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_LEAST16_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_LEAST16_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_LEAST16_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_FAST16_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_FAST16_ALIGN_g = 1;
-
-			/*
-			 *    1   0
-			 * UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 2;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 16;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_FAST16_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_FAST16_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT32_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT32_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT32_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT32_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_LEAST32_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_LEAST32_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_LEAST32_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_LEAST32_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_FAST32_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_FAST32_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_FAST32_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_FAST32_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT64_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT64_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT64_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT64_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_LEAST64_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_LEAST64_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_LEAST64_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_LEAST64_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_INT_FAST64_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_INT_FAST64_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_UINT_FAST64_g = H5I_register(H5I_DATATYPE, dt,
-			FALSE)) < 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_UINT_FAST64_ALIGN_g = 1;
-
-			/*
-			 *    7   6   5   4
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 *    3   2   1   0
-			 * IIIIIIII IIIIIIII IIIIIIII IIIIIIII
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_2;
-			if ((H5T_NATIVE_LLONG_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_LLONG_ALIGN_g = 1;
-			H5T_NATIVE_LLONG_COMP_ALIGN_g = 8;
-
-			/*
-			 *    7   6   5   4
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 *    3   2   1   0
-			 * UUUUUUUU UUUUUUUU UUUUUUUU UUUUUUUU
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_INTEGER;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.i.sign = H5T_SGN_NONE;
-			if ((H5T_NATIVE_ULLONG_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_ULLONG_ALIGN_g = 1;
-
-			/*
-			 *    3   2   1   0
-			 * SEEEEEEE EMMMMMMM MMMMMMMM MMMMMMMM
-			 * Implicit bit? yes
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_FLOAT;
-			dt->shared->size = 4;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 32;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.f.sign = 31;
-			dt->shared->u.atomic.u.f.epos = 23;
-			dt->shared->u.atomic.u.f.esize = 8;
-			dt->shared->u.atomic.u.f.ebias = 0x0000007f;
-			dt->shared->u.atomic.u.f.mpos = 0;
-			dt->shared->u.atomic.u.f.msize = 23;
-			dt->shared->u.atomic.u.f.norm = H5T_NORM_IMPLIED;
-			dt->shared->u.atomic.u.f.pad = H5T_PAD_ZERO;
-			if ((H5T_NATIVE_FLOAT_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_FLOAT_ALIGN_g = 1;
-			H5T_NATIVE_FLOAT_COMP_ALIGN_g = 4;
-
-			/*
-			 *    7   6   5   4
-			 * SEEEEEEE EEEEMMMM MMMMMMMM MMMMMMMM
-			 *    3   2   1   0
-			 * MMMMMMMM MMMMMMMM MMMMMMMM MMMMMMMM
-			 * Implicit bit? yes
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_FLOAT;
-			dt->shared->size = 8;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 64;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.f.sign = 63;
-			dt->shared->u.atomic.u.f.epos = 52;
-			dt->shared->u.atomic.u.f.esize = 11;
-			dt->shared->u.atomic.u.f.ebias = 0x000003ff;
-			dt->shared->u.atomic.u.f.mpos = 0;
-			dt->shared->u.atomic.u.f.msize = 52;
-			dt->shared->u.atomic.u.f.norm = H5T_NORM_IMPLIED;
-			dt->shared->u.atomic.u.f.pad = H5T_PAD_ZERO;
-			if ((H5T_NATIVE_DOUBLE_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_DOUBLE_ALIGN_g = 1;
-			H5T_NATIVE_DOUBLE_COMP_ALIGN_g = 8;
-
-			/*
-			 *   15  14  13  12
-			 * ???????? ???????? ???????? ????????
-			 *   11  10   9   8
-			 * ???????? ???????? SEEEEEEE EEEEEEEE
-			 *    7   6   5   4
-			 * MMMMMMMM MMMMMMMM MMMMMMMM MMMMMMMM
-			 *    3   2   1   0
-			 * MMMMMMMM MMMMMMMM MMMMMMMM MMMMMMMM
-			 * Implicit bit? no
-			 * Alignment: none
-			 */
-			if (NULL == (dt = H5T__alloc()))
-				HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
-						"datatype allocation failed")
-			dt->shared->state = H5T_STATE_IMMUTABLE;
-			dt->shared->type = H5T_FLOAT;
-			dt->shared->size = 16;
-			dt->shared->u.atomic.order = H5T_ORDER_LE;
-			dt->shared->u.atomic.offset = 0;
-			dt->shared->u.atomic.prec = 80;
-			dt->shared->u.atomic.lsb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.msb_pad = H5T_PAD_ZERO;
-			dt->shared->u.atomic.u.f.sign = 79;
-			dt->shared->u.atomic.u.f.epos = 64;
-			dt->shared->u.atomic.u.f.esize = 15;
-			dt->shared->u.atomic.u.f.ebias = 0x00003fff;
-			dt->shared->u.atomic.u.f.mpos = 0;
-			dt->shared->u.atomic.u.f.msize = 64;
-			dt->shared->u.atomic.u.f.norm = H5T_NORM_NONE;
-			dt->shared->u.atomic.u.f.pad = H5T_PAD_ZERO;
-			if ((H5T_NATIVE_LDOUBLE_g = H5I_register(H5I_DATATYPE, dt, FALSE))
-					< 0)
-				HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, FAIL,
-						"can't register ID for built-in datatype")
-			H5T_NATIVE_LDOUBLE_ALIGN_g = 1;
-			H5T_NATIVE_LDOUBLE_COMP_ALIGN_g = 16;
-
-			/* Set the native order for this machine */
-			H5T_native_order_g = H5T_ORDER_LE;
-
-			/* Structure alignment for pointers, hvl_t, hobj_ref_t, hdset_reg_ref_t */
-			H5T_POINTER_COMP_ALIGN_g = 8;
-			H5T_HVL_COMP_ALIGN_g = 8;
-			H5T_HOBJREF_COMP_ALIGN_g = 8;
-			H5T_HDSETREGREF_COMP_ALIGN_g = 1;
-
-			done: if (ret_value < 0) {
-				if (dt != NULL) {
-					dt->shared = H5FL_FREE(H5T_shared_t, dt->shared);
-					dt = H5FL_FREE(H5T_t, dt);
-				} /* end if */
-			} /* end if */
-
-			FUNC_LEAVE_NOAPI(ret_value);
-} /* end H5T__init_native() */
-
-/****************************************/
-/* ALIGNMENT and signal-handling status */
-/****************************************/
-/* Signal() support: yes */
-/* setjmp() support: yes */
-/* longjmp() support: yes */
-/* sigsetjmp() support: no */
-/* siglongjmp() support: no */
-/* sigprocmask() support: no */
-
-/******************************/
-/* signal handlers statistics */
-/******************************/
-/* signal_handlers tested: 15 times */
-/* sigbus_handler called: 5 times */
-/* sigsegv_handler called: 5 times */
-/* sigill_handler called: 5 times */
 
