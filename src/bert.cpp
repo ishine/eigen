@@ -480,8 +480,7 @@ MultiHeadAttention::MultiHeadAttention() {
 
 }
 
-MultiHeadAttention::MultiHeadAttention(HDF5Reader &dis,
-		int num_attention_heads) :
+MultiHeadAttention::MultiHeadAttention(HDF5Reader &dis, int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis >> Wq;
@@ -596,11 +595,15 @@ vector<VectorI>& SegmentInput::operator ()(const vector<VectorI> &inputToken,
 
 VectorI& SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 	int length = inputToken.size();
+	cout << "inputToken.size() = " << inputToken.size() << endl;
 	static VectorI inputSegment;
 	inputSegment.resize(length);
 
-	cout << "gcd_int(10, 46) = " << gcd_int(10, 46) << endl;
-	cout << "asm6args(1, 2, 3, 4, 5, 6) = " << asm6args(1, 2, 3, 4, 5, 6) << endl;
+	cout << "inputSegment.size() = " << inputSegment.size() << endl;
+
+	cout << "inputSegment(0) = " << inputSegment(0) << endl;
+
+	cout << "inputSegment(mid) = " << inputSegment(mid) << endl;
 
 	stosd(&inputSegment(0), 0, mid);
 
@@ -831,12 +834,12 @@ Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
 		int num_attention_heads, bool factorization_on_word_embedding_only,
 		bool cross_layer_parameter_sharing, int num_hidden_layers) :
 		tokenizer(vocab), midIndex(tokenizer.vocab.at(u"[SEP]")), bertEmbedding(
-				dis, num_attention_heads, factorization_on_word_embedding_only), transformer(
-				dis, cross_layer_parameter_sharing, num_hidden_layers,
-				num_attention_heads), poolerDense(dis), similarityDense(dis,
-				true, Activator::sigmoid) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-}
+		dis, num_attention_heads, factorization_on_word_embedding_only), transformer(
+		dis, cross_layer_parameter_sharing, num_hidden_layers,
+		num_attention_heads), poolerDense(dis), similarityDense(dis,
+		true, Activator::sigmoid) {
+			cout << "in " << __PRETTY_FUNCTION__ << endl;
+		}
 
 Paraphrase& Paraphrase::instance() {
 	static Paraphrase inst(
@@ -871,15 +874,15 @@ vector<double>& Paraphrase::operator ()(vector<VectorI> &input_ids) {
 }
 
 double Paraphrase::operator ()(VectorI &input_ids) {
-//	cout << "input_ids = " << input_ids << endl;
+	cout << "input_ids = " << input_ids << endl;
 
 	auto inputMid = midIndex(input_ids);
 
-//	cout << "inputMid = " << inputMid << endl;
+	cout << "inputMid = " << inputMid << endl;
 
 	auto &inputSegment = segmentInput(input_ids, inputMid);
 
-//	cout << "inputSegment = " << inputSegment << endl;
+	cout << "inputSegment = " << inputSegment << endl;
 
 //	auto &matrixAttention = CrossAttentionMask(inputSegment);
 
@@ -911,11 +914,12 @@ double Paraphrase::operator ()(String &x, String &y) {
 
 	cout << "x = " << x << endl;
 	cout << "y = " << y << endl;
-	vector<String> s = { u"[CLS]" };
+	vector<String> s = { u"[CLS]"};
 	s << tokenizer.tokenize(x);
 	s << u"[SEP]";
 	s << tokenizer.tokenize(y);
 	s << u"[SEP]";
+	cout << s << endl;
 	return (*this)(tokenizer.convert_tokens_to_ids(s));
 }
 
@@ -942,9 +946,9 @@ FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 	cout << "sep = " << sep << endl;
 	cout << "sep.size() = " << sep.size() << endl;
 
-	assert (sep == sep);
+	assert(sep == sep);
 	String _sep = u"[SEP]";
-	assert (u"[SEP]" == sep);
+	assert(u"[SEP]" == sep);
 	for (auto p = vocab.begin(); p != vocab.end(); ++p) {
 		if (p->first == sep) {
 			cout << "index = " << p->second << endl;

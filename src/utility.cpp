@@ -510,10 +510,10 @@ Text& Text::operator >>(unordered_map<String, int> &word2id) {
 	while (*this >> s) {
 		strip(s);
 		word2id[s] = index;
-		if (index <= 200) {
-			cout << s << " = " << index << endl;
-			cout << "s.size() = " << s.size() << endl;
-		}
+//		if (index <= 200) {
+//			cout << s << " = " << index << endl;
+//			cout << "s.size() = " << s.size() << endl;
+//		}
 		++index;
 	}
 	return *this;
@@ -601,13 +601,3 @@ vector<String>& split(const String &in) {
 }
 
 //#include <locale>         // std::wstring_convert
-
-extern "C" int H5detect(int argc, char *argv[]);
-
-void hdf5_setup() {
-	{
-		char *argv[] = { 0, "H5detect_generated.c" };
-		H5detect(2, argv);
-	}
-}
-//-Wno-format -Wno-unused-variable -Wno-pointer-to-int-cast -Wno-discarded-qualifiers -Wno-incompatible-pointer-types -Wno-incompatible-pointer-types -Wno-format-extra-args -Wno-implicit-function-declaration -Wno-unused-function -Wno-unused-label -Wno-missing-braces -Wno-unknown-pragmas -Wno-pointer-sign -Wno-stringop-truncation

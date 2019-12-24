@@ -14,27 +14,80 @@ half: 		dq 0.5
 section .text
 global relu, hard_sigmoid, gcd_long, gcd_qword, gcd_int, gcd_dword, stosd
 
-global asm6args, CalcSum_, CalcDist_
+global asm8args, CalcSum_, CalcDist_
 
 
-relu:
-	maxsd xmm0, [zero]
+%ifdef linux
+;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+gcd_qword:
+	mov rcx, rdi
+	mov rdx, rsi
+gcd_qword_linux:
+	mov rax, rcx
+	or rdx, rdx
+	jz jmp_ret
+	mov rcx, rdx
+	mov rdx, 0
+	div rcx; rax = quo, rdx = rem;
+	jmp gcd_qword_linux
+
+gcd_long:
+	mov rcx, rdi
+	mov rdx, rsi
+gcd_long_linux:
+	mov rax, rcx
+	or rdx, rdx
+	jz jmp_ret
+	mov rcx, rdx
+	cqo; Convert Quadword to Double Quadword, ie, Sign-extends the contents of RAX to RDX:RAX.
+	idiv rcx; rax = quo, rdx = rem;
+	jmp gcd_long_linux
+
+
+;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+gcd_int:
+	mov rcx, rdi
+	mov rdx, rsi
+gcd_int_linux:
+	mov eax, ecx
+	or edx, edx
+	jz jmp_ret
+	mov ecx, edx
+	cdq; Convert Doubleword to Quadword, ie, Sign-extends register EAX and saves the results in register pair EDX:EAX.
+	idiv ecx; eax = quo, edx = rem;
+	jmp gcd_int_linux
+
+;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+gcd_dword:
+	mov rcx, rdi
+	mov rdx, rsi
+gcd_dword_linux:
+	mov eax, ecx
+	or edx, edx
+	jz jmp_ret
+	mov ecx, edx
+	xor edx, edx
+	div ecx; eax = quo, edx = rem;
+	jmp gcd_dword_linux
+
+stosd:
+	mov eax, esi
+	mov rcx, rdx
+	rep stosd
 	ret
 
-hard_sigmoid:
-	mulsd xmm0, [one_fifth]; 0.2x
-
-	addsd xmm0, [half]; 0.2x + 0.5
-
-	minsd xmm0, [one]; min(y, 1)
-
-	maxsd xmm0, [zero]; max(y, 0)
+asm8args:
+	mov rax, rdi
+	add rax, rsi
+	add rax, rdx
+	add rax, rcx
+	add rax, r8
+	add rax, r9
+	add rax, [rsp+8]
+	add rax, [rsp+16]
 	ret
 
-
-jmp_ret:
-	ret
-
+%else
 ;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
 gcd_qword:
 	mov rax, rcx
@@ -54,6 +107,7 @@ gcd_long:
 	idiv rcx; rax = quo, rdx = rem;
 	jmp gcd_long
 
+
 ;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
 gcd_int:
 	mov eax, ecx
@@ -63,6 +117,7 @@ gcd_int:
 	cdq; Convert Doubleword to Quadword, ie, Sign-extends register EAX and saves the results in register pair EDX:EAX.
 	idiv ecx; eax = quo, edx = rem;
 	jmp gcd_int
+
 
 ;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
 gcd_dword:
@@ -74,13 +129,53 @@ gcd_dword:
 	div ecx; eax = quo, edx = rem;
 	jmp gcd_dword
 
-asm6args:
+
+stosd:
+%ifdef _DEBUG
+	mov rdi, rcx
+	mov eax, edx
+	mov rcx, r8
+	rep stosd
+%else
+	push rdi
+	mov rdi, rcx
+	mov eax, edx
+	mov rcx, r8
+	rep stosd
+	pop rdi
+%endif
+	ret
+
+
+asm8args:
 	mov rax, rcx
 	add rax, rdx
 	add rax, r8
 	add rax, r9
 	add rax, [rsp+40]
 	add rax, [rsp+48]
+	add rax, [rsp+56]
+	add rax, [rsp+64]
+	ret
+
+%endif
+
+relu:
+	maxsd xmm0, [zero]
+	ret
+
+hard_sigmoid:
+	mulsd xmm0, [one_fifth]; 0.2x
+
+	addsd xmm0, [half]; 0.2x + 0.5
+
+	minsd xmm0, [one]; min(y, 1)
+
+	maxsd xmm0, [zero]; max(y, 0)
+	ret
+
+
+jmp_ret:
 	ret
 
 CalcSum_:
@@ -117,26 +212,6 @@ CalcDist_:
 	sqrtsd xmm0,xmm4
 	ret
 
-stosd:
-%ifdef linux
-	mov eax, esi
-	mov rcx, rdx
-	rep stosd
-%elifdef _DEBUG
-	mov rdi, rcx
-	mov eax, edx
-	mov rcx, r8
-	rep stosd
-%else
-;	push rdi
-	mov rdi, rcx
-	mov eax, edx
-	mov rcx, r8
-	rep stosd
-;	pop rdi
-%endif
-	ret
-
 ;https://blog.csdn.net/celerychen2009/article/details/8934972
 ;https://stackoverflow.com/questions/40820814/relocation-r-x86-64-32s-against-bss-can-not-be-used-when-making-a-shared-obj
 ;https://stackoverflow.com/questions/6093547/what-do-r-x86-64-32s-and-r-x86-64-64-relocation-mean
@@ -146,3 +221,4 @@ stosd:
 ;reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
 ;https://blog.csdn.net/sivolin/article/details/41895701
 ;https://www.cnblogs.com/volva/p/11814998.html
+;https://blog.csdn.net/roger_ranger/article/details/78854348

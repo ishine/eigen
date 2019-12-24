@@ -1,7 +1,10 @@
 #include "utility.h"
 
-extern "C" qword asm6args(qword rcx, qword rdx, qword r8, qword r9,
-		qword fifthArg, qword sixthArg);
+extern "C" qword asm8args(qword rcx, qword rdx, qword r8, qword r9,
+		qword fifthArg, qword sixthArg, qword seventhArg, qword eighthArg);
+
+extern "C" qword sum8args(qword rcx, qword rdx, qword r8, qword r9,
+		qword fifthArg, qword sixthArg, qword seventhArg, qword eighthArg);
 
 extern "C" double relu(double x);
 

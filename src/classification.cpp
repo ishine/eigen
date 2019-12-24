@@ -1,6 +1,6 @@
 #include <classification.h>
 
-Vector &Classifier::predict(const String &predict_text) {
+Vector& Classifier::predict(const String &predict_text) {
 	Matrix embedding;
 
 	this->embedding(string2id(predict_text, word2id), embedding);
@@ -16,10 +16,11 @@ Vector &Classifier::predict(const String &predict_text) {
 	dense_tanh(x);
 
 	dense_pred(x);
+	cout << "probabilities: " << x << endl;
 	return x;
 }
 
-Vector &Classifier::predict_debug(const String &predict_text) {
+Vector& Classifier::predict_debug(const String &predict_text) {
 	Matrix embedding;
 
 	auto &inputs = string2id(predict_text, word2id);
@@ -89,7 +90,7 @@ vector<vector<double>>& Classifier::predict(String &predict_text,
 
 Classifier::Classifier(const string &binaryFilePath,
 		const string &vocabFilePath) :
-		Classifier((HDF5Reader&)(const HDF5Reader&)HDF5Reader(binaryFilePath)) {
+		Classifier((HDF5Reader&) (const HDF5Reader&) HDF5Reader(binaryFilePath)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Text(vocabFilePath) >> word2id;
 }
@@ -99,7 +100,8 @@ Classifier::Classifier(const string &binaryFilePath,
 Classifier::Classifier(HDF5Reader &dis) :
 		embedding(Embedding(dis)), con1D0(dis), con1D1(dis), con1D2(dis), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
-				DenseLayer(dis)), dense_pred(DenseLayer(dis, true, Activator::softmax)) {
+				DenseLayer(dis)), dense_pred(
+				DenseLayer(dis, true, Activator::softmax)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 //	dis.close();
 
@@ -119,14 +121,16 @@ Classifier::Classifier(HDF5Reader &dis, const string &vocab) :
 
 Classifier& Classifier::qatype_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "qatype/qatype.h5", cnModelsDirectory() + "qatype/vocab.txt");
+	static Classifier service(cnModelsDirectory() + "qatype/qatype.h5",
+			cnModelsDirectory() + "qatype/vocab.txt");
 
 	return service;
 }
 
 Classifier& Classifier::phatic_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "phatic/phatic.h5", cnModelsDirectory() + "phatic/vocab.txt");
+	static Classifier service(cnModelsDirectory() + "phatic/phatic.h5",
+			cnModelsDirectory() + "phatic/vocab.txt");
 
 	return service;
 }

@@ -16,6 +16,11 @@ void JNICALL Java_com_util_Native_displayHelloWorld(JNIEnv *env, jobject obj) {
 	cout << "Hello world!" << endl;
 }
 
+int JNICALL Java_com_util_Native_main(JNIEnv *env, jobject obj) {
+	int main(int argc, char **argv);
+	return main(0, 0);
+}
+
 jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env, jobject obj,
 		jstring str) {
 	String s = JString(env, str);
@@ -27,9 +32,10 @@ jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env, jobject obj,
 	return Object(env, s);
 }
 
-jint JNICALL Java_com_util_Native_asm6args(JNIEnv *env, jobject obj, jint rcx,
-		jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg) {
-	return asm6args(rcx, rdx, r8, r9, fifthArg, sixthArg);
+jint JNICALL Java_com_util_Native_asm8args(JNIEnv *env, jobject obj, jint rcx,
+		jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg,
+		jint seventhArg, jint eighthArg) {
+	return asm8args(rcx, rdx, r8, r9, fifthArg, sixthArg, seventhArg, eighthArg);
 }
 
 jdouble JNICALL Java_com_util_Native_relu(JNIEnv *env, jobject obj,
@@ -121,7 +127,7 @@ jstring Object(JNIEnv *env, const string &s) {
 
 jstring Object(JNIEnv *env, const String &s) {
 	static_assert(sizeof (jchar) == sizeof (char16_t), "jchar and char16_t must have same sizes");
-	return env->NewString((const jchar*)s.data(), s.size());
+	return env->NewString((const jchar*) s.data(), s.size());
 }
 
 jintArray SetIntArrayRegion(JNIEnv *env, jsize size, const jint *array) {

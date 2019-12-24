@@ -8,22 +8,33 @@
 #include <string>
 #include <iostream>
 using namespace std;
-
+#include "lagacy.h"
 int create_hdf5_file();
-
-int main(int argc, char *argv[]) {
-
+//to setup hdf5 project, use
+//eigen.exe H5Tpkg.c
+int main(int argc, char **argv) {
 //	reader.read_hdf5();
 //	Text::test_utf_unicode_conversion();
+
 	auto &phatic = Classifier::phatic_classifier();
-	cout << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式")[1] << endl;
-
 	auto &qatype = Classifier::qatype_classifier();
-	cout << qatype.predict(u"你很高吗?")[1] << endl;
-
 	auto &paraphrase = Paraphrase::instance();
 
+	cout << "phatic = " << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式") << endl;
+
+	cout << "qatype = " << qatype.predict(u"你很高吗?") << endl;
+
 	cout << "score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
+
+	cout << "score = " << paraphrase(u"周末你去哪里玩", u"周末你去哪里玩") << endl;
+
+	cout << "gcd_long(10, 46) = " << gcd_long(10, 46) << endl;
+	cout << "gcd_qword(10, 46) = " << gcd_qword(10, 46) << endl;
+	cout << "gcd_int(10, 46) = " << gcd_int(10, 46) << endl;
+	cout << "gcd_dword(10, 46) = " << gcd_dword(10, 46) << endl;
+
+	cout << "asm8args(1, 2, 3, 4, 5, 6, 7, 8) = " << asm8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
+	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = " << sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 
 	return 0;
 }
