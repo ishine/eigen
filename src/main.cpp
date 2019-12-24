@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
 	cout << "gcd_int(10, 46) = " << gcd_int(10, 46) << endl;
 	cout << "gcd_dword(10, 46) = " << gcd_dword(10, 46) << endl;
 
-	cout << "asm8args(1, 2, 3, 4, 5, 6, 7, 8) = " << asm8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = " << sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 
 	return 0;

@@ -32,10 +32,10 @@ jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env, jobject obj,
 	return Object(env, s);
 }
 
-jint JNICALL Java_com_util_Native_asm8args(JNIEnv *env, jobject obj, jint rcx,
+jint JNICALL Java_com_util_Native_sum8args(JNIEnv *env, jobject obj, jint rcx,
 		jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg,
 		jint seventhArg, jint eighthArg) {
-	return asm8args(rcx, rdx, r8, r9, fifthArg, sixthArg, seventhArg, eighthArg);
+	return sum8args(rcx, rdx, r8, r9, fifthArg, sixthArg, seventhArg, eighthArg);
 }
 
 jdouble JNICALL Java_com_util_Native_relu(JNIEnv *env, jobject obj,

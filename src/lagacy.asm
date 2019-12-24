@@ -14,7 +14,7 @@ half: 		dq 0.5
 section .text
 global relu, hard_sigmoid, gcd_long, gcd_qword, gcd_int, gcd_dword, stosd
 
-global asm8args, CalcSum_, CalcDist_
+global CalcSum_, CalcDist_
 
 
 %ifdef linux
@@ -76,17 +76,6 @@ stosd:
 	rep stosd
 	ret
 
-asm8args:
-	mov rax, rdi
-	add rax, rsi
-	add rax, rdx
-	add rax, rcx
-	add rax, r8
-	add rax, r9
-	add rax, [rsp+8]
-	add rax, [rsp+16]
-	ret
-
 %else
 ;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
 gcd_qword:
@@ -146,17 +135,6 @@ stosd:
 %endif
 	ret
 
-
-asm8args:
-	mov rax, rcx
-	add rax, rdx
-	add rax, r8
-	add rax, r9
-	add rax, [rsp+40]
-	add rax, [rsp+48]
-	add rax, [rsp+56]
-	add rax, [rsp+64]
-	ret
 
 %endif
 
