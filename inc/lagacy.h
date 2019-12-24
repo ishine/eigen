@@ -7,7 +7,7 @@ extern "C" double relu(double x);
 
 extern "C" double gelu(double x);
 
-extern "C" void stosd(void *edi, dword eax, qword rcx);
+extern "C" void stosl(void *edi, dword eax, qword rcx);
 
 extern "C" long long gcd_long(long long rcx, long long rdx);
 extern "C" qword gcd_qword(qword rcx, qword rdx);
