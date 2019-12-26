@@ -279,3 +279,6 @@ CalcDist_:
 //https://blog.csdn.net/sivolin/article/details/41895701
 //https://www.cnblogs.com/volva/p/11814998.html
 //https://blog.csdn.net/roger_ranger/article/details/78854348
+//http://sourceware.org/binutils/docs-2.17/as/index.html
+//https://www.cnblogs.com/binsys/articles/1303927.html
+//https://www.ibm.com/developerworks/cn/linux/l-gas-nasm.html
