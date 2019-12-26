@@ -23,8 +23,8 @@ extern "C" double CalcSum_(float a, double b, float c, double d, float e,
 extern "C" double CalcDist_(int x1, double x2, long long y1, double y2,
 		float z1, short z2);
 
-extern "C" double zero;
-extern "C" double one;
-extern "C" double one_fifth;
-extern "C" double half;
-
+//extern "C" double zero;
+//extern "C" double one;
+//extern "C" double one_fifth;
+//extern "C" double half;
+//

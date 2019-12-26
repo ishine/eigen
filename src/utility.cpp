@@ -151,7 +151,7 @@ HDF5Reader& HDF5Reader::operator >>(Matrix &arr) {
 	int dimension1 = shape[1];
 	cout << "x = " << dimension0 << ", " << "y = " << dimension1 << endl;
 
-	arr.resize(dimension0, dimension1);
+	arr.resize(dimension0, dimension1);;
 	int index = 0;
 	for (int i0 = 0; i0 < dimension0; ++i0) {
 		for (int i1 = 0; i1 < dimension1; ++i1) {

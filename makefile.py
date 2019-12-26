@@ -128,7 +128,8 @@ def cppbuild(eigen, password=None, clean=None, exe=None):
 
         if obj2asm:
             print('asms = $(wildcard src/*.asm)', file=file)
-            print('asm_objs = $(patsubst src/%.asm, obj/%.asm.o, $(wildcard src/*.asm))', file=file)
+#             print('asm_objs = $(patsubst src/%.asm, obj/%.asm.o, $(wildcard src/*.asm))', file=file)
+            print('asm_objs = $(patsubst src/%.asm, obj/%.o, $(wildcard src/*.asm))', file=file)
         else:
             print('asm_objs = ', file=file)
  
@@ -153,7 +154,8 @@ def cppbuild(eigen, password=None, clean=None, exe=None):
             print('LD_LIBRARY_PATH = ' + LD_LIBRARY_PATH(), file=file)
 
             makefile(file, '$(LD_LIBRARY_PATH)/$(target)', '$(artifact) $(src_cpp_objs) $(asm_objs)', sudo('cp -f $(artifact) $(LD_LIBRARY_PATH)', password))        
-            makefile(file, '$(artifact)', '$(src_cpp_objs) $(source_cpp_objs) $(source_c99_objs) $(asm_objs)', '$(gcc11) -z noexecstack -shared -o $@ $^')        
+            makefile(file, '$(artifact)', '$(src_cpp_objs) $(source_cpp_objs) $(source_c99_objs) $(asm_objs)', '$(gcc11) -z noexecstack -shared -o $@ $^')
+                    
 # -z noexecstack usage:
 # OpenJDK 64-Bit Server VM warning: You have loaded library /usr/local/lib64/libeigen.so 
 # which might have disabled stack guard. The VM will try to fix the stack guard now.
@@ -166,7 +168,8 @@ def cppbuild(eigen, password=None, clean=None, exe=None):
         
         if obj2asm:
             for obj_name, asm in obj2asm.items():  
-                makefile(file, 'obj/%s.asm.o' % obj_name, asm, 'nasm -D__symbol=1 -Dlinux -isrc -f elf64 -o $@ $<')
+#                 makefile(file, 'obj/%s.asm.o' % obj_name, asm, 'nasm -D__symbol=1 -Dlinux -isrc -f elf64 -o $@ $<')
+                makefile(file, 'obj/%s.o' % obj_name, asm, 'as --defsym linux=1 -o $@ $<')
         
         make_src_cpp_dep = """\
 #\t@echo creating dependency file: $@        

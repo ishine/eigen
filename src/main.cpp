@@ -28,13 +28,24 @@ int main(int argc, char **argv) {
 
 	cout << "score = " << paraphrase(u"周末你去哪里玩", u"周末你去哪里玩") << endl;
 
+//	cout << "zero = " << zero << endl;
+//	cout << "one = " << one << endl;
+//	cout << "one_fifth = " << one_fifth << endl;
+//	cout << "half = " << half << endl;
+
 	cout << "gcd_long(10, 46) = " << gcd_long(10, 46) << endl;
 	cout << "gcd_qword(10, 46) = " << gcd_qword(10, 46) << endl;
 	cout << "gcd_int(10, 46) = " << gcd_int(10, 46) << endl;
 	cout << "gcd_dword(10, 46) = " << gcd_dword(10, 46) << endl;
 
 	cout << "relu(10.1) = " << relu(10.1)<< endl;
+	cout << "relu(0.0) = " << relu(0.0)<< endl;
 	cout << "relu(-10.1) = " << relu(-10.1)<< endl;
+	cout << "hard_sigmoid(-10.1) = " << hard_sigmoid(-10.1)<< endl;
+	cout << "hard_sigmoid(10.1) = " << hard_sigmoid(10.1)<< endl;
+	cout << "hard_sigmoid(2.5) = " << hard_sigmoid(2.5)<< endl;
+	cout << "hard_sigmoid(-2.5) = " << hard_sigmoid(-2.5)<< endl;
+	cout << "hard_sigmoid(0) = " << hard_sigmoid(0)<< endl;
 
 	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = " << sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 

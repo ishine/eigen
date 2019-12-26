@@ -1,9 +1,13 @@
-#the following line is added to cope with the error:
-#relocation R_X86_64_32S against `.data' can not be used when making a shared object; recompile with -fPIC
-#DEFAULT REL
+/*
+the following line is added to cope with the error:
+relocation R_X86_64_32S against `.data' can not be used when making a shared object; recompile with -fPIC
+.DEFAULT REL
+relocation R_X86_64_PC32 against symbol `zero' can not be used when making a shared object; recompile with -fPIC
+.intel_syntax noprefix
+*/
 
-.globl zero, one, one_fifth, half
-#for export;
+
+#.global zero, one, one_fifth, half /*for export;*/
 
 .section .data
 zero:
@@ -20,13 +24,13 @@ half:
 
 
 .section .text
-.globl relu, hard_sigmoid, sum8args, gcd_qword, gcd_long, gcd_int, gcd_dword, stosl
+.global relu, hard_sigmoid, sum8args, gcd_qword, gcd_long, gcd_int, gcd_dword, stosl
 
 jmp_ret:
 	ret
 
 .ifdef linux
-;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+/*determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)*/
 gcd_qword:
 	mov %rdi, %rcx
 	mov %rsi, %rdx
@@ -37,7 +41,7 @@ gcd_qword_linux:
 	mov %rdx, %rcx
 	mov $0, %rdx
 	div %rcx
-#rax = quo, rdx = rem;
+/*rax = quo, rdx = rem;*/
 	jmp gcd_qword_linux
 
 gcd_long:
@@ -49,11 +53,11 @@ gcd_long_linux:
 	jz jmp_ret
 	mov %rdx, %rcx
 	cqo
-#Convert Quadword to Double Quadword, ie, Sign-extends the contents of RAX to RDX:RAX.
+/*Convert Quadword to Double Quadword, ie, Sign-extends the contents of RAX to RDX:RAX.*/
 	idiv %rcx
 	jmp gcd_long_linux
 
-;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+/*determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)*/
 gcd_int:
 	mov %edi, %ecx
 	mov %esi, %edx
@@ -63,12 +67,12 @@ gcd_int_linux:
 	jz jmp_ret
 	mov %edx, %ecx
 	cdq
-# Convert Doubleword to Quadword, ie, Sign-extends register EAX and saves the results in register pair EDX:EAX.
+/* Convert Doubleword to Quadword, ie, Sign-extends register EAX and saves the results in register pair EDX:EAX.*/
 	idiv %ecx
-#eax = quo, edx = rem;
+/*eax = quo, edx = rem;*/
 	jmp gcd_int_linux
 
-;determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+/*determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)*/
 gcd_dword:
 	mov %edi, %ecx
 	mov %esi, %edx
@@ -79,7 +83,7 @@ gcd_dword_linux:
 	mov %edx, %ecx
 	xor %edx, %edx
 	div %ecx
-#eax = quo, edx = rem;
+/*eax = quo, edx = rem;*/
 	jmp gcd_dword_linux
 
 stosl:
@@ -102,7 +106,7 @@ sum8args:
 
 .else
 
-#determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
+/*determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)*/
 gcd_qword:
 	mov %rcx, %rax
 	or %rdx, %rdx
@@ -110,7 +114,7 @@ gcd_qword:
 	mov %rdx, %rcx
 	mov $0, %rdx
 	div %rcx
-#rax = quo, rdx = rem;
+/*rax = quo, rdx = rem;*/
 	jmp gcd_qword
 
 gcd_long:
@@ -181,30 +185,41 @@ sum8args:
 
 
 relu:
+#	maxsd zero@plt, %xmm0
+#	maxsd zero@GOTPCREL(%rip), %xmm0
 	maxsd (zero), %xmm0
 	ret
 
 hard_sigmoid:
+#	mulsd one_fifth@GOTPCREL(%rip), %xmm0
 	mulsd (one_fifth), %xmm0
 	#0.2x
 
+#	addsd half@GOTPCREL(%rip), %xmm0
 	addsd (half), %xmm0
 	#0.2x + 0.5
 
+#	minsd one@GOTPCREL(%rip), %xmm0
 	minsd (one), %xmm0
 	#min(y, 1)
 
 	maxsd (zero), %xmm0
+#	maxsd zero@GOTPCREL(%rip), %xmm0
 	#max(y, 0)
 	ret
 
-#https://blog.csdn.net/celerychen2009/article/details/8934972
-#https://stackoverflow.com/questions/40820814/relocation-r-x86-64-32s-against-bss-can-not-be-used-when-making-a-shared-obj
-#https://stackoverflow.com/questions/6093547/what-do-r-x86-64-32s-and-r-x86-64-64-relocation-mean
-#http://www.csee.umbc.edu/~chang/cs313.f04/nasmdoc/html/nasmdoc8.html#section-8.2
-#https://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/
-#https://www.nasm.us/xdoc/2.11.02/html/nasmdoc6.html#section-6.2.1
-#reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
-#https://blog.csdn.net/sivolin/article/details/41895701
-#https://www.cnblogs.com/volva/p/11814998.html
-#https://blog.csdn.net/roger_ranger/article/details/78854348
+/*
+reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
+https://blog.csdn.net/celerychen2009/article/details/8934972
+https://stackoverflow.com/questions/40820814/relocation-r-x86-64-32s-against-bss-can-not-be-used-when-making-a-shared-obj
+https://stackoverflow.com/questions/6093547/what-do-r-x86-64-32s-and-r-x86-64-64-relocation-mean
+http://www.csee.umbc.edu/~chang/cs313.f04/nasmdoc/html/nasmdoc8.html#section-8.2
+https://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/
+https://www.nasm.us/xdoc/2.11.02/html/nasmdoc6.html#section-6.2.1
+https://blog.csdn.net/sivolin/article/details/41895701
+https://www.cnblogs.com/volva/p/11814998.html
+https://blog.csdn.net/roger_ranger/article/details/78854348
+https://sourceware.org/binutils/docs-2.21/as/index.html
+https://blog.csdn.net/chuck_huang/article/details/79936322
+https://stackoverflow.com/questions/48369771/relocation-r-x86-64-pc32-against-symbol-when-calling-function-from-inline-assemb
+*/

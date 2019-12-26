@@ -844,7 +844,7 @@ Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
 Paraphrase& Paraphrase::instance() {
 	static Paraphrase inst(
 			(HDF5Reader&) (const HDF5Reader&) HDF5Reader(
-					cnModelsDirectory() + "bert/paraphrase/paraphrase.h5"),
+					cnModelsDirectory() + "bert/paraphrase/model.h5"),
 			cnModelsDirectory() + "bert/vocab.txt", 12, false, true, 4);
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	return inst;

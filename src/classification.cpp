@@ -103,13 +103,6 @@ Classifier::Classifier(HDF5Reader &dis) :
 				DenseLayer(dis)), dense_pred(
 				DenseLayer(dis, true, Activator::softmax)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-//	dis.close();
-
-	cout << "constants in assembly language:" << endl;
-	cout << "zero = " << zero << endl;
-	cout << "one = " << one << endl;
-	cout << "one_fifth = " << one_fifth << endl;
-	cout << "half =  " << half << endl;
 }
 
 Classifier::Classifier(HDF5Reader &dis, const string &vocab) :
@@ -121,7 +114,7 @@ Classifier::Classifier(HDF5Reader &dis, const string &vocab) :
 
 Classifier& Classifier::qatype_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "qatype/qatype.h5",
+	static Classifier service(cnModelsDirectory() + "qatype/model.h5",
 			cnModelsDirectory() + "qatype/vocab.txt");
 
 	return service;
@@ -129,7 +122,7 @@ Classifier& Classifier::qatype_classifier() {
 
 Classifier& Classifier::phatic_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "phatic/phatic.h5",
+	static Classifier service(cnModelsDirectory() + "phatic/model.h5",
 			cnModelsDirectory() + "phatic/vocab.txt");
 
 	return service;
