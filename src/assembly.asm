@@ -6,6 +6,7 @@
 //output file = std.o
 //nasm -D__symbol=1 -f elf64 ${INPUTS} -o${PWD}/${OUTPUT}
 .intel_syntax noprefix
+
 .global zero, one, one_fifth, half
 // for export
 .section .data
@@ -100,6 +101,39 @@ sum8args:
 	add rax, [rsp+16]
 	ret
 
+relu:
+	mov eax, 0
+	cvtsi2sd xmm1, eax
+	maxsd xmm0, xmm1
+	ret
+
+hard_sigmoid:
+	mov eax, 2
+	cvtsi2sd xmm1, eax
+	mulsd xmm0, xmm1
+// 2x
+
+	mov eax, 5
+	cvtsi2sd xmm1, eax
+	addsd xmm0, xmm1
+// 2x + 5
+
+	mov eax, 10
+	cvtsi2sd xmm1, eax
+	divsd xmm0, xmm1
+// (2x + 5) / 10
+
+	mov eax, 1
+	cvtsi2sd xmm1, eax
+	minsd xmm0, xmm1
+// min(y, 1)
+
+	mov eax, 0
+	cvtsi2sd xmm1, eax
+	maxsd xmm0, xmm1
+// max(y, 0)
+	ret
+
 .else
 //determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
 gcd_qword:
@@ -177,8 +211,6 @@ sum8args:
 	add rax, [rsp+64]
 	ret
 
-.endif
-
 relu:
 	maxsd xmm0, [zero]
 	ret
@@ -196,6 +228,8 @@ hard_sigmoid:
 	maxsd xmm0, [zero]
 // max(y, 0)
 	ret
+.endif
+
 
 
 jmp_ret:
@@ -235,13 +269,13 @@ CalcDist_:
 	sqrtsd xmm0,xmm4
 	ret
 
+//reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
 //https://blog.csdn.net/celerychen2009/article/details/8934972
 //https://stackoverflow.com/questions/40820814/relocation-r-x86-64-32s-against-bss-can-not-be-used-when-making-a-shared-obj
 //https://stackoverflow.com/questions/6093547/what-do-r-x86-64-32s-and-r-x86-64-64-relocation-mean
 //http://www.csee.umbc.edu/~chang/cs313.f04/nasmdoc/html/nasmdoc8.html//section-8.2
 //https://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/
 //https://www.nasm.us/xdoc/2.11.02/html/nasmdoc6.html//section-6.2.1
-//reference book: Apress.Modern.X86.Assembly.Language.Programming.32-bit.64-bit
 //https://blog.csdn.net/sivolin/article/details/41895701
 //https://www.cnblogs.com/volva/p/11814998.html
 //https://blog.csdn.net/roger_ranger/article/details/78854348
