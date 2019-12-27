@@ -587,8 +587,8 @@ vector<VectorI>& SegmentInput::operator ()(const vector<VectorI> &inputToken,
 	for (int k = 0; k < batch_size; ++k) {
 		inputSegment[k].resize(length);
 		int mid = inputMid[k];
-		stosl(&inputSegment[k](0), 0, mid);
-		stosl(&inputSegment[k](mid), 1, length - mid);
+		stosd(&inputSegment[k](0), 0, mid);
+		stosd(&inputSegment[k](mid), 1, length - mid);
 	}
 	return inputSegment;
 }
@@ -605,9 +605,9 @@ VectorI& SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 
 	cout << "inputSegment(mid) = " << inputSegment(mid) << endl;
 
-	stosl(&inputSegment(0), 0, mid);
+	stosd(&inputSegment(0), 0, mid);
 
-	stosl(&inputSegment(mid), 1, length - mid);
+	stosd(&inputSegment(mid), 1, length - mid);
 
 	return inputSegment;
 }
