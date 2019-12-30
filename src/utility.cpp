@@ -5,29 +5,10 @@
 
 using namespace std;
 
-string& workingDirectory() {
-#ifdef _WIN32
-	static string workingDirectory = "D:/360/solution/";
-#else
-	static string workingDirectory = "/home/zhoulizhi/solution/";
-#endif
-	return workingDirectory;
-}
-
-//string get_workingDirectory() {
-//
-//	int index = workingDirectory.find_last_of("/\\");
-//
-//	workingDirectory = workingDirectory.substr(0, index);
-//
-//	workingDirectory += "/../";
-//
-//	cout << "workingDirectory = " << workingDirectory << endl;
-//	return workingDirectory;
-//}
+string workingDirectory = "../";
 
 string& modelsDirectory() {
-	static string modelsDirectory = workingDirectory() + "models/";
+	static string modelsDirectory = workingDirectory + "models/";
 	return modelsDirectory;
 }
 
@@ -151,7 +132,8 @@ HDF5Reader& HDF5Reader::operator >>(Matrix &arr) {
 	int dimension1 = shape[1];
 	cout << "x = " << dimension0 << ", " << "y = " << dimension1 << endl;
 
-	arr.resize(dimension0, dimension1);;
+	arr.resize(dimension0, dimension1);
+	;
 	int index = 0;
 	for (int i0 = 0; i0 < dimension0; ++i0) {
 		for (int i1 = 0; i1 < dimension1; ++i1) {

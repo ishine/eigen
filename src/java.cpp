@@ -11,7 +11,22 @@
 #include "lagacy.h"
 #include <classification.h>
 
+extern string workingDirectory;
+
 extern "C" {
+void JNICALL Java_com_util_Native_initialize(JNIEnv *env, jobject obj,
+		jstring pwd) {
+	workingDirectory = CString(env, pwd);
+	switch (workingDirectory.back()) {
+	case '/':
+	case '\\':
+		break;
+	default:
+		workingDirectory += '/';
+	}
+	cout << "initialize workingDirectory = " << workingDirectory << endl;
+}
+
 void JNICALL Java_com_util_Native_displayHelloWorld(JNIEnv *env, jobject obj) {
 	cout << "Hello world!" << endl;
 }

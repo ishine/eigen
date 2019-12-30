@@ -238,7 +238,6 @@ struct HDF5Reader {
 	HDF5Reader& operator >>(Tensor &arr);
 };
 
-string& workingDirectory();
 string& modelsDirectory();
 string& cnModelsDirectory();
 string& nerModelsDirectory();

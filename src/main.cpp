@@ -28,10 +28,10 @@ int main(int argc, char **argv) {
 
 	cout << "score = " << paraphrase(u"周末你去哪里玩", u"周末你去哪里玩") << endl;
 
-//	cout << "zero = " << zero << endl;
-//	cout << "one = " << one << endl;
-//	cout << "one_fifth = " << one_fifth << endl;
-//	cout << "half = " << half << endl;
+	cout << "zero = " << zero << endl;
+	cout << "one = " << one << endl;
+	cout << "one_fifth = " << one_fifth << endl;
+	cout << "half = " << half << endl;
 
 	cout << "gcd_long(10, 46) = " << gcd_long(10, 46) << endl;
 	cout << "gcd_qword(10, 46) = " << gcd_qword(10, 46) << endl;
