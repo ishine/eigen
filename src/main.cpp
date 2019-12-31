@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 
 	cout << "phatic = " << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式") << endl;
 
-	cout << "qatype = " << qatype.predict(u"你很高吗?") << endl;
+	cout << "qatype = " << qatype.predict(u"how are you today?") << endl;
 
 	cout << "score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
 
