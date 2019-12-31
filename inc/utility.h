@@ -380,3 +380,6 @@ template<class T>
 bool operator !(const std::basic_string<T> &s) {
 	return s.empty();
 }
+
+//forward declaration to prevent runtime linking error.
+extern string workingDirectory;

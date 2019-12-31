@@ -62,5 +62,3 @@ clean:
 install: $(artifact) LD_LIBRARY_PATH.class
 	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
 	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
-
-# make && make install

@@ -11,8 +11,6 @@
 #include "lagacy.h"
 #include <classification.h>
 
-extern string workingDirectory;
-
 extern "C" {
 void JNICALL Java_com_util_Native_initialize(JNIEnv *env, jobject obj,
 		jstring pwd) {
