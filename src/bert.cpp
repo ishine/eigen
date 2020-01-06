@@ -525,6 +525,14 @@ Matrix& PositionEmbedding::operator ()(Matrix &sequence, int mid) {
 	return sequence;
 }
 
+Matrix& PositionEmbedding::operator ()(Matrix &sequence) {
+	int seq_len = sequence.rows();
+
+	sequence += embeddings.topRows(seq_len);
+
+	return sequence;
+}
+
 Tensor& PositionEmbedding::operator ()(Tensor &sequence) {
 	int batch_size = sequence.size();
 	int seq_len = sequence[0].rows();
@@ -673,6 +681,32 @@ Matrix& BertEmbedding::operator ()(VectorI &input_ids, int inputMid,
 	embeddings += segment_layer;
 //	cout << "embeddings = " << embeddings << endl;
 	auto &embed_layer = positionEmbedding(embeddings, inputMid);
+	embed_layer = layerNormalization(embed_layer);
+
+	if (factorization(false)) {
+		embeddings = embeddingMapping(embeddings);
+	}
+
+	return embeddings;
+}
+
+Matrix& BertEmbedding::operator ()(VectorI &input_ids,
+		const VectorI &inputSegment) {
+	auto &embeddings = wordEmbedding(input_ids);
+
+//	cout << "wordEmbeddings = " << embeddings << endl;
+
+	if (factorization(true)) {
+		embeddings = embeddingMapping(embeddings);
+	}
+
+	Matrix segment_layer;
+	segmentEmbedding(inputSegment, segment_layer);
+//	cout << "segment_layer = " << segment_layer << endl;
+
+	embeddings += segment_layer;
+//	cout << "embeddings = " << embeddings << endl;
+	auto &embed_layer = positionEmbedding(embeddings);
 	embed_layer = layerNormalization(embed_layer);
 
 	if (factorization(false)) {
@@ -832,8 +866,10 @@ Vector& Transformer::operator ()(Matrix &input_layer, Vector &y) {
 
 Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
 		int num_attention_heads, bool factorization_on_word_embedding_only,
-		bool cross_layer_parameter_sharing, int num_hidden_layers) :
-		tokenizer(vocab), midIndex(tokenizer.vocab.at(u"[SEP]")), bertEmbedding(
+		bool cross_layer_parameter_sharing, bool symmetric_positional_embedding,
+		int num_hidden_layers) :
+		tokenizer(vocab), symmetric_positional_embedding(
+				symmetric_positional_embedding), midIndex(tokenizer.vocab.at(u"[SEP]")), bertEmbedding(
 		dis, num_attention_heads, factorization_on_word_embedding_only), transformer(
 		dis, cross_layer_parameter_sharing, num_hidden_layers,
 		num_attention_heads), poolerDense(dis), similarityDense(dis,
@@ -841,11 +877,34 @@ Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
 			cout << "in " << __PRETTY_FUNCTION__ << endl;
 		}
 
+#include "json/json.h"
+Json::Value readFromStream(const string &json_file);
+
 Paraphrase& Paraphrase::instance() {
+	static const auto &config = readFromStream(
+			cnModelsDirectory() + "bert/paraphrase/config.json");
+
+//	std::cout << config << std::endl;
+//	for (auto &key : config.getMemberNames()) {
+//		std::cout << key << " = " << config[key] << std::endl;
+//	}
+
+	static int num_attention_heads = 12;
+	static bool factorization_on_word_embedding_only =
+			config["factorization_on_word_embedding_only"].asBool();
+	static bool cross_layer_parameter_sharing =
+			config["cross_layer_parameter_sharing"].asBool();
+	static bool symmetric_positional_embedding =
+			config["symmetric_positional_embedding"].asBool();
+
+	static int num_hidden_layers = 4;
+
 	static Paraphrase inst(
 			(HDF5Reader&) (const HDF5Reader&) HDF5Reader(
 					cnModelsDirectory() + "bert/paraphrase/model.h5"),
-			cnModelsDirectory() + "bert/vocab.txt", 12, false, true, 4);
+			cnModelsDirectory() + "bert/vocab.txt", num_attention_heads,
+			factorization_on_word_embedding_only, cross_layer_parameter_sharing,
+			symmetric_positional_embedding, num_hidden_layers);
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	return inst;
 }
@@ -886,7 +945,10 @@ double Paraphrase::operator ()(VectorI &input_ids) {
 
 //	auto &matrixAttention = CrossAttentionMask(inputSegment);
 
-	auto &embed_layer = bertEmbedding(input_ids, inputMid, inputSegment);
+	auto &embed_layer =
+			symmetric_positional_embedding ?
+					bertEmbedding(input_ids, inputMid, inputSegment) :
+					bertEmbedding(input_ids, inputSegment);
 //	cout << "embed_layer = " << embed_layer << endl;
 
 	Vector clsEmbedding;

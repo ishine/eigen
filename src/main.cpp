@@ -30,8 +30,8 @@ void test_eigen() {
 int main(int argc, char **argv) {
 //	test();
 //	test_matmul();
-	test_eigen();
-	return 0;
+//	test_eigen();
+//	return 0;
 //	reader.read_hdf5();
 //	Text::test_utf_unicode_conversion();
 
