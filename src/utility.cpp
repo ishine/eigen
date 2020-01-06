@@ -520,7 +520,11 @@ VectorI& string2id(const String &s, const unordered_map<String, int> &dict) {
 	v.resize(s.size());
 
 	for (size_t i = 0; i < s.size(); ++i) {
-		v(i) = dict.at(s.substr(i, 1));
+		try {
+			v(i) = dict.at(s.substr(i, 1));
+		} catch (std::out_of_range &error) {
+			v(i) = dict.at(u"[UNK]");
+		}
 	}
 	return v;
 }

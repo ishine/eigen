@@ -15,7 +15,7 @@ src_cpp_dep = $(src_cpp:src/%.cpp=src/%.cpp.dep)
 source_cpp_dep = $(source_cpp:source/%.cpp=source/%.cpp.dep)
 source_c_dep = $(source_c:source/%.c=source/%.c.dep)
 
-gpp = g++ -Wall -std=c++11 -fPIC
+gpp = g++ -Wall -std=c++11 -fPIC -fopenmp
 gcc = gcc -w -std=c99 -fPIC
 
 $(artifact): $(src_cpp_obj) $(source_cpp_obj) $(source_c_obj) $(asm_obj)

@@ -119,6 +119,7 @@ struct PositionEmbedding {
 	Tensor& operator()(Tensor &sequence, const vector<int> &mid);
 	Tensor& operator()(Tensor &sequence);
 	Matrix& operator()(Matrix &sequence, int mid);
+	Matrix& operator()(Matrix &sequence);
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
 
@@ -156,6 +157,8 @@ struct BertEmbedding {
 
 	Matrix& operator ()(VectorI &inputToken, int inputMid,
 			const VectorI &inputSegment);
+
+	Matrix& operator ()(VectorI &inputToken, const VectorI &inputSegment);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 
@@ -259,9 +262,8 @@ struct WordpieceTokenizer {
 
 	static unordered_map<String, int>& load_vocab(const string &vocab_file);
 
-	WordpieceTokenizer(unordered_map<String, int> vocab,
-			String unk_token = u"[UNK]",
-			size_t max_input_chars_per_word = 200);
+	WordpieceTokenizer(unordered_map<String, int> vocab, String unk_token = u"[UNK]",
+	size_t max_input_chars_per_word = 200);
 
 	vector<String> tokenize(String &text);
 //    vector<String> unknown_words(){
@@ -289,9 +291,11 @@ struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
 struct Paraphrase {
 	Paraphrase(HDF5Reader &dis, const string &vocab, int num_attention_heads,
 			bool factorization_on_word_embedding_only = true,
-			bool cross_layer_parameter_sharing = true, int num_hidden_layers =
+			bool cross_layer_parameter_sharing = true,
+			bool symmetric_positional_embedding = true, int num_hidden_layers =
 					12);
 	FullTokenizer tokenizer;
+	bool symmetric_positional_embedding;
 
 	MidIndex midIndex;
 	SegmentInput segmentInput;

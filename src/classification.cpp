@@ -1,6 +1,7 @@
 #include <classification.h>
 
 Vector& Classifier::predict(const String &predict_text) {
+	cout << "predict: " << predict_text << endl;
 	Matrix embedding;
 
 	this->embedding(string2id(predict_text, word2id), embedding);
