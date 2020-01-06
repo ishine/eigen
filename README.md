@@ -1,5 +1,5 @@
 # eigen
-A C++ application written for deep learning
+A C++ application written for fast inference for deep learning, not for training!
 
 deployment issue:
 
