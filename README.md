@@ -8,3 +8,5 @@ git clone https://github.com/cosmosZhou/eigen.git
 cd eigen/
 
 make && make install
+
+make test
