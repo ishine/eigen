@@ -55,8 +55,8 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
 	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
 
-test: $(target)
-	@echo "testing $(target):"
+test: $(target)	
 	./$(target)
+	@echo "finish testing $(target)!"
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362

@@ -304,6 +304,14 @@ char Text::get_bits(char ch, int start, int size, int shift) {
 	return ((ch >> start) & ((1 << size) - 1)) << shift;
 }
 
+char Text::get_bits(char ch, int start, int size, char _ch) {
+	return get_bits(ch, start, size, _ch, 8 - size);
+}
+
+char Text::get_bits(char ch, int start, int size, char _ch, int _size) {
+	return get_bits(_ch, 0, _size, size) + get_bits(ch, start, size);
+}
+
 string& Text::unicode2utf(const String &wstr) {
 	static string s;
 	s.clear();
@@ -326,12 +334,26 @@ void Text::test_utf_unicode_conversion() {
 	}
 }
 
-word Text::utf2unicode(const char *pText) {
+int Text::unicode2jchar(int unicode) {
+	int res_jchars;
+	auto jchars = (word*) &res_jchars;
+	jchars[0] = 0xd800;
+	jchars[1] = 0xdc00;
+
+	unicode -= 65536;
+
+	jchars[0] |= unicode >> 10;
+	jchars[1] |= unicode & 0x03ff;
+
+	return res_jchars;
+}
+
+int Text::utf2unicode(const char *pText) {
 //	https://blog.csdn.net/qq_38279908/article/details/89329740
 //	https://www.cnblogs.com/cfas/p/7931787.html
 //  #include <codecvt>        // std::codecvt_utf8
 //	return std::wstring_convert<std::codecvt_utf8<wchar_t> >().from_bytes(str);
-	word wc;
+	int wc = 0;
 	char *uchar = (char*) &wc;
 
 	if (!pText[1]) {
@@ -340,30 +362,29 @@ word Text::utf2unicode(const char *pText) {
 	} else if (!pText[2]) {
 //		U-000007FF: 110xxxxx 10xxxxxx
 		uchar[1] = get_bits(pText[0], 2, 4);
-		uchar[0] = get_bits(pText[0], 0, 2, 6) + get_bits(pText[1], 0, 6);
-	} else /*if (!pText[3])*/{
+		uchar[0] = get_bits(pText[1], 0, 6, pText[0]);
+	} else if (!pText[3]) {
 //		U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
-		uchar[1] = get_bits(pText[0], 0, 4, 4) + get_bits(pText[1], 2, 4);
-		uchar[0] = get_bits(pText[1], 0, 2, 6) + get_bits(pText[2], 0, 6);
-	} /*else if (!pText[4]) {
-	 //		U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-	 uchar[2] = get_bits(pText[0], 0, 3, 3) + get_bits(pText[1], 4, 2);
-	 uchar[1] = get_bits(pText[1], 0, 4, 4) + get_bits(pText[2], 2, 4);
-	 uchar[0] = get_bits(pText[2], 0, 2, 6) + get_bits(pText[3], 0, 6);
-	 } else if (!pText[5]) {
-	 //		U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-	 uchar[3] = get_bits(pText[0], 0, 2);
-	 uchar[2] = get_bits(pText[1], 0, 6, 2) + get_bits(pText[2], 4, 2);
-	 uchar[1] = get_bits(pText[2], 0, 4, 4) + get_bits(pText[3], 2, 4);
-	 uchar[0] = get_bits(pText[3], 0, 2, 6) + get_bits(pText[4], 0, 6);
-	 } else if (!pText[6]) {
-	 //		U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-	 uchar[3] = get_bits(pText[0], 0, 1, 6) + get_bits(pText[1], 0, 6);
-	 uchar[2] = get_bits(pText[2], 0, 6, 2) + get_bits(pText[3], 4, 2);
-	 uchar[1] = get_bits(pText[3], 0, 4, 4) + get_bits(pText[4], 2, 4);
-	 uchar[0] = get_bits(pText[4], 0, 2, 6) + get_bits(pText[5], 0, 6);
-	 }
-	 */
+		uchar[1] = get_bits(pText[1], 2, 4, pText[0]);
+		uchar[0] = get_bits(pText[2], 0, 6, pText[1]);
+	} else if (!pText[4]) {
+		//		U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+		uchar[2] = get_bits(pText[1], 4, 2, pText[0], 4);
+		uchar[1] = get_bits(pText[2], 2, 4, pText[1]);
+		uchar[0] = get_bits(pText[3], 0, 6, pText[2]);
+	} else if (!pText[5]) {
+		//		U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+		uchar[3] = get_bits(pText[0], 0, 3);
+		uchar[2] = get_bits(pText[2], 4, 2, pText[1]);
+		uchar[1] = get_bits(pText[3], 2, 4, pText[2]);
+		uchar[0] = get_bits(pText[4], 0, 6, pText[3]);
+	} else if (!pText[6]) {
+		//		U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+		uchar[3] = get_bits(pText[1], 0, 6, pText[0]);
+		uchar[2] = get_bits(pText[3], 4, 2, pText[2]);
+		uchar[1] = get_bits(pText[4], 2, 4, pText[3]);
+		uchar[0] = get_bits(pText[5], 0, 6, pText[4]);
+	}
 	return wc;
 }
 
@@ -438,39 +459,96 @@ Text::operator bool() {
 
 Text::Text(const string &file) :
 		file(file.c_str()) {
+	int wc;
+	if (*this >> wc){
+		if (wc != 0xfeff){
+			this->file.seekg(0, std::ios::beg);
+		}
+	}
+}
+
+bool Text::iterator::operator !=(iterator &end) {
+	return this->eof != end.eof;
+}
+
+Text::iterator& Text::iterator::operator ++() {
+	if (*text >> text->line) {
+		eof = false;
+	} else {
+		eof = text->line.empty();
+	}
+
+	return *this;
+}
+
+String& Text::iterator::operator *() {
+	return text->line;
+}
+
+Text::iterator Text::begin() {
+	bool eof;
+	if (*this >> line) {
+		eof = false;
+	} else {
+		eof = true;
+	}
+
+	return iterator( { this, eof });
+}
+
+Text::iterator Text::end() {
+	return iterator( { this, true });
 }
 
 char Text::str[7];
 
-Text& Text::operator >>(word &v) {
+Text& Text::operator >>(int &unicode) {
 	if (file.get(str[0])) {
 		int length = get_utf8_char_len(str[0]);
 		file.read(str + 1, length - 1);
 		str[length] = 0;
 
-		v = utf2unicode(str);
+		unicode = utf2unicode(str);
 	}
 	return *this;
 }
 
-//String L(const char *s) {
-//	String wstr;
-//	static char str[7];
-//	while ((str[0] = *s++)) {
-//		int length = Text::get_utf8_char_len(str[0]);
-//		for (int i = 1; i < length; ++i)
-//			str[i] = *s++;
-//
-//		str[length] = 0;
-//
-//		wstr += Text::utf2unicode(str);
-//
-//	}
-//	return wstr;
-//}
+String& Text::toString() {
+	vector<String> v;
+	*this >> v;
+	static String tmp;
+	tmp.clear();
+	for (auto &s : v)
+		tmp += s;
+	return tmp;
+}
+
+Text& Text::operator >>(vector<String> &v) {
+	String line;
+	if (v.size()) {
+		for (size_t i = 0; i < v.size(); ++i) {
+			if (*this >> line)
+				v[i] = line;
+			else {
+				if (!line.empty())
+					v[i] = line;
+				break;
+			}
+		}
+	} else {
+		while (*this >> line) {
+			v << line;
+		}
+
+		if (!line.empty())
+			v << line;
+
+	}
+	return *this;
+}
 
 Text& Text::operator >>(String &v) {
-	word wc;
+	int wc;
 	v.clear();
 	while (*this >> wc) {
 		if (wc == '\r' || wc == '\n') {
@@ -479,8 +557,13 @@ Text& Text::operator >>(String &v) {
 			else
 				continue;
 		}
-
-		v += wc;
+		if (wc & 0xffff0000) {
+			wc = this->unicode2jchar(wc);
+			auto jchars = (word*) &wc;
+			v += jchars[0];
+			v += jchars[1];
+		} else
+			v += wc;
 	}
 	return *this;
 }
@@ -488,16 +571,24 @@ Text& Text::operator >>(String &v) {
 Text& Text::operator >>(unordered_map<String, int> &word2id) {
 	word2id.clear();
 	String s;
-	int index = 0;
-	while (*this >> s) {
+	size_t index = 0;
+	for (String &s : *this) {
 		strip(s);
-		word2id[s] = index;
-//		if (index <= 200) {
+		assert(!s.empty());
+//		cout << s << " = " << index << endl;
+//		cout << "s.size() = " << s.size() << endl;
+
+//		if (index == 8102 || index == 8103 || index == 8104 || index == 8105) {
 //			cout << s << " = " << index << endl;
-//			cout << "s.size() = " << s.size() << endl;
 //		}
-		++index;
+
+		assert (word2id.count(s) == 0);
+
+		word2id[s] = index++;
 	}
+	cout << "word2id.size() = " << word2id.size() << endl;
+	cout << "index = " << index << endl;
+	assert (word2id.size() == index);
 	return *this;
 }
 

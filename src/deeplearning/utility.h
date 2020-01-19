@@ -275,21 +275,39 @@ _Ty gcd(_Ty x, _Ty y) {
 }
 
 struct Text {
+	struct iterator{
+		Text *text;
+		bool eof = true;
+
+		iterator& operator++();
+		bool operator!=(iterator& other);
+		String &operator*();
+	};
+
+	String line;
+	int unicode2jchar(int unicode);
+
+	iterator begin();
+	iterator end();
+
 	Text(const string &file);
 	ifstream file;
 
-	Text& operator >>(word &v);
-//	Text& operator >>(string &v);
+	Text& operator >>(int &unicode);
 	Text& operator >>(String &v);
+	Text& operator >>(vector<String> &v);
 	Text& operator >>(unordered_map<String, int> &word2id);
+	String &toString();
 	operator bool();
 	static char str[];
-	static word utf2unicode(const char *pText);
+	static int utf2unicode(const char *pText);
 
 	static const char* unicode2utf(word wc, char *pText = 0);
 	static string& unicode2utf(const String &wstr);
 	static string& unicode2gbk(const String &wstr);
 	static char get_bits(char ch, int start, int size, int shift = 0);
+	static char get_bits(char ch, int start, int size, char _ch);
+	static char get_bits(char ch, int start, int size, char _ch, int _size);
 	static size_t get_utf8_char_len(char byte);
 	static void test_utf_unicode_conversion();
 };

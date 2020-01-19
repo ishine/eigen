@@ -28,6 +28,7 @@ void test_eigen() {
 	cout << "time cost = " << (end - start) << endl;
 }
 
+#include "../ahocorasick/Common.h"
 int main(int argc, char **argv) {
 //	test();
 //	test_matmul();
@@ -70,6 +71,8 @@ int main(int argc, char **argv) {
 	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = "
 			<< sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 
+
+	ahocorasick::initialize();
 	return 0;
 }
 /*
