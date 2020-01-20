@@ -460,8 +460,8 @@ Text::operator bool() {
 Text::Text(const string &file) :
 		file(file.c_str()) {
 	int wc;
-	if (*this >> wc){
-		if (wc != 0xfeff){
+	if (*this >> wc) {
+		if (wc != 0xfeff) {
 			this->file.seekg(0, std::ios::beg);
 		}
 	}
@@ -582,13 +582,13 @@ Text& Text::operator >>(unordered_map<String, int> &word2id) {
 //			cout << s << " = " << index << endl;
 //		}
 
-		assert (word2id.count(s) == 0);
+		assert(word2id.count(s) == 0);
 
 		word2id[s] = index++;
 	}
 	cout << "word2id.size() = " << word2id.size() << endl;
 	cout << "index = " << index << endl;
-	assert (word2id.size() == index);
+	assert(word2id.size() == index);
 	return *this;
 }
 
@@ -613,7 +613,7 @@ VectorI& string2id(const String &s, const unordered_map<String, int> &dict) {
 	for (size_t i = 0; i < s.size(); ++i) {
 		try {
 			v(i) = dict.at(s.substr(i, 1));
-		} catch (std::out_of_range &error) {
+		} catch (std::out_of_range&) {
 			v(i) = dict.at(u"[UNK]");
 		}
 	}
@@ -678,7 +678,7 @@ vector<String>& split(const String &in) {
 }
 
 //#include <locale>         // std::wstring_convert
-
+namespace std {
 int byte_length(const String &value) {
 	int length = 0;
 	for (auto ch : value) {
@@ -694,4 +694,5 @@ String toString(int d) {
 	sstream.clear();
 	sstream << d;
 	return sstream.str();
+}
 }

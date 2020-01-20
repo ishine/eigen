@@ -125,6 +125,10 @@ struct object: color_ptr<_Ty> {
 		return *this->reptr() < *y.reptr();
 	}
 
+	bool operator ==(const _Myt &y) const {
+		return *this->reptr() == *y.reptr();
+	}
+
 	template<typename T> _Myt& operator +=(T &y) {
 		this->reptr(&(*this->reptr() + y));
 		return *this;
@@ -275,13 +279,13 @@ _Ty gcd(_Ty x, _Ty y) {
 }
 
 struct Text {
-	struct iterator{
+	struct iterator {
 		Text *text;
 		bool eof = true;
 
 		iterator& operator++();
-		bool operator!=(iterator& other);
-		String &operator*();
+		bool operator!=(iterator &other);
+		String& operator*();
 	};
 
 	String line;
@@ -297,7 +301,7 @@ struct Text {
 	Text& operator >>(String &v);
 	Text& operator >>(vector<String> &v);
 	Text& operator >>(unordered_map<String, int> &word2id);
-	String &toString();
+	String& toString();
 	operator bool();
 	static char str[];
 	static int utf2unicode(const char *pText);
@@ -406,6 +410,19 @@ extern string workingDirectory;
 #include <sstream>
 extern std::basic_ostringstream<char16_t> sstream;
 
+namespace std {
 int byte_length(const String &value);
 
 String toString(int);
+
+template<typename _Ty>
+vector<_Ty> sample(vector<_Ty> v, int size) {
+	int v_size = v.size();
+	for (int i = 0; i < size; ++i) {
+		int j = i + rand() % (v_size - i);
+		std::swap(v[i], v[j]);
+	}
+	v.resize(size);
+	return v;
+}
+}

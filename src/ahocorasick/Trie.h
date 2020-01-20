@@ -19,9 +19,11 @@ struct Trie {
 
 	object<State> rootState;
 
-	Trie(TrieConfig trieConfig);
+	Trie(const TrieConfig &trieConfig);
 
 	Trie();
+
+	void clear();
 
 	Trie* caseInsensitive();
 
@@ -29,22 +31,27 @@ struct Trie {
 
 	Trie* onlyWholeWords();
 
-	void addKeyword(String keyword, String value);
-	void update(String keyword, String value);
-	void remove(String keyword);
+	void addKeyword(const String &keyword, const String &value);
+	void update(const String &keyword, const String &value);
+	void remove(const String &keyword);
 	void build(std::map<String, String> &map);
 
-	vector<Token> tokenize(String text);
+	vector<Token> tokenize(const String &text);
 
-	Token createFragment(Emit emit, String text, int lastCollectedPosition);
-	vector<Emit> parseText(String text);
-	void removePartialMatches(String searchText, vector<Emit> collectedEmits);
+	Token createFragment(const Emit &emit, const String &text,
+			int lastCollectedPosition);
 
-	static object<State> getState(object<State> currentState,
-			char16_t transition);
+	vector<Emit> parseText(const String &text);
+
+	void removePartialMatches(const String &searchText,
+			vector<Emit> &collectedEmits);
+
+	static State* getState(State *currentState, char16_t transition);
+
 	void constructFailureStates();
 
 	void updateFailureStates(vector<State::Transition> &queue, String keyword);
+
 	void deleteFailureStates(State *parent, char16_t character, String keyword,
 			int numOfDeletion);
 

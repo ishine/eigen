@@ -1,3 +1,93 @@
+/*
+ int test_matmul() {
+ const int m = 80;
+ const int k = 4;
+ const int n = 4;
+ int Matrix1[m][k] = { };
+ int Matrix2[k][n] = { };
+ int Matrix[m][n] = { };
+ clock_t start, end;
+ cout << "Matrix1:\n";
+ int i, j;
+ for (i = 0; i < m; i++) {
+ for (j = 0; j < k; j++) {
+ Matrix1[i][j] = i + j;
+ cout << Matrix1[i][j] << '\t';
+ }
+ cout << endl;
+ }
+ cout << "Matrix2:\n";
+ for (i = 0; i < k; i++) {
+ for (j = 0; j < n; j++) {
+ Matrix2[i][j] = 2 * i - j;
+ cout << Matrix2[i][j] << '\t';
+ }
+ cout << endl;
+ }
+
+ //	omp_set_num_threads(3);
+ int pnum = omp_get_num_procs();
+ cout << "Thread_pnum =" << pnum << endl;
+ int l;
+ start = clock();
+ //开始计时
+ #pragma omp parallel shared(Matrix1, Matrix2, Matrix) private(j, l)
+ {
+ #pragma omp for schedule(dynamic)
+ for (i = 0; i < m; i++) {
+ cout << "Thread_num:" << omp_get_thread_num() << '\n';
+ for (j = 0; j < n; j++) {
+ for (l = 0; l < k; l++) {
+ Matrix[i][j] += Matrix1[i][l] * Matrix2[l][j];
+ }
+ }
+ }
+ }
+ end = clock();
+ cout << "Matrix multiply time:" << (end - start) << endl;
+
+ //	cout << "The result is:\n";
+ //	for (i = 0; i < m; i++) {
+ //		for (j = 0; j < n; j++) {
+ //			cout << Matrix[i][j] << '\t';
+ //		}
+ //		cout << endl;
+ //	}
+ return 0;
+ }
+ int test() {
+
+ int i;
+
+ printf("*Hello World! Thread: %d\n", omp_get_thread_num());
+
+ #pragma omp parallel for
+ for (i = 0; i < 32; i += 3) {
+ if (i % 2)
+ printf("Hello World!  Thread: %d, odd %d, \n", omp_get_thread_num(),
+ i);
+ else
+ printf("Hello World!  Thread: %d, even %d, \n",
+ omp_get_thread_num(), i);
+ }
+
+ return 0;
+
+ }
+
+ */
+/**
+ ctrl + tab  switch between .h and .cpp
+ shift + alt + t
+ shift + alt + m
+ ctrl  + alt + s
+ ctrl + alt + h
+ ctrl + o
+ Ctrl + Shift + G
+ Ctrl + Shift + Minus
+ Ctrl + Shift + Plus
+ */
+
 //http://eigen.tuxfamily.org/dox/
 //https://blog.csdn.net/zong596568821xp/article/details/81134406
 
@@ -28,8 +118,50 @@ void test_eigen() {
 	cout << "time cost = " << (end - start) << endl;
 }
 
-#include "../ahocorasick/Common.h"
+struct Object {
+	Object() {
+		x = y = z = 0;
+		kinder = new Object(2, 2, 2);
+		cout << "in " << __PRETTY_FUNCTION__ << endl;
+	}
+
+	Object(int x, int y, int z) :
+			x(x), y(y), z(z) {
+		cout << "in " << __PRETTY_FUNCTION__ << endl;
+	}
+
+	~Object() {
+		cout << "in " << __PRETTY_FUNCTION__ << endl;
+	}
+
+	void reset() {
+		x = y = z = 1;
+		kinder = nullptr;
+	}
+
+	int x, y, z;
+	object<Object> kinder;
+	friend std::ostream& operator <<(std::ostream &cout, const Object &p) {
+		cout << "x = " << p.x << ",\t";
+		cout << "y = " << p.y << ",\t";
+		cout << "z = " << p.z << endl;
+		return cout;
+	}
+};
+
+Object return_tmp() {
+	Object obj;
+	obj.reset();
+	return obj;
+}
+
+#include "../ahocorasick/test.h"
 int main(int argc, char **argv) {
+	{
+		Object old = return_tmp();
+		Object tmp = old;
+		cout << tmp;
+	}
 //	test();
 //	test_matmul();
 //	test_eigen();
@@ -71,96 +203,8 @@ int main(int argc, char **argv) {
 	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = "
 			<< sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 
-
 	ahocorasick::initialize();
+//	ahocorasick::testUpdate();
+	ahocorasick::testDelete();
 	return 0;
 }
-/*
-int test_matmul() {
-	const int m = 80;
-	const int k = 4;
-	const int n = 4;
-	int Matrix1[m][k] = { };
-	int Matrix2[k][n] = { };
-	int Matrix[m][n] = { };
-	clock_t start, end;
-	cout << "Matrix1:\n";
-	int i, j;
-	for (i = 0; i < m; i++) {
-		for (j = 0; j < k; j++) {
-			Matrix1[i][j] = i + j;
-			cout << Matrix1[i][j] << '\t';
-		}
-		cout << endl;
-	}
-	cout << "Matrix2:\n";
-	for (i = 0; i < k; i++) {
-		for (j = 0; j < n; j++) {
-			Matrix2[i][j] = 2 * i - j;
-			cout << Matrix2[i][j] << '\t';
-		}
-		cout << endl;
-	}
-
-//	omp_set_num_threads(3);
-	int pnum = omp_get_num_procs();
-	cout << "Thread_pnum =" << pnum << endl;
-	int l;
-	start = clock();
-	//开始计时
-#pragma omp parallel shared(Matrix1, Matrix2, Matrix) private(j, l)
-	{
-#pragma omp for schedule(dynamic)
-		for (i = 0; i < m; i++) {
-			cout << "Thread_num:" << omp_get_thread_num() << '\n';
-			for (j = 0; j < n; j++) {
-				for (l = 0; l < k; l++) {
-					Matrix[i][j] += Matrix1[i][l] * Matrix2[l][j];
-				}
-			}
-		}
-	}
-	end = clock();
-	cout << "Matrix multiply time:" << (end - start) << endl;
-
-//	cout << "The result is:\n";
-//	for (i = 0; i < m; i++) {
-//		for (j = 0; j < n; j++) {
-//			cout << Matrix[i][j] << '\t';
-//		}
-//		cout << endl;
-//	}
-	return 0;
-}
-int test() {
-
-	int i;
-
-	printf("*Hello World! Thread: %d\n", omp_get_thread_num());
-
-#pragma omp parallel for
-	for (i = 0; i < 32; i += 3) {
-		if (i % 2)
-			printf("Hello World!  Thread: %d, odd %d, \n", omp_get_thread_num(),
-					i);
-		else
-			printf("Hello World!  Thread: %d, even %d, \n",
-					omp_get_thread_num(), i);
-	}
-
-	return 0;
-
-}
-
-*/
-/**
- ctrl + tab  switch between .h and .cpp
- shift + alt + t
- shift + alt + m
- ctrl  + alt + s
- ctrl + alt + h
- ctrl + o
- Ctrl + Shift + G
- Ctrl + Shift + Minus
- Ctrl + Shift + Plus
- */

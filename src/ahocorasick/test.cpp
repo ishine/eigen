@@ -1,21 +1,20 @@
-#include "Common.h"
+#include "test.h"
 
 namespace ahocorasick {
 
 vector<String> loadDictionary(const string &path) {
 	vector<String> dictionary;
-	for (const auto &s : Text(path)){
+	for (const auto &s : Text(path)) {
 		dictionary.push_back(s);
 	}
 
-	cout << "dictionary.front() = " << dictionary.front() << endl;
-	cout << "dictionary.back() = " << dictionary.back() << endl;
 	return dictionary;
 }
 
 vector<String> loadDictionary(const string &path, int limit) {
 	vector<String> dictionary(limit);
 	Text(path) >> dictionary;
+//	cout << "dictionary.size() = " << dictionary.size() << endl;
 	return dictionary;
 }
 
@@ -46,11 +45,10 @@ std::map<String, String> dictionaryMap;
 String text;
 bool debug = false;
 //	String wordsToBeDeleted = "dictatorial";
-String wordsToBeDeleted = u"aa";
 
 void initialize() {
-
-	for (String &word : loadDictionary()) {
+	for (String &word : std::sample(
+			loadDictionary("../corpus/ahocorasick/en/dictionary.txt"), 10000)) {
 		dictionaryMap[word] = word;
 	}
 //			dictionaryMap.remove(wordsToBeDeleted);
@@ -67,8 +65,8 @@ Trie naiveUpdate() {
 
 	Trie ahoCorasickNaive;
 
-	for (auto p = dictionaryMap.begin(); p != dictionaryMap.end(); ++p) {
-		ahoCorasickNaive.update(p->first, p->second);
+	for (auto &p : dictionaryMap) {
+		ahoCorasickNaive.update(p.first, p.second);
 		if (debug)
 			cout << ahoCorasickNaive.rootState;
 	}
@@ -108,14 +106,10 @@ int countNaiveConstruct() {
 	return result.size();
 }
 
-Trie naiveDelete() {
+Trie naiveDelete(const String &wordsToBeDeleted) {
 	Trie ahoCorasickNaive;
 
-	std::map<String, String> dictionary;
-	dictionary = dictionaryMap;
-	dictionary[wordsToBeDeleted] = wordsToBeDeleted;
-
-	ahoCorasickNaive.build(dictionary);
+	ahoCorasickNaive.build(dictionaryMap);
 
 	if (debug) {
 		printf("before deletion:\n");
@@ -129,4 +123,41 @@ Trie naiveDelete() {
 	printf("construction finished\n");
 	return ahoCorasickNaive;
 }
+
+void testUpdate() {
+	Trie trieConstruction = naiveConstruct();
+	Trie trieUpdate = naiveUpdate();
+
+	assert(*trieConstruction.rootState == *trieUpdate.rootState);
+	assert(
+			trieConstruction.parseText(text).size()
+					== trieUpdate.parseText(text).size());
+}
+
+void testDelete() {
+
+	vector<String> keywords;
+	for (auto &p : dictionaryMap) {
+		keywords.push_back(p.first);
+	}
+
+	for (String &wordsToBeDeleted : keywords) {
+		cout << "testing word: " << wordsToBeDeleted << endl;
+
+		Trie trieDelete = naiveDelete(wordsToBeDeleted);
+
+		dictionaryMap.erase(wordsToBeDeleted);
+		Trie trieConstruct = naiveConstruct();
+		dictionaryMap[wordsToBeDeleted] = wordsToBeDeleted;
+
+		assert(*trieConstruct.rootState == *trieDelete.rootState);
+
+		assert(
+				trieConstruct.parseText(text).size()
+						== trieDelete.parseText(text).size());
+
+	}
+
+}
+
 }

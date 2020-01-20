@@ -7,9 +7,8 @@
  */
 #include "Trie.h"
 
-Trie::Trie(TrieConfig trieConfig) {
-	this->trieConfig = trieConfig;
-	this->rootState = new State();
+Trie::Trie(const TrieConfig &trieConfig) :
+		trieConfig(trieConfig), rootState(new State()) {
 }
 
 Trie::Trie() :
@@ -31,19 +30,19 @@ Trie* Trie::onlyWholeWords() {
 	return this;
 }
 
-void Trie::addKeyword(String keyword, String value) {
+void Trie::addKeyword(const String &keyword, const String &value) {
 	if (keyword.size() == 0) {
 		return;
 	}
 	State *currentState = this->rootState;
-	for (char16_t character : keyword) {
+	for (auto character : keyword) {
 		currentState = currentState->addState(character);
 	}
 
-	currentState->addEmit(State::Tuple(keyword.size(), value));
+	currentState->addEmit(State::Tuple( { keyword.size(), value }));
 }
 
-void Trie::update(String keyword, String value) {
+void Trie::update(const String &keyword, const String &value) {
 	if (keyword.size() == 0) {
 		return;
 	}
@@ -58,12 +57,12 @@ void Trie::update(String keyword, String value) {
 	for (auto character : keyword) {
 		currentState = currentState->updateState(character, start);
 	}
-	currentState->updateEmit(State::Tuple(keyword.size(), value));
+	currentState->updateEmit(State::Tuple( { keyword.size(), value }));
 
 	updateFailureStates(start, keyword);
 }
 
-void Trie::remove(String keyword) {
+void Trie::remove(const String &keyword) {
 	if (keyword.size() == 0) {
 		return;
 	}
@@ -75,16 +74,18 @@ void Trie::remove(String keyword) {
 	std::stack<State*> parent;
 	for (auto character : keyword) {
 		parent.push(currentState);
-		currentState = currentState->nextStateIgnoreRootState(character);
-		if (currentState == nullptr)
+		try {
+			currentState = currentState->success.at(character);
+		} catch (std::out_of_range&) {
 			return;
+		}
 	}
 
 	currentState->deleteEmit(keyword.size());
 
 	char16_t character = 0;
 	int numOfDeletion = 0;
-	for (int i = keyword.size() - 1; i >= 0; --i) {
+	for (size_t i = keyword.size() - 1; i != String::npos; --i) {
 		if (!currentState->success.empty())
 			break;
 
@@ -111,10 +112,10 @@ void Trie::remove(String keyword) {
 }
 
 void Trie::build(std::map<String, String> &map) {
-	for (auto p = map.begin(); p != map.end(); ++p) {
-		this->addKeyword(p->first, p->second);
+	for (auto &p : map) {
+		addKeyword(p.first, p.second);
 	}
-	this->constructFailureStates();
+	constructFailureStates();
 }
 
 //	vector<Token> Trie::tokenize(String text) {
@@ -148,7 +149,7 @@ void Trie::build(std::map<String, String> &map) {
 //				emit);
 //	}
 
-vector<Emit> Trie::parseText(String text) {
+vector<Emit> Trie::parseText(const String &text) {
 
 	int position = 0;
 	State *currentState = this->rootState;
@@ -193,9 +194,9 @@ vector<Emit> Trie::parseText(String text) {
 //		}
 //	}
 
-object<State> Trie::getState(object<State> currentState, char16_t transition) {
+State* Trie::getState(State *currentState, char16_t transition) {
 	for (;;) {
-		object<State> state = currentState->nextState(transition);
+		State *state = currentState->nextState(transition);
 		if (state != nullptr)
 			return state;
 		currentState = currentState->failure;
@@ -206,7 +207,8 @@ void Trie::constructFailureStates() {
 	std::queue<State*> queue;
 
 // First, set the fail state of all depth 1 states to the root state
-	for (State *depthOneState : rootState->getStates()) {
+	for (auto &p : rootState->success) {
+		State *depthOneState = p.second;
 		depthOneState->failure = rootState;
 		queue.push(depthOneState);
 	}
@@ -216,13 +218,12 @@ void Trie::constructFailureStates() {
 		State *currentState = queue.front();
 		queue.pop();
 
-		for (auto p = currentState->success.begin();
-				p != currentState->success.end(); ++p) {
-			State *targetState = p->second;
+		for (auto &p : currentState->success) {
+			State *targetState = p.second;
 			queue.push(targetState);
 
 			State *newFailureState = State::newFailureState(currentState,
-					p->first);
+					p.first);
 			targetState->failure = newFailureState;
 			targetState->addEmit(newFailureState->emits);
 		}
@@ -231,7 +232,7 @@ void Trie::constructFailureStates() {
 
 void Trie::updateFailureStates(vector<State::Transition> &queue,
 		String keyword) {
-	for (State::Transition &transit : queue) {
+	for (auto &transit : queue) {
 		transit.set_failure();
 	}
 
@@ -241,7 +242,6 @@ void Trie::updateFailureStates(vector<State::Transition> &queue,
 	vector<State*> list;
 	if (keywordHead.parent->depth == 0) {
 		list = keywordHead.parent->locate_state(keywordHead.character);
-
 	} else {
 		int mid = keyword.size() - (queue.size() - 1);
 		String _keyword = keyword.substr(mid - 1);
@@ -277,6 +277,10 @@ void Trie::deleteFailureStates(State *parent, char16_t character,
 	}
 
 	State::deleteFailureStates(list, keyword, char_length);
+}
+
+void Trie::clear() {
+	rootState = new State;
 }
 
 void Trie::storeEmits(int position, State *currentState,

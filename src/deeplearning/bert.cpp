@@ -1004,23 +1004,6 @@ vector<String> whitespace_tokenize(String &text) {
 FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 		BasicTokenizer(do_lower_case), WordpieceTokenizer(vocab_file) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	String sep = { '[', 'S', 'E', 'P', ']' };
-	cout << "sep = " << sep << endl;
-	cout << "sep.size() = " << sep.size() << endl;
-
-	assert(sep == sep);
-	String _sep = u"[SEP]";
-	assert(u"[SEP]" == sep);
-	for (auto p = vocab.begin(); p != vocab.end(); ++p) {
-		if (p->first == sep) {
-			cout << "index = " << p->second << endl;
-		}
-	}
-
-	int index = this->vocab.at(u"[SEP]");
-	cout << "index = " << index << endl;
-	index = this->vocab.at(sep);
-	cout << "index = " << index << endl;
 }
 
 vector<String>& FullTokenizer::tokenize(String &text) {
@@ -1043,7 +1026,7 @@ VectorI& FullTokenizer::convert_tokens_to_ids(vector<String> &items) {
 	for (auto &item : items) {
 		try {
 			output(index) = vocab.at(item);
-		} catch (std::out_of_range &error) {
+		} catch (std::out_of_range&) {
 			item = lstrip(item);
 			output(index) = -vocab.at(item);
 		}
