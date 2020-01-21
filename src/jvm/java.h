@@ -216,7 +216,7 @@ struct FindClass<double> {
 template<typename _Ty>
 struct FindClass<vector<_Ty>> {
 	static const string name;
-	using jobject = jobject;
+//	using jobject = jobject;
 	using jarray = jobjectArray;
 	static jobject* (JNIEnv::*GetArrayElements)(jarray array, jboolean *isCopy);
 	static void (JNIEnv::*ReleaseArrayElements)(jarray array, jobject *elems,

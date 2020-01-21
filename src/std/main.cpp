@@ -90,7 +90,6 @@
 
 //http://eigen.tuxfamily.org/dox/
 //https://blog.csdn.net/zong596568821xp/article/details/81134406
-
 #include <time.h>
 #include <string>
 #include <iostream>
@@ -203,8 +202,9 @@ int main(int argc, char **argv) {
 	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = "
 			<< sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 
-	ahocorasick::initialize();
-//	ahocorasick::testUpdate();
+	ahocorasick::initialize("../corpus/ahocorasick/en/dictionary.txt", 100);
 	ahocorasick::test();
+	void print_primitive_type_size();
+	print_primitive_type_size();
 	return 0;
 }

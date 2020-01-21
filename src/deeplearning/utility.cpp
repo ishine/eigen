@@ -212,31 +212,6 @@ HDF5Reader& HDF5Reader::operator >>(Tensor &arr) {
 	return *this;
 }
 
-void print_primitive_type_size() {
-	cout << "sizeof(char) = " << sizeof(char) << endl;
-	cout << "sizeof(wchar_t) = " << sizeof(wchar_t) << endl;
-	cout << "sizeof(short) = " << sizeof(short) << endl;
-	cout << "sizeof(int) = " << sizeof(int) << endl;
-	cout << "sizeof(long) = " << sizeof(long) << endl;
-	cout << "sizeof(long long) = " << sizeof(long long) << endl;
-
-	cout << "sizeof(unsigned char) = " << sizeof(unsigned char) << endl;
-	cout << "sizeof(unsigned wchar_t) = " << sizeof(unsigned wchar_t) << endl;
-	cout << "sizeof(unsigned short) = " << sizeof(unsigned short) << endl;
-	cout << "sizeof(unsigned int) = " << sizeof(unsigned int) << endl;
-	cout << "sizeof(unsigned long) = " << sizeof(unsigned long) << endl;
-	cout << "sizeof(unsigned long long) = " << sizeof(unsigned long long)
-			<< endl;
-
-	cout << "sizeof(float) = " << sizeof(float) << endl;
-	cout << "sizeof(double) = " << sizeof(double) << endl;
-	cout << "sizeof(byte) = " << sizeof(byte) << endl;
-	cout << "sizeof(word) = " << sizeof(word) << endl;
-	cout << "sizeof(dword) = " << sizeof(dword) << endl;
-	cout << "sizeof(qword) = " << sizeof(qword) << endl;
-	cout << "sizeof(void*) = " << sizeof(void*) << endl;
-}
-
 vector<double> convert2vector(const Matrix &m, int row_index) {
 	auto start = m.data() + row_index * m.cols();
 
@@ -335,10 +310,10 @@ void Text::test_utf_unicode_conversion() {
 }
 
 int Text::unicode2jchar(int unicode) {
-	int res_jchars;
+	int res_jchars = 0xdc00d800;
 	auto jchars = (word*) &res_jchars;
-	jchars[0] = 0xd800;
-	jchars[1] = 0xdc00;
+//	jchars[0] = 0xd800;
+//	jchars[1] = 0xdc00;
 
 	unicode -= 65536;
 
@@ -459,11 +434,14 @@ Text::operator bool() {
 
 Text::Text(const string &file) :
 		file(file.c_str()) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 	int wc;
 	if (*this >> wc) {
 		if (wc != 0xfeff) {
 			this->file.seekg(0, std::ios::beg);
 		}
+#pragma GCC diagnostic pop
 	}
 }
 
@@ -552,8 +530,11 @@ Text& Text::operator >>(vector<String> &v) {
 }
 
 Text& Text::operator >>(String &v) {
-	int wc;
 	v.clear();
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+	int wc;
+
 	while (*this >> wc) {
 		if (wc == '\r' || wc == '\n') {
 			if (v.size())
@@ -568,7 +549,9 @@ Text& Text::operator >>(String &v) {
 			v += jchars[1];
 		} else
 			v += wc;
+
 	}
+#pragma GCC diagnostic pop
 	return *this;
 }
 

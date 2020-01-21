@@ -12,9 +12,10 @@ vector<String> loadDictionary(const string &path) {
 }
 
 vector<String> loadDictionary(const string &path, int limit) {
-	vector<String> dictionary(limit);
+	vector<String> dictionary;
 	Text(path) >> dictionary;
-//	cout << "dictionary.size() = " << dictionary.size() << endl;
+	if (limit)
+		return std::sample(dictionary, limit);
 	return dictionary;
 }
 
@@ -47,22 +48,18 @@ bool debug = false;
 Trie instance;
 //	String wordsToBeDeleted = "dictatorial";
 
-void initialize() {
-//	for (String &word : std::sample(
-//			loadDictionary("../corpus/ahocorasick/en/dictionary.txt"), 10000)) {
-//		dictionaryMap[word] = word;
-//	}
-	for (String &word : loadDictionary(
-			"../corpus/ahocorasick/en/dictionary.txt")) {
+void initialize(const string &path, int limit) {
+	for (String &word : loadDictionary(path, limit)) {
 		dictionaryMap[word] = word;
 	}
-//			dictionaryMap.remove(wordsToBeDeleted);
 
 	cout << "dictionary.size() = " << dictionaryMap.size() << endl;
 	text = loadText("text.txt");
 	if (dictionaryMap.size() <= 10) {
 		debug = true;
 	}
+
+	instance.build(dictionaryMap);
 }
 
 Trie naiveUpdate() {
@@ -152,7 +149,7 @@ void test() {
 //	std::shuffle(keywords.begin(), keywords.end(), std::random_device());
 
 	Trie trieDynamic = naiveConstruct();
-	Trie trieWhole = naiveConstruct();
+
 	for (String &wordsToBeDeleted : keywords) {
 		cout << "testing word: " << wordsToBeDeleted << endl;
 
@@ -170,10 +167,10 @@ void test() {
 
 		trieDynamic.update(wordsToBeDeleted, wordsToBeDeleted);
 
-		assert(*trieWhole.rootState == *trieDynamic.rootState);
+		assert(*instance.rootState == *trieDynamic.rootState);
 
 		assert(
-				trieWhole.parseText(text).size()
+				instance.parseText(text).size()
 						== trieDynamic.parseText(text).size());
 
 	}

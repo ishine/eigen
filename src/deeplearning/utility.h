@@ -249,8 +249,6 @@ string& nerModelsDirectory();
 string& serviceBinary();
 string nerBinary(const string &service);
 
-void print_primitive_type_size();
-
 #include <assert.h>
 
 vector<double> convert2vector(const Matrix &m, int row_index);

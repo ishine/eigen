@@ -97,47 +97,47 @@ jdoubleArray Object(JNIEnv *env, const vector<double> &s) {
 
 const string FindClass<bool>::name = "Z";
 FindClass<bool>::jobject* (JNIEnv::*FindClass<bool>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetBooleanArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetBooleanArrayElements;
 void (JNIEnv::*FindClass<bool>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseBooleanArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseBooleanArrayElements;
 
 const string FindClass<byte>::name = "B";
 FindClass<byte>::jobject* (JNIEnv::*FindClass<byte>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetByteArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetByteArrayElements;
 void (JNIEnv::*FindClass<byte>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseByteArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseByteArrayElements;
 
 const string FindClass<short>::name = "S";
 FindClass<short>::jobject* (JNIEnv::*FindClass<short>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetShortArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetShortArrayElements;
 void (JNIEnv::*FindClass<short>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseShortArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseShortArrayElements;
 
 const string FindClass<int>::name = "I";
 FindClass<int>::jobject* (JNIEnv::*FindClass<int>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetIntArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetIntArrayElements;
 void (JNIEnv::*FindClass<int>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseIntArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseIntArrayElements;
 
 const string FindClass<long>::name = "J";
 FindClass<long>::jobject* (JNIEnv::*FindClass<long>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetLongArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetLongArrayElements;
 void (JNIEnv::*FindClass<long>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseLongArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseLongArrayElements;
 
 const string FindClass<float>::name = "F";
 FindClass<float>::jobject* (JNIEnv::*FindClass<float>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetFloatArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetFloatArrayElements;
 void (JNIEnv::*FindClass<float>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseFloatArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseFloatArrayElements;
 
 const string FindClass<double>::name = "D";
 FindClass<double>::jobject* (JNIEnv::*FindClass<double>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = JNIEnv::GetDoubleArrayElements;
+		jarray array, jboolean *isCopy) = &JNIEnv::GetDoubleArrayElements;
 void (JNIEnv::*FindClass<double>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = JNIEnv::ReleaseDoubleArrayElements;
+		jobject *elems, jint mode) = &JNIEnv::ReleaseDoubleArrayElements;
 
-const string FindClass<String>::name = "Ljava.lang.String;";
+const string FindClass<String>::name = "java/lang/String";
 
 JArray<String>::JArray(JNIEnv *env, jobjectArray arr) :
 		env(env), arr(arr) {
@@ -188,3 +188,36 @@ std::ostream& operator <<(std::ostream &cout, const JArray<int> &v) {
 	return cout;
 }
 
+void print_primitive_type_size() {
+	cout << "sizeof(jchar) = " << sizeof(jchar) << endl;
+	cout << "sizeof(jbyte) = " << sizeof(jbyte) << endl;
+	cout << "sizeof(jboolean) = " << sizeof(jboolean) << endl;
+	cout << "sizeof(jshort) = " << sizeof(jshort) << endl;
+	cout << "sizeof(jint) = " << sizeof(jint) << endl;
+	cout << "sizeof(jlong) = " << sizeof(jlong) << endl;
+	cout << "sizeof(jfloat) = " << sizeof(jfloat) << endl;
+	cout << "sizeof(jdouble) = " << sizeof(jdouble) << endl;
+
+	cout << "sizeof(char) = " << sizeof(char) << endl;
+	cout << "sizeof(wchar_t) = " << sizeof(wchar_t) << endl;
+	cout << "sizeof(short) = " << sizeof(short) << endl;
+	cout << "sizeof(int) = " << sizeof(int) << endl;
+	cout << "sizeof(long) = " << sizeof(long) << endl;
+	cout << "sizeof(long long) = " << sizeof(long long) << endl;
+
+	cout << "sizeof(unsigned char) = " << sizeof(unsigned char) << endl;
+	cout << "sizeof(unsigned wchar_t) = " << sizeof(unsigned wchar_t) << endl;
+	cout << "sizeof(unsigned short) = " << sizeof(unsigned short) << endl;
+	cout << "sizeof(unsigned int) = " << sizeof(unsigned int) << endl;
+	cout << "sizeof(unsigned long) = " << sizeof(unsigned long) << endl;
+	cout << "sizeof(unsigned long long) = " << sizeof(unsigned long long)
+			<< endl;
+
+	cout << "sizeof(float) = " << sizeof(float) << endl;
+	cout << "sizeof(double) = " << sizeof(double) << endl;
+	cout << "sizeof(byte) = " << sizeof(byte) << endl;
+	cout << "sizeof(word) = " << sizeof(word) << endl;
+	cout << "sizeof(dword) = " << sizeof(dword) << endl;
+	cout << "sizeof(qword) = " << sizeof(qword) << endl;
+	cout << "sizeof(void*) = " << sizeof(void*) << endl;
+}

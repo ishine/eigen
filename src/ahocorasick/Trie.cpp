@@ -330,6 +330,8 @@ void Trie::storeEmits(int position, State *currentState, vector<int> &begin,
 		begin.push_back(position - emit.char_length);
 		end.push_back(position);
 		value.push_back(emit.value);
+		cout << "begin = " << begin.back() << '\t' << "end = " << end.back()
+				<< '\t' << "value = " << value.back() << endl;
 	}
 }
 

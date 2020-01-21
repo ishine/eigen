@@ -25,7 +25,7 @@ Trie naiveConstruct();
 Trie naiveDelete(const String &wordsToBeDeleted);
 
 int countNaiveConstruct();
-void initialize();
+void initialize(const string &path, int limit = 0);
 void testUpdate();
 void test();
 }
