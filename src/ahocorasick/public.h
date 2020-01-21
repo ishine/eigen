@@ -9,6 +9,7 @@ namespace ahocorasick {
 extern std::map<String, String> dictionaryMap;
 extern String text;
 extern bool debug;
+extern Trie instance;
 
 vector<String> loadDictionary(const string &path =
 		"../corpus/ahocorasick/en/dictionary.txt");
@@ -26,5 +27,5 @@ Trie naiveDelete(const String &wordsToBeDeleted);
 int countNaiveConstruct();
 void initialize();
 void testUpdate();
-void testDelete();
+void test();
 }

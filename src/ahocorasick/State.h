@@ -138,3 +138,4 @@ struct State {
 	void deleteFailureStates(State *parent, const String &keyword,
 			int char_length);
 };
+

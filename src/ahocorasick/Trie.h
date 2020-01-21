@@ -33,7 +33,7 @@ struct Trie {
 
 	void addKeyword(const String &keyword, const String &value);
 	void update(const String &keyword, const String &value);
-	void remove(const String &keyword);
+	void erase(const String &keyword);
 	void build(std::map<String, String> &map);
 
 	vector<Token> tokenize(const String &text);
@@ -42,6 +42,8 @@ struct Trie {
 			int lastCollectedPosition);
 
 	vector<Emit> parseText(const String &text);
+	void parseText(const unsigned short *text, int length, vector<int> &begin,
+			vector<int> &end, vector<String> &value);
 
 	void removePartialMatches(const String &searchText,
 			vector<Emit> &collectedEmits);
@@ -57,4 +59,8 @@ struct Trie {
 
 	void storeEmits(int position, State *currentState,
 			vector<Emit> &collectedEmits);
+
+	void storeEmits(int position, State *currentState, vector<int> &begin,
+			vector<int> &end, vector<String> &value);
 };
+

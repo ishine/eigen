@@ -1,4 +1,4 @@
-#include "test.h"
+#include "public.h"
 
 namespace ahocorasick {
 
@@ -44,11 +44,16 @@ String loadText(const string &path) {
 std::map<String, String> dictionaryMap;
 String text;
 bool debug = false;
+Trie instance;
 //	String wordsToBeDeleted = "dictatorial";
 
 void initialize() {
-	for (String &word : std::sample(
-			loadDictionary("../corpus/ahocorasick/en/dictionary.txt"), 10000)) {
+//	for (String &word : std::sample(
+//			loadDictionary("../corpus/ahocorasick/en/dictionary.txt"), 10000)) {
+//		dictionaryMap[word] = word;
+//	}
+	for (String &word : loadDictionary(
+			"../corpus/ahocorasick/en/dictionary.txt")) {
 		dictionaryMap[word] = word;
 	}
 //			dictionaryMap.remove(wordsToBeDeleted);
@@ -58,7 +63,6 @@ void initialize() {
 	if (dictionaryMap.size() <= 10) {
 		debug = true;
 	}
-
 }
 
 Trie naiveUpdate() {
@@ -116,7 +120,7 @@ Trie naiveDelete(const String &wordsToBeDeleted) {
 		cout << ahoCorasickNaive.rootState;
 	}
 
-	ahoCorasickNaive.remove(wordsToBeDeleted);
+	ahoCorasickNaive.erase(wordsToBeDeleted);
 	if (debug)
 		cout << ahoCorasickNaive.rootState;
 
@@ -134,30 +138,45 @@ void testUpdate() {
 					== trieUpdate.parseText(text).size());
 }
 
-void testDelete() {
+//#include <algorithm>
+//#include <random>
+void test() {
 
 	vector<String> keywords;
 	for (auto &p : dictionaryMap) {
 		keywords.push_back(p.first);
 	}
 
+	srand(time(NULL));
+	std::random_shuffle(keywords.begin(), keywords.end());
+//	std::shuffle(keywords.begin(), keywords.end(), std::random_device());
+
+	Trie trieDynamic = naiveConstruct();
+	Trie trieWhole = naiveConstruct();
 	for (String &wordsToBeDeleted : keywords) {
 		cout << "testing word: " << wordsToBeDeleted << endl;
 
-		Trie trieDelete = naiveDelete(wordsToBeDeleted);
+		trieDynamic.erase(wordsToBeDeleted);
 
 		dictionaryMap.erase(wordsToBeDeleted);
 		Trie trieConstruct = naiveConstruct();
 		dictionaryMap[wordsToBeDeleted] = wordsToBeDeleted;
 
-		assert(*trieConstruct.rootState == *trieDelete.rootState);
+		assert(*trieConstruct.rootState == *trieDynamic.rootState);
 
 		assert(
 				trieConstruct.parseText(text).size()
-						== trieDelete.parseText(text).size());
+						== trieDynamic.parseText(text).size());
+
+		trieDynamic.update(wordsToBeDeleted, wordsToBeDeleted);
+
+		assert(*trieWhole.rootState == *trieDynamic.rootState);
+
+		assert(
+				trieWhole.parseText(text).size()
+						== trieDynamic.parseText(text).size());
 
 	}
-
 }
 
 }

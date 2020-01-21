@@ -467,6 +467,10 @@ Text::Text(const string &file) :
 	}
 }
 
+Text::iterator::iterator(Text *text, bool eof) :
+		text(text), eof(eof) {
+}
+
 bool Text::iterator::operator !=(iterator &end) {
 	return this->eof != end.eof;
 }
@@ -493,11 +497,11 @@ Text::iterator Text::begin() {
 		eof = true;
 	}
 
-	return iterator( { this, eof });
+	return iterator(this, eof);
 }
 
 Text::iterator Text::end() {
-	return iterator( { this, true });
+	return iterator(this, true);
 }
 
 char Text::str[7];

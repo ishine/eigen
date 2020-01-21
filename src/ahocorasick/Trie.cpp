@@ -43,12 +43,8 @@ void Trie::addKeyword(const String &keyword, const String &value) {
 }
 
 void Trie::update(const String &keyword, const String &value) {
-	if (keyword.size() == 0) {
+	if (keyword.empty()) {
 		return;
-	}
-
-	if (keyword == u"genesis") {
-		cout << "update " << keyword << "= " << value << endl;
 	}
 
 	vector<State::Transition> start;
@@ -62,7 +58,7 @@ void Trie::update(const String &keyword, const String &value) {
 	updateFailureStates(start, keyword);
 }
 
-void Trie::remove(const String &keyword) {
+void Trie::erase(const String &keyword) {
 	if (keyword.size() == 0) {
 		return;
 	}
@@ -174,6 +170,30 @@ vector<Emit> Trie::parseText(const String &text) {
 	return collectedEmits;
 }
 
+void Trie::parseText(const unsigned short *text, int length, vector<int> &begin,
+		vector<int> &end, vector<String> &value) {
+
+	int position = 0;
+	State *currentState = this->rootState;
+	for (int i = 0; i < length; ++i) {
+		auto character = text[i];
+//			if (trieConfig.isCaseInsensitive()) {
+//				character = Character.toLowerCase(character);
+//			}
+		currentState = getState(currentState, character);
+		storeEmits(++position, currentState, begin, end, value);
+	}
+
+	if (trieConfig.isOnlyWholeWords()) {
+//			removePartialMatches(text, collectedEmits);
+	}
+
+	if (!trieConfig.isAllowOverlaps()) {
+//			IntervalTree intervalTree = IntervalTree(collectedEmits);
+//			intervalTree.removeOverlaps(collectedEmits);
+	}
+}
+
 //	void Trie::removePartialMatches(String searchText, vector<Emit> collectedEmits) {
 //		long size = searchText.size();
 //		vector<Emit> removeEmits;
@@ -236,16 +256,29 @@ void Trie::updateFailureStates(vector<State::Transition> &queue,
 		transit.set_failure();
 	}
 
-	State::Transition &keywordHead = queue[0];
+	State::Transition *keywordHead = nullptr;
+	if (!queue.empty()) {
+		State::Transition *keywordHead = &queue[0];
+		if (keywordHead->parent->depth != 0) {
+			keywordHead = nullptr;
+		}
+	}
 
 	State *rootState = this->rootState;
 	vector<State*> list;
-	if (keywordHead.parent->depth == 0) {
-		list = keywordHead.parent->locate_state(keywordHead.character);
+	if (keywordHead) {
+		list = keywordHead->parent->locate_state(keywordHead->character);
 	} else {
-		int mid = keyword.size() - (queue.size() - 1);
-		String _keyword = keyword.substr(mid - 1);
-		keyword = keyword.substr(0, mid);
+		String _keyword;
+		if (queue.empty()) {
+			int mid = keyword.size();
+			_keyword = keyword.substr(mid - 1);
+		} else {
+			int mid = keyword.size() - (queue.size() - 1);
+			_keyword = keyword.substr(mid - 1);
+			keyword = keyword.substr(0, mid);
+		}
+
 		list = rootState->locate_state(keyword);
 
 		for (size_t i = 0; i < keyword.size() - 1; ++i) {
@@ -285,9 +318,18 @@ void Trie::clear() {
 
 void Trie::storeEmits(int position, State *currentState,
 		vector<Emit> &collectedEmits) {
-	for (State::Tuple &emit : currentState->emits) {
+	for (auto &emit : currentState->emits) {
 		collectedEmits.push_back(
 				Emit(position - emit.char_length, position, emit.value));
+	}
+}
+
+void Trie::storeEmits(int position, State *currentState, vector<int> &begin,
+		vector<int> &end, vector<String> &value) {
+	for (auto &emit : currentState->emits) {
+		begin.push_back(position - emit.char_length);
+		end.push_back(position);
+		value.push_back(emit.value);
 	}
 }
 

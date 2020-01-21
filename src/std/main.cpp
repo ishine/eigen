@@ -155,7 +155,7 @@ Object return_tmp() {
 	return obj;
 }
 
-#include "../ahocorasick/test.h"
+#include "../ahocorasick/public.h"
 int main(int argc, char **argv) {
 	{
 		Object old = return_tmp();
@@ -205,6 +205,6 @@ int main(int argc, char **argv) {
 
 	ahocorasick::initialize();
 //	ahocorasick::testUpdate();
-	ahocorasick::testDelete();
+	ahocorasick::test();
 	return 0;
 }

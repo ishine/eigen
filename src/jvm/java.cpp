@@ -3,25 +3,9 @@
 #include <stdio.h>
 #include <cstring>
 
-#include "../deeplearning/bert.h"
-#include "../deeplearning/NERTagger.h"
-#include "../deeplearning/lagacy.h"
-#include "../deeplearning/classification.h"
 #include "java.h"
 
 extern "C" {
-void JNICALL Java_com_util_Native_initialize(JNIEnv *env, jobject obj,
-		jstring pwd) {
-	workingDirectory = CString(env, pwd);
-	switch (workingDirectory.back()) {
-	case '/':
-	case '\\':
-		break;
-	default:
-		workingDirectory += '/';
-	}
-	cout << "initialize workingDirectory = " << workingDirectory << endl;
-}
 
 void JNICALL Java_com_util_Native_displayHelloWorld(JNIEnv *env, jobject obj) {
 	cout << "Hello world!" << endl;
@@ -43,93 +27,6 @@ jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env, jobject obj,
 	return Object(env, s);
 }
 
-jint JNICALL Java_com_util_Native_sum8args(JNIEnv *env, jobject obj, jint rcx,
-		jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg,
-		jint seventhArg, jint eighthArg) {
-	return sum8args(rcx, rdx, r8, r9, fifthArg, sixthArg, seventhArg, eighthArg);
-}
-
-jdouble JNICALL Java_com_util_Native_relu(JNIEnv *env, jobject obj,
-		jdouble rcx) {
-	return relu(rcx);
-}
-
-jint JNICALL Java_com_util_Native_gcdint(JNIEnv *env, jobject obj, jint rcx,
-		jint rdx) {
-	return gcd_int(rcx, rdx);
-}
-
-jlong JNICALL Java_com_util_Native_gcdlong(JNIEnv *env, jobject obj, jlong rcx,
-		jlong rdx) {
-	return gcd_long(rcx, rdx);
-}
-
-jint JNICALL Java_com_util_Native_gcdinttemplate(JNIEnv *env, jobject obj,
-		jint rcx, jint rdx) {
-	return gcd(rcx, rdx);
-}
-
-jlong JNICALL Java_com_util_Native_gcdlongtemplate(JNIEnv *env, jobject obj,
-		jlong rcx, jlong rdx) {
-	return gcd(rcx, rdx);
-}
-
-jdouble JNICALL Java_com_util_Native_qatype(JNIEnv *env, jobject obj,
-		jstring str) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	String s = JString(env, str);
-	return Classifier::qatype_classifier().predict(s)[1];
-}
-
-jdouble JNICALL Java_com_util_Native_phatic(JNIEnv *env, jobject obj,
-		jstring str) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	String s = JString(env, str);
-	return Classifier::phatic_classifier().predict(s)[1];
-}
-
-jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
-		jstring x, jstring y) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	String s1 = JString(env, x);
-	String s2 = JString(env, y);
-
-	cout << "s1 = " << s1 << endl;
-	cout << "s2 = " << s2 << endl;
-
-	return Paraphrase::instance()(s1, s2);
-}
-
-jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
-		jstring _service, jstring _text, jintArray _code) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	string service = CString(env, _service);
-	String text = JString(env, _text);
-	JInteger code(env, _code);
-//	cout << "code from java = " << code << endl;
-
-	VectorI arr = code;
-//	cout << "converted to C++ = " << arr << endl;
-
-	NERTaggerDict::predict(service, text, arr);
-	return Object(env, arr);
-}
-
-jobjectArray JNICALL Java_com_util_Native_NER(JNIEnv *env, jobject obj,
-		jstring _service, jstring _text, jintArray _code) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	string service = CString(env, _service);
-	String text = JString(env, _text);
-	JInteger code(env, _code);
-	cout << "code from java = " << code << endl;
-
-	VectorI arr = code;
-	cout << "converted to C++ = " << arr << endl;
-
-	vector<vector<vector<double>>> debug;
-	NERTaggerDict::_predict(service, text, arr, debug);
-	return Object(env, debug);
-}
 }
 
 jstring Object(JNIEnv *env, const string &s) {
@@ -199,14 +96,86 @@ jdoubleArray Object(JNIEnv *env, const vector<double> &s) {
 }
 
 const string FindClass<bool>::name = "Z";
-const string FindClass<byte>::name = "B";
-const string FindClass<short>::name = "S";
-const string FindClass<int>::name = "I";
-const string FindClass<long>::name = "J";
-const string FindClass<float>::name = "F";
-const string FindClass<double>::name = "D";
+FindClass<bool>::jobject* (JNIEnv::*FindClass<bool>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetBooleanArrayElements;
+void (JNIEnv::*FindClass<bool>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseBooleanArrayElements;
 
-std::ostream& operator <<(std::ostream &cout, const JInteger &v) {
+const string FindClass<byte>::name = "B";
+FindClass<byte>::jobject* (JNIEnv::*FindClass<byte>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetByteArrayElements;
+void (JNIEnv::*FindClass<byte>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseByteArrayElements;
+
+const string FindClass<short>::name = "S";
+FindClass<short>::jobject* (JNIEnv::*FindClass<short>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetShortArrayElements;
+void (JNIEnv::*FindClass<short>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseShortArrayElements;
+
+const string FindClass<int>::name = "I";
+FindClass<int>::jobject* (JNIEnv::*FindClass<int>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetIntArrayElements;
+void (JNIEnv::*FindClass<int>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseIntArrayElements;
+
+const string FindClass<long>::name = "J";
+FindClass<long>::jobject* (JNIEnv::*FindClass<long>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetLongArrayElements;
+void (JNIEnv::*FindClass<long>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseLongArrayElements;
+
+const string FindClass<float>::name = "F";
+FindClass<float>::jobject* (JNIEnv::*FindClass<float>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetFloatArrayElements;
+void (JNIEnv::*FindClass<float>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseFloatArrayElements;
+
+const string FindClass<double>::name = "D";
+FindClass<double>::jobject* (JNIEnv::*FindClass<double>::GetArrayElements)(
+		jarray array, jboolean *isCopy) = JNIEnv::GetDoubleArrayElements;
+void (JNIEnv::*FindClass<double>::ReleaseArrayElements)(jarray array,
+		jobject *elems, jint mode) = JNIEnv::ReleaseDoubleArrayElements;
+
+const string FindClass<String>::name = "Ljava.lang.String;";
+
+JArray<String>::JArray(JNIEnv *env, jobjectArray arr) :
+		env(env), arr(arr) {
+}
+
+JArray<String>::reference::reference(JNIEnv *env, jobjectArray arr, jsize index) :
+		env(env), arr(arr), index(index) {
+}
+
+JArray<String>::reference::operator jobject() {
+	return env->GetObjectArrayElement(arr, index);
+}
+
+JArray<String>::reference& JArray<String>::reference::operator =(
+		const String &value) {
+	jobject val = Object(env, value);
+
+	env->SetObjectArrayElement(arr, index, val);
+	return *this;
+}
+
+jobject JArray<String>::operator [](size_t i) const {
+	return env->GetObjectArrayElement(arr, i);
+}
+
+JArray<String>::reference JArray<String>::operator [](size_t i) {
+	return reference(env, arr, i);
+}
+
+bool JArray<String>::operator !() const {
+	return !length();
+}
+
+jsize JArray<String>::length() const {
+	return env->GetArrayLength(arr);
+}
+
+std::ostream& operator <<(std::ostream &cout, const JArray<int> &v) {
 	cout << '[';
 	if (!v) {
 		cout << v[0];

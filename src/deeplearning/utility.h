@@ -280,6 +280,7 @@ _Ty gcd(_Ty x, _Ty y) {
 
 struct Text {
 	struct iterator {
+		iterator(Text *text, bool eof);
 		Text *text;
 		bool eof = true;
 
