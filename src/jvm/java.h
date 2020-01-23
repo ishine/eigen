@@ -240,14 +240,16 @@ template<typename _Ty>
 jobjectArray Object(JNIEnv *env, const vector<_Ty> &arr) {
 	int sz = arr.size();
 
-	jobjectArray obj = env->NewObjectArray(sz,
-			env->FindClass(FindClass<_Ty>::name.data()), nullptr);
+	auto jclass = env->FindClass(FindClass<_Ty>::name.data());
+	auto obj = env->NewObjectArray(sz, jclass, nullptr);
 
 	for (int k = 0; k < sz; k++) {
-		jobject local = Object(env, arr[k]);
+		auto local = Object(env, arr[k]);
 		env->SetObjectArrayElement(obj, k, local);
 		env->DeleteLocalRef(local);
 	}
+
+	env->DeleteLocalRef(jclass);
 	return obj;
 }
 

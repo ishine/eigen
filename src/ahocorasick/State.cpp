@@ -294,14 +294,13 @@ State::State(int depth) :
 		depth(depth) {
 }
 
-State* State::nextState(char16_t character) {
-	try {
-		return success.at(character);
-	} catch (std::out_of_range&) {
-		if (depth == 0)
-			return this;
-		return nullptr;
-	}
+State* State::nextState(char16_t ch) {
+	auto iter = success.find(ch);
+	if (iter != success.end())
+		return iter->second;
+	if (depth == 0)
+		return this;
+	return nullptr;
 }
 
 State* State::addState(char16_t character) {
@@ -541,11 +540,21 @@ void State::constructFailureStates_(State *parent, State *rootState,
 
 	if (!keyword.empty()) {
 		try {
-			State *state = success.at(keyword[0]);
-			state->constructFailureStates_(this, rootState, keyword);
+			success.at(keyword[0])->constructFailureStates_(this, rootState,
+					keyword);
 		} catch (std::out_of_range&) {
 		}
 	}
+}
+
+State::~State() {
+	for (auto p : success) {
+		delete p.second;
+	}
+}
+
+bool State::operator !=(const State &obj) const {
+	return !(*this == obj);
 }
 
 void State::deleteFailureStates(State *parent, const String &previous_keyword,
@@ -565,4 +574,19 @@ void State::deleteFailureStates(State *parent, const String &previous_keyword,
 		} catch (std::out_of_range&) {
 		}
 	}
+}
+
+bool operator ==(const std::map<char16_t, State*> &lhs,
+		const std::map<char16_t, State*> &rhs) {
+	if (lhs.size() != rhs.size())
+		return false;
+	auto q = rhs.begin();
+	for (auto p : lhs) {
+		if (p.first != q->first)
+			return false;
+		if (*p.second != *q->second)
+			return false;
+		++q;
+	}
+	return true;
 }

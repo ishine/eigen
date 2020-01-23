@@ -59,7 +59,10 @@ struct State {
 	 * referred to in the white paper as the 'goto' structure. From a state it is
 	 * possible to go to other states, depending on the character passed.
 	 */
-	std::map<char16_t, object<State>> success;
+//	std::map<char16_t, State*> success;
+	std::unordered_map<char16_t, State*> success;
+
+	~State();
 
 	/** if no matching states are found, the failure state will be returned */
 	State *failure = nullptr;
@@ -74,7 +77,8 @@ struct State {
 		String value;
 	};
 
-	bool operator == (const State &obj) const;
+	bool operator ==(const State &obj) const;
+	bool operator !=(const State &obj) const;
 	vector<Tuple> emits;
 
 	LNodeShadow* toShadowTree();
@@ -139,3 +143,5 @@ struct State {
 			int char_length);
 };
 
+bool operator == (const std::map<char16_t, State*> &lhs, const std::map<char16_t, State*> &rhs);
+//bool operator != (const std::map<char16_t, State*> &lhs, const std::map<char16_t, State*> &rhs);

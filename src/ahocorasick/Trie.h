@@ -42,8 +42,8 @@ struct Trie {
 			int lastCollectedPosition);
 
 	vector<Emit> parseText(const String &text);
-	void parseText(const unsigned short *text, int length, vector<int> &begin,
-			vector<int> &end, vector<String> &value);
+
+	void parseText(const unsigned short *text, int length, vector<Emit> &value);
 
 	void removePartialMatches(const String &searchText,
 			vector<Emit> &collectedEmits);
@@ -62,5 +62,8 @@ struct Trie {
 
 	void storeEmits(int position, State *currentState, vector<int> &begin,
 			vector<int> &end, vector<String> &value);
+	void storeEmits(int position, State *currentState, vector<int> &begin,
+			vector<int> &end, vector<const char16_t*> &value);
+
 };
 

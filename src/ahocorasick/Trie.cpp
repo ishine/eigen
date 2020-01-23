@@ -170,8 +170,8 @@ vector<Emit> Trie::parseText(const String &text) {
 	return collectedEmits;
 }
 
-void Trie::parseText(const unsigned short *text, int length, vector<int> &begin,
-		vector<int> &end, vector<String> &value) {
+void Trie::parseText(const unsigned short *text, int length,
+		vector<Emit> &emits) {
 
 	int position = 0;
 	State *currentState = this->rootState;
@@ -181,7 +181,7 @@ void Trie::parseText(const unsigned short *text, int length, vector<int> &begin,
 //				character = Character.toLowerCase(character);
 //			}
 		currentState = getState(currentState, character);
-		storeEmits(++position, currentState, begin, end, value);
+		storeEmits(++position, currentState, emits);
 	}
 
 	if (trieConfig.isOnlyWholeWords()) {
@@ -330,8 +330,19 @@ void Trie::storeEmits(int position, State *currentState, vector<int> &begin,
 		begin.push_back(position - emit.char_length);
 		end.push_back(position);
 		value.push_back(emit.value);
-		cout << "begin = " << begin.back() << '\t' << "end = " << end.back()
-				<< '\t' << "value = " << value.back() << endl;
+//		cout << "begin = " << begin.back() << '\t' << "end = " << end.back()
+//				<< '\t' << "value = " << value.back() << endl;
+	}
+}
+
+void Trie::storeEmits(int position, State *currentState, vector<int> &begin,
+		vector<int> &end, vector<const char16_t*> &value) {
+	for (auto &emit : currentState->emits) {
+		begin.push_back(position - emit.char_length);
+		end.push_back(position);
+		value.push_back(emit.value.data());
+//		cout << "begin = " << begin.back() << '\t' << "end = " << end.back()
+//				<< '\t' << "value = " << value.back() << endl;
 	}
 }
 

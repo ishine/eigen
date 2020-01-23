@@ -59,6 +59,7 @@ void initialize(const string &path, int limit) {
 		debug = true;
 	}
 
+	instance.clear();
 	instance.build(dictionaryMap);
 }
 
@@ -150,7 +151,7 @@ void test() {
 
 	Trie trieDynamic = naiveConstruct();
 
-	for (String &wordsToBeDeleted : keywords) {
+	for (auto &wordsToBeDeleted : keywords) {
 		cout << "testing word: " << wordsToBeDeleted << endl;
 
 		trieDynamic.erase(wordsToBeDeleted);

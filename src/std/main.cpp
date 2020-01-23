@@ -202,8 +202,15 @@ int main(int argc, char **argv) {
 	cout << "sum8args(1, 2, 3, 4, 5, 6, 7, 8) = "
 			<< sum8args(1, 2, 3, 4, 5, 6, 7, 8) << endl;
 
-	ahocorasick::initialize("../corpus/ahocorasick/en/dictionary.txt", 100);
-	ahocorasick::test();
+//	try {
+//		ahocorasick::initialize("../corpus/ahocorasick/en/dictionary.txt", 100);
+//		ahocorasick::test();
+//	} catch (std::exception &e) {
+//		cout << e.what() << endl;
+//	} catch (...) {
+//		cout << "unknown error!" << endl;
+//	}
+//
 	void print_primitive_type_size();
 	print_primitive_type_size();
 	return 0;
