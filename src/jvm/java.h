@@ -24,9 +24,9 @@ struct CString {
 		env->ReleaseStringUTFChars(str, ptr);
 	}
 
-	JNIEnv *const env;
+	JNIEnv * const env;
 	const jstring str;
-	const char *const ptr;
+	const char * const ptr;
 };
 
 struct JString {
@@ -50,9 +50,9 @@ struct JString {
 		env->ReleaseStringChars(str, ptr);
 	}
 
-	JNIEnv *const env;
+	JNIEnv * const env;
 	const jstring str;
-	const jchar *const ptr;
+	const jchar * const ptr;
 };
 
 template<typename _Ty> struct FindClass {
@@ -100,9 +100,9 @@ struct JArray {
 		(env->*FindClass<_Ty>::ReleaseArrayElements)(arr, ptr, 0);
 	}
 
-	JNIEnv *const env;
+	JNIEnv * const env;
 	const jarray arr;
-	jobject *const ptr;
+	jobject * const ptr;
 };
 
 template<>
@@ -112,7 +112,7 @@ struct JArray<String> {
 	struct reference {
 		reference(JNIEnv *env, jobjectArray arr, jsize index);
 		operator jobject();
-		JNIEnv *const env;
+		JNIEnv * const env;
 		const jobjectArray arr;
 		jsize index;
 
@@ -125,7 +125,7 @@ struct JArray<String> {
 	bool operator !() const;
 
 	jsize length() const;
-	JNIEnv *const env;
+	JNIEnv * const env;
 	const jobjectArray arr;
 };
 
@@ -247,6 +247,24 @@ jobjectArray Object(JNIEnv *env, const vector<_Ty> &arr) {
 		auto local = Object(env, arr[k]);
 		env->SetObjectArrayElement(obj, k, local);
 		env->DeleteLocalRef(local);
+	}
+
+	env->DeleteLocalRef(jclass);
+	return obj;
+}
+
+template<typename _Ty>
+jobjectArray Object(JNIEnv *env, const std::forward_list<_Ty> &arr, int size) {
+
+	auto jclass = env->FindClass(FindClass<_Ty>::name.data());
+	auto obj = env->NewObjectArray(size, jclass, nullptr);
+
+	auto iter = arr.begin();
+	for (int k = 0; k < size; k++) {
+		auto local = Object(env, *iter);
+		env->SetObjectArrayElement(obj, k, local);
+		env->DeleteLocalRef(local);
+		++iter;
 	}
 
 	env->DeleteLocalRef(jclass);

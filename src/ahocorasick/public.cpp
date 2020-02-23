@@ -42,104 +42,31 @@ String loadText(const string &path) {
 //	return result.size();
 //}
 
-std::map<String, String> dictionaryMap;
 String text;
 bool debug = false;
 Trie instance;
-//	String wordsToBeDeleted = "dictatorial";
 
 void initialize(const string &path, int limit) {
+	std::map<String, String> dictionaryMap;
 	for (String &word : loadDictionary(path, limit)) {
 		dictionaryMap[word] = word;
 	}
 
 	cout << "dictionary.size() = " << dictionaryMap.size() << endl;
-	text = loadText("text.txt");
-	if (dictionaryMap.size() <= 10) {
-		debug = true;
-	}
+//	text = loadText("text.txt");
+//	if (dictionaryMap.size() <= 10) {
+//		debug = true;
+//	}
 
 	instance.clear();
-	instance.build(dictionaryMap);
-}
-
-Trie naiveUpdate() {
-
-	Trie ahoCorasickNaive;
-
-	for (auto &p : dictionaryMap) {
-		ahoCorasickNaive.update(p.first, p.second);
-		if (debug)
-			cout << ahoCorasickNaive.rootState;
-	}
-	printf("construction finished\n");
-	return ahoCorasickNaive;
-}
-
-Trie naiveConstruct() {
-	Trie ahoCorasickNaive;
-
-	ahoCorasickNaive.build(dictionaryMap);
-
-	return ahoCorasickNaive;
-}
-
-int countNaiveConstruct() {
-
-	Trie ahoCorasickNaive;
-
-	ahoCorasickNaive.build(dictionaryMap);
-	if (debug) {
-		printf("building ahocorasic all at once:\n");
-		cout << ahoCorasickNaive.rootState;
-	}
-
-	vector<String> result;
-	for (Emit emit : ahoCorasickNaive.parseText(text)) {
-//			int begin = emit.getStart();
-//			int end = emit.getEnd();
-		String value = emit.value;
-
-//			System.out.printf("%s = %s\n", text.substring(begin, end), value);
-		result.push_back(value);
-	}
-//		System.out.println(ahoCorasickNaive.rootState);
-
-	return result.size();
-}
-
-Trie naiveDelete(const String &wordsToBeDeleted) {
-	Trie ahoCorasickNaive;
-
-	ahoCorasickNaive.build(dictionaryMap);
-
-	if (debug) {
-		printf("before deletion:\n");
-		cout << ahoCorasickNaive.rootState;
-	}
-
-	ahoCorasickNaive.erase(wordsToBeDeleted);
-	if (debug)
-		cout << ahoCorasickNaive.rootState;
-
-	printf("construction finished\n");
-	return ahoCorasickNaive;
-}
-
-void testUpdate() {
-	Trie trieConstruction = naiveConstruct();
-	Trie trieUpdate = naiveUpdate();
-
-	assert(*trieConstruction.rootState == *trieUpdate.rootState);
-	assert(
-			trieConstruction.parseText(text).size()
-					== trieUpdate.parseText(text).size());
+	instance.dictionaryMap = dictionaryMap;
+	instance.build();
 }
 
 //#include <algorithm>
 //#include <random>
 void test() {
-
+	std::map<String, String> dictionaryMap = instance.dictionaryMap;
 	vector<String> keywords;
 	for (auto &p : dictionaryMap) {
 		keywords.push_back(p.first);
@@ -149,7 +76,7 @@ void test() {
 	std::random_shuffle(keywords.begin(), keywords.end());
 //	std::shuffle(keywords.begin(), keywords.end(), std::random_device());
 
-	Trie trieDynamic = naiveConstruct();
+	Trie trieDynamic(dictionaryMap);
 
 	for (auto &wordsToBeDeleted : keywords) {
 		cout << "testing word: " << wordsToBeDeleted << endl;
@@ -157,24 +84,23 @@ void test() {
 		trieDynamic.erase(wordsToBeDeleted);
 
 		dictionaryMap.erase(wordsToBeDeleted);
-		Trie trieConstruct = naiveConstruct();
+		Trie trieConstruct(dictionaryMap);
 		dictionaryMap[wordsToBeDeleted] = wordsToBeDeleted;
-
-		assert(*trieConstruct.rootState == *trieDynamic.rootState);
 
 		assert(
 				trieConstruct.parseText(text).size()
 						== trieDynamic.parseText(text).size());
 
-		trieDynamic.update(wordsToBeDeleted, wordsToBeDeleted);
+		assert(*trieConstruct.rootState == *trieDynamic.rootState);
 
-		assert(*instance.rootState == *trieDynamic.rootState);
+		trieDynamic.update(wordsToBeDeleted, wordsToBeDeleted);
 
 		assert(
 				instance.parseText(text).size()
 						== trieDynamic.parseText(text).size());
 
+		assert(*instance.rootState == *trieDynamic.rootState);
+
 	}
 }
-
 }

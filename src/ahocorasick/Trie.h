@@ -11,17 +11,16 @@
 #include "Emit.h"
 #include "Token.h"
 
-#include <queue>
-
 struct Trie {
+	std::map<String, String> dictionaryMap;
 
 	TrieConfig trieConfig;
 
 	object<State> rootState;
 
-	Trie(const TrieConfig &trieConfig);
-
-	Trie();
+	Trie(const std::map<String, String> &dictionaryMap =
+			std::map<String, String>(), const TrieConfig &trieConfig =
+			TrieConfig());
 
 	void clear();
 
@@ -34,7 +33,7 @@ struct Trie {
 	void addKeyword(const String &keyword, const String &value);
 	void update(const String &keyword, const String &value);
 	void erase(const String &keyword);
-	void build(std::map<String, String> &map);
+	void build();
 
 	vector<Token> tokenize(const String &text);
 
@@ -43,7 +42,7 @@ struct Trie {
 
 	vector<Emit> parseText(const String &text);
 
-	void parseText(const unsigned short *text, int length, vector<Emit> &value);
+	vector<Emit> parseText(const unsigned short *text, int length);
 
 	void removePartialMatches(const String &searchText,
 			vector<Emit> &collectedEmits);
@@ -59,11 +58,5 @@ struct Trie {
 
 	void storeEmits(int position, State *currentState,
 			vector<Emit> &collectedEmits);
-
-	void storeEmits(int position, State *currentState, vector<int> &begin,
-			vector<int> &end, vector<String> &value);
-	void storeEmits(int position, State *currentState, vector<int> &begin,
-			vector<int> &end, vector<const char16_t*> &value);
-
 };
 

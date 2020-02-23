@@ -590,3 +590,18 @@ bool operator ==(const std::map<char16_t, State*> &lhs,
 	}
 	return true;
 }
+
+bool operator ==(const std::unordered_map<char16_t, State*> &lhs,
+		const std::unordered_map<char16_t, State*> &rhs) {
+	if (lhs.size() != rhs.size())
+		return false;
+	for (auto p : lhs) {
+		auto key = p.first;
+		auto q = rhs.find(key);
+		if (q == rhs.end())
+			return false;
+		if (*p.second != *q->second)
+			return false;
+	}
+	return true;
+}
