@@ -22,13 +22,13 @@ struct FeedForward {
 	Vector b1, b2;
 
 	Vector& operator()(const Vector &x, Vector &ret);
-	Vector& operator()(const Vector &x);
+	Vector operator()(const Vector &x);
 
 	Matrix& operator()(Matrix &x, Matrix &wDense);
-	Matrix& operator()(const Matrix &x);
+	Matrix operator()(const Matrix &x);
 
-	Tensor& operator()(const Tensor &x);
-	vector<Vector>& operator()(const vector<Vector> &x);
+	Tensor operator()(const Tensor &x);
+	vector<Vector> operator()(const vector<Vector> &x);
 	FeedForward(HDF5Reader &dis, bool bias = true);
 	FeedForward();
 };
@@ -39,9 +39,9 @@ struct CrossAttentionMask {
 	int num_attention_heads;
 	bool diagnal_attention;
 
-	vector<MatrixI>& operator()(const vector<VectorI> &segment_ids);
+	vector<MatrixI> operator()(const vector<VectorI> &segment_ids);
 
-	vector<MatrixI>& operator()(const vector<VectorI> &segment_ids,
+	vector<MatrixI> operator()(const vector<VectorI> &segment_ids,
 			int num_attention_heads);
 };
 
@@ -61,7 +61,7 @@ struct MidIndex {
 //	MidIndex(int SEP = 102);
 	MidIndex(int SEP);
 	int SEP;
-	vector<int>& operator()(const vector<VectorI> &token);
+	vector<int> operator()(const vector<VectorI> &token);
 	int operator()(const VectorI &token);
 };
 
@@ -69,10 +69,10 @@ struct MultiHeadAttention {
 	MultiHeadAttention(HDF5Reader &dis, int num_attention_heads);
 	MultiHeadAttention();
 
-	Tensor& operator()(const Tensor &sequence, const Tensor &attention_matrix,
+	Tensor operator()(const Tensor &sequence, const Tensor &attention_matrix,
 			const vector<Vector> &mask);
-	Tensor& operator()(const Tensor &sequence, const vector<Vector> &mask);
-	Matrix& operator()(const Matrix &sequence);
+	Tensor operator()(const Tensor &sequence, const vector<Vector> &mask);
+	Matrix operator()(const Matrix &sequence);
 
 	vector<Vector>& operator ()(const Tensor &sequence,
 			const vector<Vector> &mask, vector<Vector> &y);
@@ -101,10 +101,10 @@ struct MultiHeadAttention {
 			const Tensor &key, const Tensor &value);
 
 	Tensor& reshape_to_batches(Tensor &x);
-	Tensor& reshape_to_batches(Matrix &x);
+	Tensor reshape_to_batches(Matrix &x);
 
 	vector<Vector>& reshape_to_batches(vector<Vector>&);
-	vector<Vector>& reshape_to_batches(Vector&);
+	vector<Vector> reshape_to_batches(Vector&);
 
 	Tensor& reshape_from_batches(Tensor&);
 	vector<Vector>& reshape_from_batches(vector<Vector>&);
@@ -120,7 +120,7 @@ struct PositionEmbedding {
 	Tensor& operator()(Tensor &sequence);
 	Matrix& operator()(Matrix &sequence, int mid);
 	Matrix& operator()(Matrix &sequence);
-	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
+	vector<Vector> compute_mask(vector<VectorI> &inputToken);
 };
 
 struct RevertMask {
@@ -133,9 +133,9 @@ struct RevertMask {
 };
 
 struct SegmentInput {
-	vector<VectorI>& operator()(const vector<VectorI> &token,
+	vector<VectorI> operator()(const vector<VectorI> &token,
 			vector<int> &inputMid);
-	VectorI& operator()(const VectorI &token, int inputMid);
+	VectorI operator()(const VectorI &token, int inputMid);
 };
 
 struct BertEmbedding {
@@ -155,10 +155,10 @@ struct BertEmbedding {
 			const vector<int> &inputMid, const vector<VectorI> &inputSegment,
 			vector<Vector> &mask);
 
-	Matrix& operator ()(VectorI &inputToken, int inputMid,
+	Matrix operator ()(VectorI &inputToken, int inputMid,
 			const VectorI &inputSegment);
 
-	Matrix& operator ()(VectorI &inputToken, const VectorI &inputSegment);
+	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 
@@ -237,13 +237,13 @@ struct BasicTokenizer {
 //        Args:
 	bool do_lower_case;
 
-	vector<String>& tokenize(String &text);
+	vector<String> tokenize(String &text);
 
 	String& _run_strip_accents(String &text);
 
-	vector<String>& _run_split_on_punc(String &text);
+	vector<String> _run_split_on_punc(String &text);
 
-	String& _tokenize_chinese_chars(const String &text);
+	String _tokenize_chinese_chars(const String &text);
 
 	bool _is_punctuation(word cp);
 
@@ -260,7 +260,7 @@ struct WordpieceTokenizer {
 	unordered_map<String, int> unknownSet;
 	WordpieceTokenizer(const string &vocab_file);
 
-	static unordered_map<String, int>& load_vocab(const string &vocab_file);
+	static unordered_map<String, int> load_vocab(const string &vocab_file);
 
 	WordpieceTokenizer(unordered_map<String, int> vocab, String unk_token = u"[UNK]",
 	size_t max_input_chars_per_word = 200);
@@ -283,9 +283,9 @@ struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
 
 	FullTokenizer(const string &vocab_file, bool do_lower_case = true);
 
-	vector<String>& tokenize(String &text);
+	vector<String> tokenize(String &text);
 
-	VectorI& convert_tokens_to_ids(vector<String> &items);
+	VectorI convert_tokens_to_ids(vector<String> &items);
 };
 
 struct Paraphrase {
@@ -307,7 +307,7 @@ struct Paraphrase {
 	DenseLayer poolerDense;
 	DenseLayer similarityDense;
 
-	vector<double>& operator ()(vector<VectorI> &input_ids);
+	vector<double> operator ()(vector<VectorI> &input_ids);
 	double operator ()(VectorI &input_ids);
 
 	double operator ()(String &x, String &y);

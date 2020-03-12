@@ -114,9 +114,7 @@ Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) {
 			y.row(i) += bias;
 	}
 
-	activate(y);
-
-	return y;
+	return activate(y);
 }
 
 Vector& DenseLayer::operator()(const Vector &x, Vector &ret) {
@@ -185,10 +183,9 @@ Tensor& Embedding::operator()(const vector<VectorI> &words) {
 	return wordEmbedding;
 }
 
-Matrix& Embedding::operator()(const VectorI &words) {
-	static Matrix wordEmbedding;
-	operator ()(words, wordEmbedding);
-	return wordEmbedding;
+Matrix Embedding::operator()(const VectorI &words) {
+	Matrix wordEmbedding;
+	return operator ()(words, wordEmbedding);
 }
 
 Tensor& Embedding::operator()(const vector<VectorI> &words,

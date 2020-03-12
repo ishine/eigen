@@ -84,6 +84,48 @@ jdouble JNICALL Java_com_util_Native_phatic(JNIEnv *env, jobject obj,
 	return Classifier::phatic_classifier().predict(s)[1];
 }
 
+jdouble JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::keyword_cn_classifier().predict(s)[1];
+}
+
+jdouble JNICALL Java_com_util_Native_keyword_1cn(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::keyword_cn_classifier().predict(s)[1];
+}
+
+jdouble JNICALL Java_com_util_Native_00024cn_keyword(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::keyword_cn_classifier().predict(s)[1];
+}
+
+jdouble JNICALL Java_com_util_Native_keyword_1en(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::keyword_en_classifier().predict(s)[1];
+}
+
+jdouble JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::keyword_en_classifier().predict(s)[1];
+}
+
+jdouble JNICALL Java_com_util_Native_00024en_keyword(JNIEnv *env, jobject obj,
+		jstring str) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return Classifier::keyword_en_classifier().predict(s)[1];
+}
+
 jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
 		jstring x, jstring y) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
@@ -122,7 +164,7 @@ jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
 		JArray<double> code(env, 0);
 	}
 	{
-		JArray<String> code(env, (jobjectArray)0);
+		JArray<String> code(env, (jobjectArray) 0);
 	}
 //	cout << "code from java = " << code << endl;
 

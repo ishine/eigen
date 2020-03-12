@@ -170,7 +170,10 @@ int main(int argc, char **argv) {
 
 	auto &phatic = Classifier::phatic_classifier();
 	auto &qatype = Classifier::qatype_classifier();
+	auto &keyword_cn = Classifier::keyword_cn_classifier();
 	auto &paraphrase = Paraphrase::instance();
+
+	cout << "keyword = " << keyword_cn.predict(u"便携式终端") << endl;
 
 	cout << "phatic = " << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式") << endl;
 
@@ -178,7 +181,7 @@ int main(int argc, char **argv) {
 
 	cout << "score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
 
-	cout << "score = " << paraphrase(u"周末你去哪里玩", u"周末你去哪里玩") << endl;
+	cout << "score = " << paraphrase(u"周末你去哪里玩", u"今天他去哪里玩？") << endl;
 
 	cout << "zero = " << zero << endl;
 	cout << "one = " << one << endl;

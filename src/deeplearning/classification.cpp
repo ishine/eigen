@@ -1,6 +1,6 @@
 #include "classification.h"
 
-Vector& Classifier::predict(const String &predict_text) {
+Vector Classifier::predict(const String &predict_text) {
 	cout << "predict: " << predict_text << endl;
 	Matrix embedding;
 
@@ -11,7 +11,7 @@ Vector& Classifier::predict(const String &predict_text) {
 	lCNN = con1D1(lCNN, embedding);
 	con1D2(lCNN, embedding);
 
-	static Vector x;
+	Vector x;
 	lstm(embedding, x);
 
 	dense_tanh(x);
@@ -21,10 +21,10 @@ Vector& Classifier::predict(const String &predict_text) {
 	return x;
 }
 
-Vector& Classifier::predict_debug(const String &predict_text) {
+Vector Classifier::predict_debug(const String &predict_text) {
 	Matrix embedding;
 
-	auto &inputs = string2id(predict_text, word2id);
+	auto inputs = string2id(predict_text, word2id);
 	cout << "inputs = \n" << inputs << endl;
 
 	this->embedding(inputs, embedding);
@@ -40,7 +40,7 @@ Vector& Classifier::predict_debug(const String &predict_text) {
 	lCNN = con1D2(lCNN, embedding);
 	cout << "lCNN2 = \n" << lCNN << endl;
 
-	static Vector x;
+	Vector x;
 	lstm(lCNN, x);
 	cout << "lLSTM = \n" << x << endl;
 
@@ -54,7 +54,7 @@ Vector& Classifier::predict_debug(const String &predict_text) {
 }
 
 int Classifier::predict(const String &predict_text, int &argmax) {
-	auto &x = predict(predict_text);
+	auto x = predict(predict_text);
 	int index;
 	x.maxCoeff(&index);
 	return index;
@@ -125,6 +125,22 @@ Classifier& Classifier::phatic_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	static Classifier service(cnModelsDirectory() + "phatic/model.h5",
 			cnModelsDirectory() + "phatic/vocab.txt");
+
+	return service;
+}
+
+Classifier& Classifier::keyword_cn_classifier() {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	static Classifier service(cnModelsDirectory() + "keyword/model.h5",
+			cnModelsDirectory() + "keyword/vocab.txt");
+
+	return service;
+}
+
+Classifier& Classifier::keyword_en_classifier() {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	static Classifier service(modelsDirectory() + "en/keyword/model.h5",
+			modelsDirectory() + "en/keyword/vocab.txt");
 
 	return service;
 }
