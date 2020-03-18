@@ -67,7 +67,7 @@ struct Embedding {
 
 	Tensor& operator()(const vector<VectorI> &word, Tensor &y);
 	Tensor& operator()(const vector<VectorI> &word);
-	Matrix& operator()(const VectorI &word);
+	Matrix operator()(const VectorI &word);
 
 	void initialize(HDF5Reader &dis);
 

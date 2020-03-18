@@ -247,7 +247,6 @@ string& modelsDirectory();
 string& cnModelsDirectory();
 string& nerModelsDirectory();
 string& serviceBinary();
-string nerBinary(const string &service);
 
 #include <assert.h>
 
@@ -315,7 +314,7 @@ struct Text {
 	static void test_utf_unicode_conversion();
 };
 
-VectorI& string2id(const String &s, const unordered_map<String, int> &dict);
+VectorI string2id(const String &s, const unordered_map<String, int> &dict);
 vector<VectorI>& string2id(const vector<String> &s,
 		const unordered_map<String, int> &dict);
 
@@ -425,3 +424,6 @@ vector<_Ty> sample(vector<_Ty> v, int size) {
 	return v;
 }
 }
+
+#include <queue>
+#include <forward_list>

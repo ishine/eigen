@@ -1,8 +1,8 @@
 #include "bert.h"
 #include "matrix.h"
 #include "lagacy.h"
-Matrix& revert_mask(const MatrixI &mask, double weight) {
-	static Matrix out;
+Matrix revert_mask(const MatrixI &mask, double weight) {
+	Matrix out;
 	out = mask.cast<double>() * -weight;
 	if (weight >= 0)
 		out += weight;
@@ -10,18 +10,18 @@ Matrix& revert_mask(const MatrixI &mask, double weight) {
 	return out;
 }
 
-vector<Vector>& revert_mask(const vector<VectorI> &mask, double weight) {
-	auto &out = -weight * mask;
+vector<Vector> revert_mask(const vector<VectorI> &mask, double weight) {
+	auto out = -weight * mask;
 	if (weight >= 0)
 		out += weight;
 
 	return out;
 }
 
-vector<MatrixI>& CrossAttentionMask::operator ()(
+vector<MatrixI> CrossAttentionMask::operator ()(
 		const vector<VectorI> &segment_ids) {
 	int batch_size = segment_ids.size();
-	static vector<MatrixI> mask;
+	vector<MatrixI> mask;
 
 	mask.resize(batch_size);
 
@@ -61,11 +61,10 @@ CrossAttentionMask::CrossAttentionMask(int num_attention_heads,
 }
 
 Vector& FeedForward::operator()(const Vector &x, Vector &ret) {
-	ret = x * W1 + b1;
-	return ret;
+	return ret = x * W1 + b1;
 }
 
-vector<Vector>& FeedForward::operator()(const vector<Vector> &x) {
+vector<Vector> FeedForward::operator()(const vector<Vector> &x) {
 	auto &y = x * W1;
 	if (b1.data())
 		y += b1;
@@ -78,8 +77,8 @@ vector<Vector>& FeedForward::operator()(const vector<Vector> &x) {
 	return y;
 }
 
-Vector& FeedForward::operator()(const Vector &x) {
-	static Vector y;
+Vector FeedForward::operator()(const Vector &x) {
+	Vector y;
 	y = x * W1;
 	if (b1.data())
 		y += b1;
@@ -92,7 +91,7 @@ Vector& FeedForward::operator()(const Vector &x) {
 	return y;
 }
 
-Tensor& FeedForward::operator()(const Tensor &x) {
+Tensor FeedForward::operator()(const Tensor &x) {
 	auto &y = x * W1;
 	if (b1.data())
 		y += b1;
@@ -105,8 +104,8 @@ Tensor& FeedForward::operator()(const Tensor &x) {
 	return y;
 }
 
-Matrix& FeedForward::operator()(const Matrix &x) {
-	static Matrix y;
+Matrix FeedForward::operator()(const Matrix &x) {
+	Matrix y;
 	y = x * W1;
 	if (b1.data())
 		add(y, b1);
@@ -138,7 +137,7 @@ FeedForward::FeedForward(HDF5Reader &dis, bool use_bias) {
 Tensor& LayerNormalization::operator ()(Tensor &x) {
 	auto &deviation = x - mean(x);
 
-	static Tensor deviation_copy;
+	Tensor deviation_copy;
 	deviation_copy = deviation;
 
 	return deviation / sqrt(mean(square(deviation_copy)) + epsilon) * gamma
@@ -150,10 +149,12 @@ Matrix& LayerNormalization::operator ()(Matrix &x) {
 
 	Matrix &deviation = x;
 
-	static Matrix deviation_copy;
+	Matrix deviation_copy;
 	deviation_copy = deviation;
 
-	divt(deviation, sqrt(mean(square(deviation_copy)) += epsilon));
+	auto mean_square = mean(square(deviation_copy));
+	mean_square += epsilon;
+	divt(deviation, sqrt(mean_square));
 	mul(deviation, gamma);
 	add(deviation, beta);
 	return deviation;
@@ -162,7 +163,7 @@ Matrix& LayerNormalization::operator ()(Matrix &x) {
 vector<Vector>& LayerNormalization::operator()(vector<Vector> &x) {
 	auto &deviation = x - mean(x);
 
-	static vector<Vector> deviation_copy;
+	vector<Vector> deviation_copy;
 	deviation_copy = deviation;
 
 	return deviation / sqrt(mean(square(deviation_copy)) + epsilon) * gamma
@@ -173,7 +174,7 @@ Vector& LayerNormalization::operator()(Vector &x) {
 	x -= x.mean();
 	auto &deviation = x;
 
-	static Vector deviation_copy;
+	Vector deviation_copy;
 	deviation_copy = deviation;
 	deviation /= sqrt(square(deviation_copy).mean() + epsilon);
 	mul(deviation, gamma);
@@ -192,9 +193,9 @@ LayerNormalization::LayerNormalization(HDF5Reader &dis) {
 
 const double LayerNormalization::epsilon = 1e-12;
 
-vector<int>& MidIndex::operator()(const vector<VectorI> &input_ids) {
+vector<int> MidIndex::operator()(const vector<VectorI> &input_ids) {
 	int batch_size = input_ids.size();
-	static vector<int> res;
+	vector<int> res;
 	res.resize(batch_size);
 	int seq_len = input_ids[0].size();
 
@@ -225,7 +226,7 @@ MidIndex::MidIndex(int SEP) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-Tensor& MultiHeadAttention::operator ()(const Tensor &sequence,
+Tensor MultiHeadAttention::operator ()(const Tensor &sequence,
 		const Tensor &attention_matrix, const vector<Vector> &mask) {
 
 	Tensor q, k, v;
@@ -242,7 +243,7 @@ Tensor& MultiHeadAttention::operator ()(const Tensor &sequence,
 	return y * Wo + bo;
 }
 
-Tensor& MultiHeadAttention::operator ()(const Tensor &sequence,
+Tensor MultiHeadAttention::operator ()(const Tensor &sequence,
 		const vector<Vector> &mask) {
 
 	Tensor q, k, v;
@@ -259,21 +260,21 @@ Tensor& MultiHeadAttention::operator ()(const Tensor &sequence,
 	return y * Wo + bo;
 }
 
-Matrix& MultiHeadAttention::operator ()(const Matrix &sequence) {
+Matrix MultiHeadAttention::operator ()(const Matrix &sequence) {
 
 	Matrix q, k, v;
 	q = k = v = sequence;
 
 	Tensor _q = reshape_to_batches(add(q *= Wq, bq));
 	Tensor _k = reshape_to_batches(add(k *= Wk, bk));
-	Tensor &_v = reshape_to_batches(add(v *= Wv, bv));
+	Tensor _v = reshape_to_batches(add(v *= Wv, bv));
 
 	Tensor &y = scaled_dot_product_attention(_q, _k, _v);
 
 	y = reshape_from_batches(y);
 	assert(y.size() == 1);
 
-	static Matrix res;
+	Matrix res;
 	res = y[0];
 	res *= Wo;
 	add(res, bo);
@@ -308,9 +309,9 @@ Vector& MultiHeadAttention::operator ()(const Matrix &sequence, Vector &y) {
 	y = sequence.row(0);
 	Vector &q = y;
 
-	vector<Vector> &_q = reshape_to_batches((q *= Wq) += bq);
+	vector<Vector> _q = reshape_to_batches((q *= Wq) += bq);
 	Tensor _k = reshape_to_batches(add(k *= Wk, bk));
-	Tensor &_v = reshape_to_batches(add(v *= Wv, bv));
+	Tensor _v = reshape_to_batches(add(v *= Wv, bv));
 
 	vector<Vector> &_y = reshape_from_batches(
 			scaled_dot_product_attention(_q, _k, _v));
@@ -395,8 +396,8 @@ Tensor& MultiHeadAttention::reshape_to_batches(Tensor &x) {
 	return x;
 }
 
-Tensor& MultiHeadAttention::reshape_to_batches(Matrix &x) {
-	static Tensor _x;
+Tensor MultiHeadAttention::reshape_to_batches(Matrix &x) {
+	Tensor _x;
 	_x.resize(num_attention_heads);
 //	_x[0] = x;
 
@@ -426,8 +427,8 @@ vector<Vector>& MultiHeadAttention::reshape_to_batches(vector<Vector> &x) {
 	return x;
 }
 
-vector<Vector>& MultiHeadAttention::reshape_to_batches(Vector &x) {
-	static vector<Vector> _x;
+vector<Vector> MultiHeadAttention::reshape_to_batches(Vector &x) {
+	vector<Vector> _x;
 	_x.resize(num_attention_heads);
 //	_x[0] = x;
 
@@ -546,7 +547,7 @@ Tensor& PositionEmbedding::operator ()(Tensor &sequence) {
 	return sequence;
 }
 
-vector<Vector>& PositionEmbedding::compute_mask(vector<VectorI> &inputToken) {
+vector<Vector> PositionEmbedding::compute_mask(vector<VectorI> &inputToken) {
 	vector<VectorI> &mask = inputToken != 0;
 
 	parallelize(mask, num_attention_heads);
@@ -559,7 +560,7 @@ PositionEmbedding::PositionEmbedding(HDF5Reader &dis, int num_attention_heads) :
 }
 
 Tensor& RevertMask::operator ()(const vector<MatrixI> &attention_mask) {
-	static Tensor res;
+	Tensor res;
 	return (*this)(attention_mask, res);
 }
 
@@ -585,11 +586,11 @@ RevertMask::RevertMask(double cross_attention) :
 	step = 0;
 }
 
-vector<VectorI>& SegmentInput::operator ()(const vector<VectorI> &inputToken,
+vector<VectorI> SegmentInput::operator ()(const vector<VectorI> &inputToken,
 		vector<int> &inputMid) {
 	int batch_size = inputToken.size();
 	int length = inputToken[0].size();
-	static vector<VectorI> inputSegment;
+	vector<VectorI> inputSegment;
 	inputSegment.resize(batch_size);
 
 	for (int k = 0; k < batch_size; ++k) {
@@ -601,10 +602,10 @@ vector<VectorI>& SegmentInput::operator ()(const vector<VectorI> &inputToken,
 	return inputSegment;
 }
 
-VectorI& SegmentInput::operator ()(const VectorI &inputToken, int mid) {
+VectorI SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 	int length = inputToken.size();
 	cout << "inputToken.size() = " << inputToken.size() << endl;
-	static VectorI inputSegment;
+	VectorI inputSegment;
 	inputSegment.resize(length);
 
 	cout << "inputSegment.size() = " << inputSegment.size() << endl;
@@ -664,9 +665,9 @@ Tensor& BertEmbedding::operator ()(vector<VectorI> &inputToken,
 	return embeddings;
 }
 
-Matrix& BertEmbedding::operator ()(VectorI &input_ids, int inputMid,
+Matrix BertEmbedding::operator ()(VectorI &input_ids, int inputMid,
 		const VectorI &inputSegment) {
-	auto &embeddings = wordEmbedding(input_ids);
+	auto embeddings = wordEmbedding(input_ids);
 
 //	cout << "wordEmbeddings = " << embeddings << endl;
 
@@ -690,9 +691,9 @@ Matrix& BertEmbedding::operator ()(VectorI &input_ids, int inputMid,
 	return embeddings;
 }
 
-Matrix& BertEmbedding::operator ()(VectorI &input_ids,
+Matrix BertEmbedding::operator ()(VectorI &input_ids,
 		const VectorI &inputSegment) {
-	auto &embeddings = wordEmbedding(input_ids);
+	auto embeddings = wordEmbedding(input_ids);
 
 //	cout << "wordEmbeddings = " << embeddings << endl;
 
@@ -909,20 +910,20 @@ Paraphrase& Paraphrase::instance() {
 	return inst;
 }
 
-vector<double>& Paraphrase::operator ()(vector<VectorI> &input_ids) {
-	auto &inputMid = midIndex(input_ids);
+vector<double> Paraphrase::operator ()(vector<VectorI> &input_ids) {
+	auto inputMid = midIndex(input_ids);
 
-	auto &inputSegment = segmentInput(input_ids, inputMid);
+	auto inputSegment = segmentInput(input_ids, inputMid);
 
 //	auto &matrixAttention = CrossAttentionMask(inputSegment);
 
-	static vector<Vector> mask;
+	vector<Vector> mask;
 	auto &embed_layer = bertEmbedding(input_ids, inputMid, inputSegment, mask);
 
 	vector<Vector> clsEmbedding;
 	transformer(embed_layer, mask, clsEmbedding);
 	auto &sent = poolerDense(clsEmbedding);
-	static vector<double> similarity;
+	vector<double> similarity;
 	int batch_size = sent.size();
 	similarity.resize(batch_size);
 	sent = similarityDense(sent);
@@ -939,13 +940,13 @@ double Paraphrase::operator ()(VectorI &input_ids) {
 
 	cout << "inputMid = " << inputMid << endl;
 
-	auto &inputSegment = segmentInput(input_ids, inputMid);
+	auto inputSegment = segmentInput(input_ids, inputMid);
 
 	cout << "inputSegment = " << inputSegment << endl;
 
 //	auto &matrixAttention = CrossAttentionMask(inputSegment);
 
-	auto &embed_layer =
+	auto embed_layer =
 			symmetric_positional_embedding ?
 					bertEmbedding(input_ids, inputMid, inputSegment) :
 					bertEmbedding(input_ids, inputSegment);
@@ -982,7 +983,8 @@ double Paraphrase::operator ()(String &x, String &y) {
 	s << tokenizer.tokenize(y);
 	s << u"[SEP]";
 	cout << s << endl;
-	return (*this)(tokenizer.convert_tokens_to_ids(s));
+	auto v = tokenizer.convert_tokens_to_ids(s);
+	return (*this)(v);
 }
 
 double Paraphrase::operator ()(const char16_t *_x, const char16_t *_y) {
@@ -1006,8 +1008,8 @@ FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-vector<String>& FullTokenizer::tokenize(String &text) {
-	static vector<String> split_tokens;
+vector<String> FullTokenizer::tokenize(String &text) {
+	vector<String> split_tokens;
 	split_tokens.clear();
 	for (String &token : this->BasicTokenizer::tokenize(text)) {
 		for (String &sub_token : this->WordpieceTokenizer::tokenize(token)) {
@@ -1018,18 +1020,23 @@ vector<String>& FullTokenizer::tokenize(String &text) {
 	return split_tokens;
 }
 
-VectorI& FullTokenizer::convert_tokens_to_ids(vector<String> &items) {
-	static VectorI output;
+VectorI FullTokenizer::convert_tokens_to_ids(vector<String> &items) {
+	VectorI output;
 	output.resize(items.size());
 
 	int index = 0;
 	for (auto &item : items) {
-		try {
-			output(index) = vocab.at(item);
-		} catch (std::out_of_range&) {
-			item = lstrip(item);
-			output(index) = -vocab.at(item);
-		}
+		auto iter = vocab.find(item);
+		output(index) =
+				iter == vocab.end() ? -vocab.at(lstrip(item)) : iter->second;
+
+//		try {
+//			output(index) = vocab.at(item);
+//		} catch (std::out_of_range&) {
+//			item = lstrip(item);
+//			output(index) = -vocab.at(item);
+//		}
+
 		++index;
 	}
 	return output;
@@ -1040,11 +1047,11 @@ WordpieceTokenizer::WordpieceTokenizer(const string &vocab_file) :
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-unordered_map<String, int>& WordpieceTokenizer::load_vocab(
+unordered_map<String, int> WordpieceTokenizer::load_vocab(
 		const string &vocab_file) {
 	//        """Loads a vocabulary file into a dictionary."""
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static unordered_map<String, int> vocab;
+	unordered_map<String, int> vocab;
 	Text(vocab_file) >> vocab;
 	return vocab;
 }
@@ -1127,7 +1134,7 @@ BasicTokenizer::BasicTokenizer(bool do_lower_case) :
 		do_lower_case(do_lower_case) {
 }
 
-vector<String>& BasicTokenizer::tokenize(String &text) {
+vector<String> BasicTokenizer::tokenize(String &text) {
 //        """Tokenizes a piece of text."""
 	text = _clean_text(text);
 
@@ -1140,7 +1147,7 @@ vector<String>& BasicTokenizer::tokenize(String &text) {
 	text = _tokenize_chinese_chars(text);
 
 	vector<String> orig_tokens = whitespace_tokenize(text);
-	static vector<String> split_tokens;
+	vector<String> split_tokens;
 	split_tokens.clear();
 	for (String &token : orig_tokens) {
 		if (do_lower_case) {
@@ -1155,11 +1162,11 @@ vector<String>& BasicTokenizer::tokenize(String &text) {
 //        return output_tokens;
 }
 
-vector<String>& BasicTokenizer::_run_split_on_punc(String &text) {
+vector<String> BasicTokenizer::_run_split_on_punc(String &text) {
 //        """Splits punctuation on a piece of text."""
 	size_t i = 0;
 	bool start_new_word = true;
-	static vector<String> output;
+	vector<String> output;
 	output.clear();
 	while (i < text.size()) {
 		auto ch = text[i];
@@ -1178,9 +1185,9 @@ vector<String>& BasicTokenizer::_run_split_on_punc(String &text) {
 	return output;
 }
 
-String& BasicTokenizer::_tokenize_chinese_chars(const String &text) {
+String BasicTokenizer::_tokenize_chinese_chars(const String &text) {
 //        """Adds whitespace around any CJK character."""
-	static String output;
+	String output;
 	output.clear();
 	for (word ch : text) {
 		if (_is_chinese_char(ch)) {

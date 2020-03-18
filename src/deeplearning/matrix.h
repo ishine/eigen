@@ -4,8 +4,8 @@
 Vector& min(const Matrix &x, Vector &m, vector<int> &argmin);
 Vector& max(const Matrix &x, Vector &m, vector<int> &argmax);
 
-Vector& min(const Matrix &x);
-Vector& max(const Matrix &x);
+Vector min(const Matrix &x);
+Vector max(const Matrix &x);
 
 Matrix& exp(Matrix &x);
 Vector& exp(Vector &x);
@@ -79,9 +79,9 @@ vector<VectorI>& operator ==(vector<VectorI> &x, int y);
 VectorI& operator !=(VectorI &x, int y);
 VectorI& operator ==(VectorI &x, int y);
 
-vector<Vector>& mean(const Tensor &x);
-Vector& mean(const Matrix &x);
-vector<double>& mean(const vector<Vector> &x);
+vector<Vector> mean(const Tensor &x);
+Vector mean(const Matrix &x);
+vector<double> mean(const vector<Vector> &x);
 
 Tensor& sqrt(Tensor &x);
 Matrix& sqrt(Matrix &x);
@@ -165,7 +165,7 @@ Vector& operator -(Vector &x, double y);
 
 vector<VectorI>& operator -=(vector<VectorI> &x, int y);
 
-vector<Vector>& operator *(double x, const vector<VectorI> &y);
+vector<Vector> operator *(double x, const vector<VectorI> &y);
 //Matrix &operator *(double x, const MatrixI &y);
 Tensor& operator *=(Tensor &x, const Vector &y);
 Tensor& operator *=(Tensor &x, const Matrix &y);

@@ -10,8 +10,8 @@ struct Classifier {
 	BidirectionalLSTM lstm;
 	DenseLayer dense_tanh, dense_pred;
 
-	Vector& predict(const String &predict_text);
-	Vector& predict_debug(const String &predict_text);
+	Vector predict(const String &predict_text);
+	Vector predict_debug(const String &predict_text);
 	int predict(const String &predict_text, int &argmax);
 
 	vector<vector<double>>& predict(String &predict_text,
@@ -25,5 +25,7 @@ struct Classifier {
 
 	static Classifier& phatic_classifier();
 	static Classifier& qatype_classifier();
+	static Classifier& keyword_cn_classifier();
+	static Classifier& keyword_en_classifier();
 };
 

@@ -144,4 +144,5 @@ struct State {
 };
 
 bool operator == (const std::map<char16_t, State*> &lhs, const std::map<char16_t, State*> &rhs);
+bool operator == (const std::unordered_map<char16_t, State*> &lhs, const std::unordered_map<char16_t, State*> &rhs);
 //bool operator != (const std::map<char16_t, State*> &lhs, const std::map<char16_t, State*> &rhs);

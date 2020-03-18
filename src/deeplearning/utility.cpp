@@ -29,15 +29,6 @@ string& serviceModelsDirectory() {
 	return serviceModelsDirectory;
 }
 
-string& serviceBinary() {
-	static string serviceBinary = serviceModelsDirectory() + "service.bin";
-	return serviceBinary;
-}
-
-string nerBinary(const string &service) {
-	return nerModelsDirectory() + service + ".bin";
-}
-
 vector<string> openAttribute(const H5::Group &group, const char *name);
 
 HDF5Reader::HDF5Reader(const string &s_FilePath) :
@@ -593,16 +584,13 @@ Text& Text::operator >>(unordered_map<String, int> &word2id) {
 //}
 //
 
-VectorI& string2id(const String &s, const unordered_map<String, int> &dict) {
-	static VectorI v;
+VectorI string2id(const String &s, const unordered_map<String, int> &dict) {
+	VectorI v;
 	v.resize(s.size());
 
 	for (size_t i = 0; i < s.size(); ++i) {
-		try {
-			v(i) = dict.at(s.substr(i, 1));
-		} catch (std::out_of_range&) {
-			v(i) = dict.at(u"[UNK]");
-		}
+		auto iter = dict.find(s.substr(i, 1));
+		v(i) = iter == dict.end() ? dict.at(u"[UNK]") : iter->second;
 	}
 	return v;
 }

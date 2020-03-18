@@ -43,18 +43,19 @@ jobjectArray JNICALL Java_com_util_Native_parseText(JNIEnv *env, jobject obj,
 	auto start = clock();
 	JString text(env, jText);
 
-	vector<Emit> emit;
-
 	auto ending = clock();
 	cout << "initialization time cost = " << (ending - start) << endl;
 	start = ending;
 
-	ahocorasick::instance.parseText(text.ptr, text.length(), emit);
+	auto emit = ahocorasick::instance.parseText(text.ptr, text.length());
 	ending = clock();
-	cout << "parsing time cost = " << (ending - start) << endl;
+	cout << "parsing time cost     = " << (ending - start) << endl;
 
 	return Object(env, emit);
 }
 
 }
 
+//https://linux.thai.net/~thep/datrie/datrie.html
+//https://github.com/komiya-atsushi/darts-java
+//https://www.hankcs.com/program/algorithm/aho-corasick-double-array-trie.html

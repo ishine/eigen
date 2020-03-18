@@ -7,12 +7,11 @@
  */
 #include "Trie.h"
 
-Trie::Trie(const TrieConfig &trieConfig) :
-		trieConfig(trieConfig), rootState(new State()) {
-}
-
-Trie::Trie() :
-		Trie(TrieConfig()) {
+Trie::Trie(const std::map<String, String> &dictionaryMap,
+		const TrieConfig &trieConfig) :
+		dictionaryMap(dictionaryMap), trieConfig(trieConfig), rootState(
+				new State()) {
+	this->build();
 }
 
 Trie* Trie::caseInsensitive() {
@@ -107,8 +106,8 @@ void Trie::erase(const String &keyword) {
 	deleteFailureStates(currentState, character, keyword, numOfDeletion);
 }
 
-void Trie::build(std::map<String, String> &map) {
-	for (auto &p : map) {
+void Trie::build() {
+	for (auto &p : dictionaryMap) {
 		addKeyword(p.first, p.second);
 	}
 	constructFailureStates();
@@ -149,13 +148,15 @@ vector<Emit> Trie::parseText(const String &text) {
 
 	int position = 0;
 	State *currentState = this->rootState;
-	vector<Emit> collectedEmits;
+	vector<Emit> emits;
+	emits.reserve(text.size());
+
 	for (char16_t character : text) {
 //			if (trieConfig.isCaseInsensitive()) {
 //				character = Character.toLowerCase(character);
 //			}
 		currentState = getState(currentState, character);
-		storeEmits(++position, currentState, collectedEmits);
+		storeEmits(++position, currentState, emits);
 	}
 
 	if (trieConfig.isOnlyWholeWords()) {
@@ -167,12 +168,13 @@ vector<Emit> Trie::parseText(const String &text) {
 //			intervalTree.removeOverlaps(collectedEmits);
 	}
 
-	return collectedEmits;
+	return emits;
 }
 
-void Trie::parseText(const unsigned short *text, int length,
-		vector<Emit> &emits) {
-
+vector<Emit> Trie::parseText(const unsigned short *text, int length) {
+	vector<Emit> emits;
+//	emits.reserve(length / 2);
+	emits.reserve(length);
 	int position = 0;
 	State *currentState = this->rootState;
 	for (int i = 0; i < length; ++i) {
@@ -192,6 +194,7 @@ void Trie::parseText(const unsigned short *text, int length,
 //			IntervalTree intervalTree = IntervalTree(collectedEmits);
 //			intervalTree.removeOverlaps(collectedEmits);
 	}
+	return emits;
 }
 
 //	void Trie::removePartialMatches(String searchText, vector<Emit> collectedEmits) {
@@ -314,35 +317,14 @@ void Trie::deleteFailureStates(State *parent, char16_t character,
 
 void Trie::clear() {
 	rootState = new State;
+	dictionaryMap.clear();
 }
 
 void Trie::storeEmits(int position, State *currentState,
 		vector<Emit> &collectedEmits) {
+//	auto iter = collectedEmits.end();
 	for (auto &emit : currentState->emits) {
 		collectedEmits.push_back(
 				Emit(position - emit.char_length, position, emit.value));
 	}
 }
-
-void Trie::storeEmits(int position, State *currentState, vector<int> &begin,
-		vector<int> &end, vector<String> &value) {
-	for (auto &emit : currentState->emits) {
-		begin.push_back(position - emit.char_length);
-		end.push_back(position);
-		value.push_back(emit.value);
-//		cout << "begin = " << begin.back() << '\t' << "end = " << end.back()
-//				<< '\t' << "value = " << value.back() << endl;
-	}
-}
-
-void Trie::storeEmits(int position, State *currentState, vector<int> &begin,
-		vector<int> &end, vector<const char16_t*> &value) {
-	for (auto &emit : currentState->emits) {
-		begin.push_back(position - emit.char_length);
-		end.push_back(position);
-		value.push_back(emit.value.data());
-//		cout << "begin = " << begin.back() << '\t' << "end = " << end.back()
-//				<< '\t' << "value = " << value.back() << endl;
-	}
-}
-

@@ -80,7 +80,7 @@ NERTagger::NERTagger(HDF5Reader &dis) :
 NERTagger::object& NERTaggerDict::getTagger(const string &service) {
 	if (!dict.count(service)) {
 		cout << "in " << __PRETTY_FUNCTION__ << endl;
-		HDF5Reader dis(nerBinary(service));
+		HDF5Reader dis(service);
 		dict[service] = new NERTagger(dis);
 	}
 

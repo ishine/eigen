@@ -21,15 +21,15 @@ Vector& min(const Matrix &x, Vector &min, vector<int> &argmin) {
 	return aggregate(x, min, argmin, &Matrix::ConstRowXpr::minCoeff);
 }
 
-Vector& max(const Matrix &x) {
-	static Vector y;
-	static vector<int> argmax;
+Vector max(const Matrix &x) {
+	Vector y;
+	vector<int> argmax;
 	return max(x, y, argmax);
 }
 
-Vector& min(const Matrix &x) {
-	static Vector y;
-	static vector<int> argmax;
+Vector min(const Matrix &x) {
+	Vector y;
+	vector<int> argmax;
 	return min(x, y, argmax);
 }
 //eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
@@ -253,8 +253,8 @@ MatrixI& operator ==(MatrixI &x, int y) {
 	return x;
 }
 
-vector<Vector>& mean(const Tensor &x) {
-	static vector<Vector> mean;
+vector<Vector> mean(const Tensor &x) {
+	vector<Vector> mean;
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
 		mean[k] = x[k].rowwise().mean();
@@ -262,15 +262,15 @@ vector<Vector>& mean(const Tensor &x) {
 	return mean;
 }
 
-Vector& mean(const Matrix &x) {
-	static Vector mean;
+Vector mean(const Matrix &x) {
+	Vector mean;
 	mean = x.rowwise().mean();
 
 	return mean;
 }
 
-vector<double>& mean(const vector<Vector> &x) {
-	static vector<double> mean;
+vector<double> mean(const vector<Vector> &x) {
+	vector<double> mean;
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
 		mean[k] = x[k].mean();
@@ -458,8 +458,8 @@ vector<Vector>& operator -=(vector<Vector> &x, const vector<double> &y) {
 	return x;
 }
 
-vector<Vector>& operator *(double x, const vector<VectorI> &y) {
-	static vector<Vector> out;
+vector<Vector> operator *(double x, const vector<VectorI> &y) {
+	vector<Vector> out;
 	int batch_size = y.size();
 	out.resize(batch_size);
 	for (int k = 0; k < batch_size; ++k) {
@@ -468,8 +468,8 @@ vector<Vector>& operator *(double x, const vector<VectorI> &y) {
 	return out;
 }
 
-Matrix& operator *(double x, const MatrixI &y) {
-	static Matrix out;
+Matrix operator *(double x, const MatrixI &y) {
+	Matrix out;
 	out = x * y.cast<double>();
 	return out;
 }
@@ -572,7 +572,7 @@ vector<Vector>& batch_dot(vector<Vector> &x, const Tensor &y, bool transpose) {
 }
 
 vector<Vector>& extract(const Tensor &x, int index) {
-	static vector<Vector> out;
+	vector<Vector> out;
 	return extract(x, index, out);
 }
 
