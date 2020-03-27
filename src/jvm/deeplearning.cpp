@@ -3,10 +3,13 @@
 #include <stdio.h>
 #include <cstring>
 
+#include "../std/utility.h"
 #include "../deeplearning/bert.h"
 #include "../deeplearning/NERTagger.h"
 #include "../deeplearning/lagacy.h"
 #include "../deeplearning/classification.h"
+#include "../deeplearning/CWSTagger.h"
+
 #include "java.h"
 
 extern "C" {
@@ -84,9 +87,22 @@ jdouble JNICALL Java_com_util_Native_phatic(JNIEnv *env, jobject obj,
 	return Classifier::phatic_classifier().predict(s)[1];
 }
 
+jstring JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
+		jstring text) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, text);
+	return Object(env, CWSTagger::instance().predict(s));
+}
+
+void JNICALL Java_com_util_Native_reinitializeCWSTagger(JNIEnv *env,
+		jobject obj) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	CWSTagger::reinitialize();
+}
+
 jdouble JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
 		jstring str) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, str);
 	return Classifier::keyword_cn_classifier().predict(s)[1];
 }
@@ -114,7 +130,7 @@ jdouble JNICALL Java_com_util_Native_keyword_1en(JNIEnv *env, jobject obj,
 
 jdouble JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
 		jstring str) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, str);
 	return Classifier::keyword_en_classifier().predict(s)[1];
 }

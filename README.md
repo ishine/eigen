@@ -5,7 +5,7 @@ deployment issue:
 
 git clone https://github.com/cosmosZhou/eigen.git
 
-cd eigen/
+cd eigen/Linux
 
 make && make install
 

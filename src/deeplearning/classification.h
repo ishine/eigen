@@ -4,7 +4,7 @@
 
 struct Classifier {
 
-	unordered_map<String, int> word2id;
+	dict<String, int> word2id;
 	Embedding embedding;
 	Conv1D con1D0, con1D1, con1D2;
 	BidirectionalLSTM lstm;

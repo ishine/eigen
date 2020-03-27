@@ -1,7 +1,7 @@
 #include "classification.h"
 
 Vector Classifier::predict(const String &predict_text) {
-	cout << "predict: " << predict_text << endl;
+//	cout << "predict: " << predict_text << endl;
 	Matrix embedding;
 
 	this->embedding(string2id(predict_text, word2id), embedding);
@@ -17,7 +17,7 @@ Vector Classifier::predict(const String &predict_text) {
 	dense_tanh(x);
 
 	dense_pred(x);
-	cout << "probabilities: " << x << endl;
+//	cout << "probabilities: " << x << endl;
 	return x;
 }
 
@@ -130,7 +130,7 @@ Classifier& Classifier::phatic_classifier() {
 }
 
 Classifier& Classifier::keyword_cn_classifier() {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	static Classifier service(cnModelsDirectory() + "keyword/model.h5",
 			cnModelsDirectory() + "keyword/vocab.txt");
 
@@ -138,7 +138,7 @@ Classifier& Classifier::keyword_cn_classifier() {
 }
 
 Classifier& Classifier::keyword_en_classifier() {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	static Classifier service(modelsDirectory() + "en/keyword/model.h5",
 			modelsDirectory() + "en/keyword/vocab.txt");
 

@@ -6,7 +6,6 @@
 using namespace std;
 
 string workingDirectory = "../";
-std::basic_ostringstream<char16_t> sstream;
 
 string& modelsDirectory() {
 	static string modelsDirectory = workingDirectory + "models/";
@@ -41,7 +40,7 @@ HDF5Reader::HDF5Reader(const string &s_FilePath) :
 }
 
 HDF5Reader& HDF5Reader::operator >>(Vector &arr) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;
@@ -49,7 +48,7 @@ HDF5Reader& HDF5Reader::operator >>(Vector &arr) {
 	assert(shape.size() == 1);
 
 	int dimension = shape[0];
-	cout << "x = " << dimension << endl;
+//	cout << "x = " << dimension << endl;
 
 	arr.resize(dimension);
 	assert(arr.cols() == dimension);
@@ -112,19 +111,22 @@ HDF5Reader& HDF5Reader::operator >>(Vector &arr) {
 //
 
 HDF5Reader& HDF5Reader::operator >>(Matrix &arr) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;
 	auto &weight = tuple.second;
+
+//	cout << "shape.size() = " << shape.size() << endl;
+
 	assert(shape.size() == 2);
 
 	int dimension0 = shape[0];
 	int dimension1 = shape[1];
-	cout << "x = " << dimension0 << ", " << "y = " << dimension1 << endl;
+//	cout << "x = " << dimension0 << ", " << "y = " << dimension1 << endl;
 
 	arr.resize(dimension0, dimension1);
-	;
+
 	int index = 0;
 	for (int i0 = 0; i0 < dimension0; ++i0) {
 		for (int i1 = 0; i1 < dimension1; ++i1) {
@@ -187,7 +189,7 @@ HDF5Reader& HDF5Reader::operator >>(Tensor &arr) {
 	int dimension1 = shape[1];
 	int dimension2 = shape[2];
 
-	printf("d0 = %d, d1 = %d, d2 = %d\n", dimension0, dimension1, dimension2);
+//	printf("d0 = %d, d1 = %d, d2 = %d\n", dimension0, dimension1, dimension2);
 	arr.resize(dimension0);
 
 	int index = 0;
@@ -654,7 +656,7 @@ vector<String>& split(const String &in) {
 
 //#include <locale>         // std::wstring_convert
 namespace std {
-int byte_length(const String &value) {
+int strlen(const String &value) {
 	int length = 0;
 	for (auto ch : value) {
 		if ((ch & 0xff80) != 0)
@@ -665,9 +667,150 @@ int byte_length(const String &value) {
 	return length;
 }
 
+#include <sstream>
 String toString(int d) {
-	sstream.clear();
+	std::basic_ostringstream<char16_t> sstream;
 	sstream << d;
 	return sstream.str();
 }
 }
+
+/*
+ int test_matmul() {
+ const int m = 80;
+ const int k = 4;
+ const int n = 4;
+ int Matrix1[m][k] = { };
+ int Matrix2[k][n] = { };
+ int Matrix[m][n] = { };
+ clock_t start, end;
+ cout << "Matrix1:\n";
+ int i, j;
+ for (i = 0; i < m; i++) {
+ for (j = 0; j < k; j++) {
+ Matrix1[i][j] = i + j;
+ cout << Matrix1[i][j] << '\t';
+ }
+ cout << endl;
+ }
+ cout << "Matrix2:\n";
+ for (i = 0; i < k; i++) {
+ for (j = 0; j < n; j++) {
+ Matrix2[i][j] = 2 * i - j;
+ cout << Matrix2[i][j] << '\t';
+ }
+ cout << endl;
+ }
+
+ //	omp_set_num_threads(3);
+ int pnum = omp_get_num_procs();
+ cout << "Thread_pnum =" << pnum << endl;
+ int l;
+ start = clock();
+ //开始计时
+ #pragma omp parallel shared(Matrix1, Matrix2, Matrix) private(j, l)
+ {
+ #pragma omp for schedule(dynamic)
+ for (i = 0; i < m; i++) {
+ cout << "Thread_num:" << omp_get_thread_num() << '\n';
+ for (j = 0; j < n; j++) {
+ for (l = 0; l < k; l++) {
+ Matrix[i][j] += Matrix1[i][l] * Matrix2[l][j];
+ }
+ }
+ }
+ }
+ end = clock();
+ cout << "Matrix multiply time:" << (end - start) << endl;
+
+ //	cout << "The result is:\n";
+ //	for (i = 0; i < m; i++) {
+ //		for (j = 0; j < n; j++) {
+ //			cout << Matrix[i][j] << '\t';
+ //		}
+ //		cout << endl;
+ //	}
+ return 0;
+ }
+ int test() {
+
+ int i;
+
+ printf("*Hello World! Thread: %d\n", omp_get_thread_num());
+
+ #pragma omp parallel for
+ for (i = 0; i < 32; i += 3) {
+ if (i % 2)
+ printf("Hello World!  Thread: %d, odd %d, \n", omp_get_thread_num(),
+ i);
+ else
+ printf("Hello World!  Thread: %d, even %d, \n",
+ omp_get_thread_num(), i);
+ }
+
+ return 0;
+
+ }
+
+ */
+/**
+ ctrl + tab  switch between .h and .cpp
+ shift + alt + t
+ shift + alt + m
+ ctrl  + alt + s
+ ctrl + alt + h
+ ctrl + o
+ Ctrl + Shift + G
+ Ctrl + Shift + Minus
+ Ctrl + Shift + Plus
+ */
+
+//http://eigen.tuxfamily.org/dox/
+//https://blog.csdn.net/zong596568821xp/article/details/81134406
+
+void test_eigen() {
+	Matrix A = Matrix::Ones(2560, 2560);
+	Matrix B = Matrix::Ones(2560, 2560);
+	auto start = clock();
+	Matrix C = A * B;
+	auto end = clock();
+	cout << "time cost = " << (end - start) << endl;
+}
+
+struct Object {
+	Object() {
+		x = y = z = 0;
+		kinder = new Object(2, 2, 2);
+		cout << "in " << __PRETTY_FUNCTION__ << endl;
+	}
+
+	Object(int x, int y, int z) :
+			x(x), y(y), z(z) {
+		cout << "in " << __PRETTY_FUNCTION__ << endl;
+	}
+
+	~Object() {
+		cout << "in " << __PRETTY_FUNCTION__ << endl;
+	}
+
+	void reset() {
+		x = y = z = 1;
+		kinder = nullptr;
+	}
+
+	int x, y, z;
+	object<Object> kinder;
+	friend std::ostream& operator <<(std::ostream &cout, const Object &p) {
+		cout << "x = " << p.x << ",\t";
+		cout << "y = " << p.y << ",\t";
+		cout << "z = " << p.z << endl;
+		return cout;
+	}
+};
+
+Object return_tmp() {
+	Object obj;
+	obj.reset();
+	return obj;
+}
+

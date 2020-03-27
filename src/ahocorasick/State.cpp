@@ -43,7 +43,7 @@ int LNodeShadow::max_width(vector<object<LNodeShadow>> &list) {
 }
 
 int LNodeShadow::max_width() {
-	int width = byte_length(value);
+	int width = strlen(value);
 	if (x.size()) {
 		int width_x = max_width(x);
 		if (width_x > width)
@@ -162,7 +162,7 @@ String LNodeShadow::toString(int max_width) {
 			LNodeShadow *head = currNode->x[0];
 			// the string is right-aligned / right-justified, that's why
 			// there a series of leading ' ';
-			int dif = colWidth - byte_length(head->value);	// for leading ' 's
+			int dif = colWidth - strlen(head->value);	// for leading ' 's
 			cout += String((head->j - currCol) * colWidth + dif, u' ');
 			cout += String((currNode->j - head->j) * colWidth - dif, u'_');
 
@@ -174,7 +174,7 @@ String LNodeShadow::toString(int max_width) {
 		}
 
 		// for leading white spaces;
-		cout += String(colWidth - byte_length(currNode->value), ch)
+		cout += String(colWidth - strlen(currNode->value), ch)
 				+ currNode->value;
 
 		currCol = currNode->j;

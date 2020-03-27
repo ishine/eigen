@@ -1047,16 +1047,16 @@ WordpieceTokenizer::WordpieceTokenizer(const string &vocab_file) :
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-unordered_map<String, int> WordpieceTokenizer::load_vocab(
+dict<String, int> WordpieceTokenizer::load_vocab(
 		const string &vocab_file) {
 	//        """Loads a vocabulary file into a dictionary."""
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	unordered_map<String, int> vocab;
+	dict<String, int> vocab;
 	Text(vocab_file) >> vocab;
 	return vocab;
 }
 
-WordpieceTokenizer::WordpieceTokenizer(unordered_map<String, int> vocab,
+WordpieceTokenizer::WordpieceTokenizer(dict<String, int> vocab,
 		String unk_token, size_t max_input_chars_per_word) :
 		vocab(vocab), unk_token(unk_token), max_input_chars_per_word(
 				max_input_chars_per_word) {

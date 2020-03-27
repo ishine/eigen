@@ -4,7 +4,7 @@
 struct NERTagger {
 	typedef ::object<NERTagger> object;
 
-	unordered_map<String, int> word2id;
+	dict<String, int> word2id;
 	Embedding embedding, repertoire_embedding;
 
 	BidirectionalLSTM lstm;
@@ -23,7 +23,7 @@ struct NERTagger {
 
 struct NERTaggerDict {
 
-	static unordered_map<string, NERTagger::object> dict;
+	static ::dict<string, NERTagger::object> dict;
 
 	static NERTagger::object& getTagger(const string &service);
 

@@ -12,7 +12,7 @@ using namespace H5;
 vector<string> openAttribute(const Group &group, const char *name) {
 	const Attribute &attribute = group.openAttribute(name);
 	auto storageSize = attribute.getStorageSize();
-	cout << "attribute.getStorageSize() = " << storageSize << endl;
+//	cout << "attribute.getStorageSize() = " << storageSize << endl;
 	std::vector<string> attributes;
 	if (!storageSize)
 		return attributes;
@@ -22,19 +22,20 @@ vector<string> openAttribute(const Group &group, const char *name) {
 	attribute.read(attribute.getDataType(), &buf.front());
 
 	hsize_t num_of_attributes;
-	cout << "attribute.getSpace().getSimpleExtentNdims() = "
-			<< attribute.getSpace().getSimpleExtentDims(&num_of_attributes, 0)
-			<< endl;
+	attribute.getSpace().getSimpleExtentDims(&num_of_attributes, 0);
+//	cout << "attribute.getSpace().getSimpleExtentNdims() = "
+//			<< attribute.getSpace().getSimpleExtentDims(&num_of_attributes, 0)
+//			<< endl;
 
-	cout << "num_of_attributes = " << num_of_attributes << endl;
+//	cout << "num_of_attributes = " << num_of_attributes << endl;
 
 	hsize_t size_of_attribute = storageSize / num_of_attributes;
-	cout << "size_of_attribute = " << size_of_attribute << endl;
+//	cout << "size_of_attribute = " << size_of_attribute << endl;
 
 	for (hsize_t i = 0; i < storageSize; i += size_of_attribute) {
 		auto c_str = &buf[i];
 		string str(c_str, c_str + size_of_attribute);
-		cout << str << endl;
+//		cout << str << endl;
 		attributes.push_back(str);
 	}
 
@@ -84,15 +85,15 @@ std::pair<vector<int>, vector<double>>& read_keras_model(const H5File &file,
 		 * display them.
 		 */
 		vector<hsize_t> shape(rank);
-		int ndims = dataspace.getSimpleExtentDims(&shape.front(), NULL);
+		dataspace.getSimpleExtentDims(&shape.front(), NULL);
+//		int ndims = dataspace.getSimpleExtentDims(&shape.front(), NULL);
+//		cout << "ndims = " << ndims << endl;
 
-		cout << "ndims = " << ndims << endl;
+//		for (auto dimension : shape) {
+//			cout << dimension << "\t";
+//		}
 
-		for (auto dimension : shape) {
-			cout << dimension << "\t";
-		}
-
-		cout << endl;
+//		cout << endl;
 		vector<char> buf(weight.getStorageSize(), '\0');
 		weight.read(&buf.front(), weight.getDataType());
 
@@ -102,7 +103,7 @@ std::pair<vector<int>, vector<double>>& read_keras_model(const H5File &file,
 		switch (weight.getTypeClass()) {
 		case H5T_INTEGER: {
 //					* Get class of datatype and print message if it's an integer.
-			cout << "Data set has INTEGER type" << endl;
+//			cout << "Data set has INTEGER type" << endl;
 
 			/*
 			 * Get the integer datatype
@@ -114,17 +115,17 @@ std::pair<vector<int>, vector<double>>& read_keras_model(const H5File &file,
 			 */
 			H5std_string order_string;
 			inttype.getOrder(order_string);
-			cout << order_string << endl;
+//			cout << order_string << endl;
 
 			/*
 			 * Get size of the data element stored in file and print it.
 			 */
-			size_t size = inttype.getSize();
-			cout << "integer byte size is " << size << endl;
+//			size_t size = inttype.getSize();
+//			cout << "integer byte size is " << size << endl;
 			break;
 		}
 		case H5T_FLOAT: {
-			cout << "Data set has FLOAT type" << endl;
+//			cout << "Data set has FLOAT type" << endl;
 
 			/*
 			 * Get the integer datatype
@@ -135,7 +136,7 @@ std::pair<vector<int>, vector<double>>& read_keras_model(const H5File &file,
 			 * Get size of the data element stored in file and print it.
 			 */
 			size_t float_size = floattype.getSize();
-			cout << "float size is " << float_size << endl;
+//			cout << "float size is " << float_size << endl;
 
 			tuple.first = vector<int>(shape.begin(), shape.end());
 

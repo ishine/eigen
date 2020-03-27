@@ -112,4 +112,4 @@ extern "C" void cpp_ner_initialize(const char *service) {
 	NERTaggerDict::getTagger(service);
 }
 
-unordered_map<string, NERTagger::object> NERTaggerDict::dict;
+dict<string, NERTagger::object> NERTaggerDict::dict;
