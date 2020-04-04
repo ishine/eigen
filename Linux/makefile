@@ -3,10 +3,13 @@ target = eigen
 artifact = lib$(target).so	
 
 GCC = g++ -Wall -std=c++11 -fPIC -fopenmp
-CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
+#CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
+CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 
 FOLDERS = $(foreach dir,$(wildcard ../src/*),$(subst ../,,$(dir)))
 $(info $(FOLDERS))
+
+-include $(wildcard src/*/*.d)
 
 $(foreach dir,$(FOLDERS),$(shell mkdir -p $(dir)))
 
@@ -54,7 +57,7 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
 
 test: $(target)	
-	./$(target)
+	./$(target) ../../
 	@echo "finish testing $(target)!"
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362

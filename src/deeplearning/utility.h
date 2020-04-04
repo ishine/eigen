@@ -39,7 +39,9 @@ vector<double> convert2vector(const Vector &m);
 vector<vector<double>> convert2vector(const Matrix &m);
 
 VectorI string2id(const String &s, const dict<String, int> &dict);
-vector<VectorI>& string2id(const vector<String> &s,
+VectorI string2id(const vector<String> &s, const dict<String, int> &dict);
+
+vector<VectorI> string2ids(const vector<String> &s,
 		const dict<String, int> &dict);
 
 //forward declaration to prevent runtime linking error.

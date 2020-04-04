@@ -151,7 +151,7 @@ struct BertEmbedding {
 	DenseLayer embeddingMapping;
 	int embed_dim, hidden_size;
 
-	Tensor& operator ()(vector<VectorI> &inputToken,
+	Tensor operator ()(vector<VectorI> &inputToken,
 			const vector<int> &inputMid, const vector<VectorI> &inputSegment,
 			vector<Vector> &mask);
 
@@ -286,6 +286,9 @@ struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
 	vector<String> tokenize(String &text);
 
 	VectorI convert_tokens_to_ids(vector<String> &items);
+
+	static FullTokenizer &instance_cn();
+	static FullTokenizer &instance_en();
 };
 
 struct Paraphrase {

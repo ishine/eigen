@@ -12,8 +12,8 @@ using namespace std;
 #include "../deeplearning/bert.h"
 #include "../deeplearning/lagacy.h"
 #include "../deeplearning/CWSTagger.h"
-
 #include "../ahocorasick/public.h"
+
 int main(int argc, char **argv) {
 	cout << "argc = " << argc << endl;
 	for (int i = 0; i < argc; ++i) {
@@ -24,6 +24,16 @@ int main(int argc, char **argv) {
 		workingDirectory = argv[1];
 	}
 
+	for (int w_shape = 2; w_shape < 10; ++w_shape) {
+		for (int x_shape = 1; x_shape < 16; ++x_shape) {
+			printf("Conv1D::initial_offset(%d, %d, %d, 1) = %d\n", x_shape,
+					x_shape, w_shape,
+					Conv1D::initial_offset(x_shape, x_shape, w_shape, 1));
+		}
+		cout << endl;
+	}
+//	return 0;
+
 	auto &phatic = Classifier::phatic_classifier();
 	auto &qatype = Classifier::qatype_classifier();
 	auto &keyword_cn = Classifier::keyword_cn_classifier();
@@ -33,7 +43,7 @@ int main(int argc, char **argv) {
 
 	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;
 
-	cout << "keyword = " << keyword_cn.predict(u"工作空间") << endl;
+	cout << "keyword = " << keyword_cn.predict(u"，") << endl;
 
 	cout << "phatic = " << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式") << endl;
 

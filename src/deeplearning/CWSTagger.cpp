@@ -27,13 +27,13 @@ String convertToSegment(const String &predict_text, const VectorI &argmax) {
 	return arr;
 }
 
-String CWSTagger::predict(const String &predict_text) {
+String CWSTaggerLSTM::predict(const String &predict_text) {
 	VectorI seg = string2id(predict_text, this->word2id);
 //	cout << "seg = " << seg << endl;
 	return convertToSegment(predict_text, this->predict(seg));
 }
 
-VectorI& CWSTagger::predict(VectorI &predict_text) {
+VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 //	cout << "predict_text = " << predict_text.size() << endl;
 //	cout << "repertoire_code = " << repertoire_code << endl;
@@ -57,11 +57,11 @@ VectorI& CWSTagger::predict(VectorI &predict_text) {
 //	lConcatenate.resize();
 	lConcatenate << lLSTM, lCNN;
 
-	return wCRF.call(lConcatenate, predict_text);
+	return wCRF(lConcatenate, predict_text);
 }
 
-vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
-		vector<vector<vector<double>>> &result) {
+vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
+		const String &predict_text, vector<vector<vector<double>>> &result) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
@@ -97,7 +97,13 @@ vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 	return result;
 }
 
-CWSTagger::CWSTagger(HDF5Reader &dis, const string &vocabFilePath) :
+CWSTaggerLSTM::CWSTaggerLSTM(const string &h5FilePath,
+		const string &vocabFilePath) :
+		CWSTaggerLSTM((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+				vocabFilePath) {
+}
+
+CWSTaggerLSTM::CWSTaggerLSTM(HDF5Reader &dis, const string &vocabFilePath) :
 		embedding(Embedding(dis)),
 //		repertoire_embedding(Embedding(dis)),
 		con1D0(Conv1D(dis)), con1D1(Conv1D(dis)), lstm(
@@ -107,16 +113,83 @@ CWSTagger::CWSTagger(HDF5Reader &dis, const string &vocabFilePath) :
 	Text(vocabFilePath) >> word2id;
 }
 
-CWSTagger& CWSTagger::instance() {
-	static HDF5Reader dis(cnModelsDirectory() + "cws/model.h5");
-	static CWSTagger instance(dis, cnModelsDirectory() + "cws/vocab.txt");
+CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
+	static string modelFile = cnModelsDirectory() + "cws/model-cnn.h5";
+	static string vocab = cnModelsDirectory() + "cws/vocab.txt";
+
+	static CWSTaggerLSTM instance(modelFile, vocab);
+	if (reinitialize) {
+		instance = CWSTaggerLSTM(modelFile, vocab);
+	}
 	return instance;
 }
 
-void CWSTagger::reinitialize() {
-	auto &inst = instance();
-	HDF5Reader dis(cnModelsDirectory() + "cws/model.h5");
-	CWSTagger instance(dis, cnModelsDirectory() + "cws/vocab.txt");
-	inst = instance;
+String CWSTagger::predict(const String &predict_text) {
+	VectorI seg = string2id(predict_text, this->word2id);
+//	cout << "seg = " << seg << endl;
+	return convertToSegment(predict_text, this->predict(seg));
 }
 
+VectorI& CWSTagger::predict(VectorI &predict_text) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	cout << "predict_text = " << predict_text.size() << endl;
+//	cout << "repertoire_code = " << repertoire_code << endl;
+
+	Matrix lEmbedding;
+	embedding(predict_text, lEmbedding);
+
+//	Matrix lRepertoire;
+//	repertoire_embedding(repertoire_code, lRepertoire);
+//	lEmbedding += lRepertoire;
+
+	Matrix lLSTM;
+	lstm.call_return_sequences(lEmbedding, lLSTM);
+
+	return wCRF(lLSTM, predict_text);
+}
+
+vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
+		vector<vector<vector<double>>> &result) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	Matrix x;
+	embedding(string2id(predict_text, this->word2id), x);
+	result.push_back(convert2vector(x)); // i = 0
+
+//	Matrix lRepertoire;
+//	repertoire_embedding(repertoire_code, lRepertoire);
+//	result.push_back(convert2vector(lRepertoire)); // i = 1
+
+	Matrix lLSTM;
+	lstm.call_return_sequences(x, lLSTM);
+	result.push_back(convert2vector(lLSTM)); // i = 3
+
+	Matrix label;
+	wCRF.viterbi_one_hot(lLSTM, label);
+	result.push_back(convert2vector(label)); // i = 8
+
+	return result;
+}
+
+CWSTagger::CWSTagger(const string &h5FilePath, const string &vocabFilePath) :
+		CWSTagger((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+				vocabFilePath) {
+}
+
+CWSTagger::CWSTagger(HDF5Reader &dis, const string &vocabFilePath) :
+		embedding(Embedding(dis)),
+//		repertoire_embedding(Embedding(dis)),
+		lstm(LSTM(dis)), wCRF(CRF(dis)) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	Text(vocabFilePath) >> word2id;
+}
+
+CWSTagger& CWSTagger::instance(bool reinitialize) {
+	static string modelFile = cnModelsDirectory() + "cws/model.h5";
+	static string vocab = cnModelsDirectory() + "cws/vocab.txt";
+
+	static CWSTagger instance(modelFile, vocab);
+	if (reinitialize) {
+		instance = CWSTagger(modelFile, vocab);
+	}
+	return instance;
+}

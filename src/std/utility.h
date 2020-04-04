@@ -1,4 +1,7 @@
 #pragma once
+//gcc -Werror=return-local-addr
+#pragma GCC diagnostic error "-Wreturn-local-addr"
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -216,9 +219,9 @@ std::ostream& operator <<(std::ostream &cout, const vector<_Ty> &v) {
 
 template<typename _Ty>
 _Ty gcd(_Ty x, _Ty y) {
-        if (!y)
-                return x;
-        return gcd(y, x % y);
+	if (!y)
+		return x;
+	return gcd(y, x % y);
 }
 
 struct Text {
@@ -245,14 +248,14 @@ struct Text {
 	Text& operator >>(String &v);
 	Text& operator >>(vector<String> &v);
 	Text& operator >>(dict<String, int> &word2id);
-	String& toString();
+	String toString();
 	operator bool();
 	static char str[];
 	static int utf2unicode(const char *pText);
 
 	static const char* unicode2utf(word wc, char *pText = 0);
-	static string& unicode2utf(const String &wstr);
-	static string& unicode2gbk(const String &wstr);
+	static string unicode2utf(const String &wstr);
+	static string unicode2gbk(const String &wstr);
 	static char get_bits(char ch, int start, int size, int shift = 0);
 	static char get_bits(char ch, int start, int size, char _ch);
 	static char get_bits(char ch, int start, int size, char _ch, int _size);
@@ -262,7 +265,7 @@ struct Text {
 
 std::ostream& operator <<(std::ostream &cout, const String &v);
 
-vector<String>& split(const String &in);
+vector<String> split(const String &in);
 
 #include "wchar.h"
 
@@ -305,13 +308,17 @@ std::basic_string<T>& lstrip(std::basic_string<T> &s) {
 	return s;
 }
 
+char16_t tolower(char16_t ch);
+
+char16_t toupper(char16_t ch);
+
 template<class T>
 std::basic_string<T>& tolower(std::basic_string<T> &s) {
 	if (s.empty()) {
 		return s;
 	}
 	for (T &ch : s) {
-		ch = std::towlower(ch);
+		ch = tolower(ch);
 	}
 	return s;
 }

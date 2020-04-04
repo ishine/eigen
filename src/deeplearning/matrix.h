@@ -50,7 +50,7 @@ struct Activation {
 
 	Activator act;
 	template<typename _Ty>
-	_Ty& operator ()(_Ty &x) {
+	_Ty& operator ()(_Ty &x) const {
 		switch (act) {
 		case Activator::linear:
 			return x;
@@ -100,8 +100,8 @@ vector<_Tx>& operator +(vector<_Tx> &x, const _Ty &y) {
 }
 
 template<typename _Tx, typename _Ty>
-vector<_Tx>& operator +(const vector<_Tx> &x, const _Ty &y) {
-	static vector<_Tx> out;
+vector<_Tx> operator +(const vector<_Tx> &x, const _Ty &y) {
+	vector<_Tx> out;
 	out = x;
 	return out += y;
 }
@@ -112,8 +112,8 @@ vector<_Tx>& operator -(vector<_Tx> &x, const _Ty &y) {
 }
 
 template<typename _Tx, typename _Ty>
-vector<_Tx>& operator -(const vector<_Tx> &x, const _Ty &y) {
-	static vector<_Tx> out;
+vector<_Tx> operator -(const vector<_Tx> &x, const _Ty &y) {
+	vector<_Tx> out;
 	out = x;
 	return out -= y;
 }
@@ -124,8 +124,8 @@ vector<_Tx>& operator *(vector<_Tx> &x, const _Ty &y) {
 }
 
 template<typename _Tx, typename _Ty>
-vector<_Tx>& operator *(const vector<_Tx> &x, const _Ty &y) {
-	static vector<_Tx> out;
+vector<_Tx> operator *(const vector<_Tx> &x, const _Ty &y) {
+	vector<_Tx> out;
 	out = x;
 	return out *= y;
 }
@@ -136,8 +136,8 @@ vector<_Tx>& operator /(vector<_Tx> &x, const _Ty &y) {
 }
 
 template<typename _Tx, typename _Ty>
-vector<_Tx>& operator /(const vector<_Tx> &x, const _Ty &y) {
-	static vector<_Tx> out;
+vector<_Tx> operator /(const vector<_Tx> &x, const _Ty &y) {
+	vector<_Tx> out;
 	out = x;
 	return out /= y;
 }

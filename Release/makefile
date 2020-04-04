@@ -3,10 +3,14 @@ target = eigen
 artifact = $(target).dll
 
 GCC = g++ -Wall -std=c++11 -fPIC -fopenmp
-CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
+#CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
+CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
+
 SHELL=cmd.exe
 FOLDERS = $(foreach dir,$(wildcard ../src/*),$(subst ../,,$(dir)))
 #$(info $(FOLDERS))
+
+-include $(wildcard src/*/*.d)
 
 $(foreach dir,$(FOLDERS),$(shell mkdir $(subst /,\,$(dir))))
 
@@ -51,4 +55,4 @@ install: $(artifact)
 
 test: $(target).exe
 	./$(target).exe ../../
-	@echo "finish testing $(target)!"
+	@echo "finish testing $(target)!"	

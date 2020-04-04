@@ -1,10 +1,16 @@
 #include "classification.h"
-
+#include "bert.h"
 Vector Classifier::predict(const String &predict_text) {
+	auto text = predict_text;
+	return predict(text);
+}
+
+Vector Classifier::predict(String &predict_text) {
 //	cout << "predict: " << predict_text << endl;
 	Matrix embedding;
 
-	this->embedding(string2id(predict_text, word2id), embedding);
+	this->embedding(string2id(tokenizer->tokenize(predict_text), word2id),
+			embedding);
 
 	Matrix lCNN;
 	lCNN = con1D0(embedding, lCNN);
@@ -90,33 +96,34 @@ vector<vector<double>>& Classifier::predict(String &predict_text,
 }
 
 Classifier::Classifier(const string &binaryFilePath,
-		const string &vocabFilePath) :
-		Classifier((HDF5Reader&) (const HDF5Reader&) HDF5Reader(binaryFilePath)) {
+		const string &vocabFilePath, FullTokenizer *tokenizer) :
+		Classifier((HDF5Reader&) (const HDF5Reader&) HDF5Reader(binaryFilePath),
+				tokenizer) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Text(vocabFilePath) >> word2id;
 }
 
 #include "lagacy.h"
 
-Classifier::Classifier(HDF5Reader &dis) :
+Classifier::Classifier(HDF5Reader &dis, FullTokenizer *tokenizer) :
 		embedding(Embedding(dis)), con1D0(dis), con1D1(dis), con1D2(dis), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
-				DenseLayer(dis, true, Activator::softmax)) {
+				DenseLayer(dis, true, Activator::softmax)), tokenizer(tokenizer) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-Classifier::Classifier(HDF5Reader &dis, const string &vocab) :
-		Classifier(dis) {
-
+Classifier::Classifier(HDF5Reader &dis, const string &vocab,
+		FullTokenizer *tokenizer) :
+		Classifier(dis, tokenizer) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-
 }
 
 Classifier& Classifier::qatype_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	static Classifier service(cnModelsDirectory() + "qatype/model.h5",
-			cnModelsDirectory() + "qatype/vocab.txt");
+			cnModelsDirectory() + "qatype/vocab.txt",
+			&FullTokenizer::instance_cn());
 
 	return service;
 }
@@ -124,23 +131,33 @@ Classifier& Classifier::qatype_classifier() {
 Classifier& Classifier::phatic_classifier() {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	static Classifier service(cnModelsDirectory() + "phatic/model.h5",
-			cnModelsDirectory() + "phatic/vocab.txt");
+			cnModelsDirectory() + "phatic/vocab.txt",
+			&FullTokenizer::instance_cn());
 
 	return service;
 }
 
-Classifier& Classifier::keyword_cn_classifier() {
+Classifier& Classifier::keyword_cn_classifier(bool reinitialize) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(cnModelsDirectory() + "keyword/model.h5",
-			cnModelsDirectory() + "keyword/vocab.txt");
+	static string h5FilePath = cnModelsDirectory() + "keyword/model.h5";
+	static string vocab = cnModelsDirectory() + "keyword/vocab.txt";
+	static Classifier service(h5FilePath, vocab, &FullTokenizer::instance_cn());
 
+	if (reinitialize) {
+		service = Classifier(h5FilePath, vocab, &FullTokenizer::instance_cn());
+	}
 	return service;
 }
 
-Classifier& Classifier::keyword_en_classifier() {
+Classifier& Classifier::keyword_en_classifier(bool reinitialize) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	static Classifier service(modelsDirectory() + "en/keyword/model.h5",
-			modelsDirectory() + "en/keyword/vocab.txt");
+	static string h5FilePath = modelsDirectory() + "en/keyword/model.h5";
+	static string vocab = modelsDirectory() + "en/keyword/vocab.txt";
+	static Classifier service(h5FilePath, vocab, &FullTokenizer::instance_en());
+
+	if (reinitialize) {
+		service = Classifier(h5FilePath, vocab, &FullTokenizer::instance_en());
+	}
 
 	return service;
 }
