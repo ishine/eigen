@@ -151,7 +151,7 @@ struct BertEmbedding {
 	DenseLayer embeddingMapping;
 	int embed_dim, hidden_size;
 
-	Tensor& operator ()(vector<VectorI> &inputToken,
+	Tensor operator ()(vector<VectorI> &inputToken,
 			const vector<int> &inputMid, const vector<VectorI> &inputSegment,
 			vector<Vector> &mask);
 
@@ -254,15 +254,15 @@ struct BasicTokenizer {
 
 struct WordpieceTokenizer {
 //    """Runs WordPiece tokenziation."""
-	unordered_map<String, int> vocab;
+	dict<String, int> vocab;
 	String unk_token;
 	size_t max_input_chars_per_word;
-	unordered_map<String, int> unknownSet;
+	dict<String, int> unknownSet;
 	WordpieceTokenizer(const string &vocab_file);
 
-	static unordered_map<String, int> load_vocab(const string &vocab_file);
+	static dict<String, int> load_vocab(const string &vocab_file);
 
-	WordpieceTokenizer(unordered_map<String, int> vocab, String unk_token = u"[UNK]",
+	WordpieceTokenizer(dict<String, int> vocab, String unk_token = u"[UNK]",
 	size_t max_input_chars_per_word = 200);
 
 	vector<String> tokenize(String &text);
@@ -286,6 +286,9 @@ struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
 	vector<String> tokenize(String &text);
 
 	VectorI convert_tokens_to_ids(vector<String> &items);
+
+	static FullTokenizer &instance_cn();
+	static FullTokenizer &instance_en();
 };
 
 struct Paraphrase {

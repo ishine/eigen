@@ -26,7 +26,7 @@ VectorI& NERTagger::predict(const VectorI &predict_text,
 //	lConcatenate.resize();
 	lConcatenate << lLSTM, lCNN;
 
-	return wCRF.call(lConcatenate, repertoire_code);
+	return wCRF(lConcatenate, repertoire_code);
 }
 
 vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
@@ -112,4 +112,4 @@ extern "C" void cpp_ner_initialize(const char *service) {
 	NERTaggerDict::getTagger(service);
 }
 
-unordered_map<string, NERTagger::object> NERTaggerDict::dict;
+dict<string, NERTagger::object> NERTaggerDict::dict;

@@ -15,7 +15,7 @@ CRF::CRF(Matrix kernel, Matrix G, Vector bias, Vector left_boundary,
 
 Matrix& CRF::viterbi_one_hot(const Matrix &X, Matrix &oneHot) {
 	VectorI label;
-	label = call(X, label);
+	label = (*this)(X, label);
 	int n = bias.cols();
 	Matrix eye = Matrix::Identity(n, n);
 	int m = label.size();
@@ -26,7 +26,7 @@ Matrix& CRF::viterbi_one_hot(const Matrix &X, Matrix &oneHot) {
 	return oneHot;
 }
 
-VectorI& CRF::call(const Matrix &X, VectorI &best_paths) {
+VectorI& CRF::operator()(const Matrix &X, VectorI &best_paths) const {
 	//add a row vector to a matrix
 	Matrix x = X * kernel;
 	add(x, bias);
@@ -92,13 +92,13 @@ int Conv1D::initial_offset(int xshape, int yshape, int wshape, int sshape) {
 		return -((xshape - wshape) / 2);
 }
 
-Matrix& Conv1D::operator()(const Matrix &x, int s) {
-	static Matrix y;
+Matrix Conv1D::operator()(const Matrix &x, int s) const {
+	Matrix y;
 	return (*this)(x, y, s);
 }
 
 //	#stride=(1,1)
-Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) {
+Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) const {
 	int yshape0 = (x.rows() + s - 1) / s;
 	y = Matrix::Zero(yshape0, x.cols());
 
@@ -117,12 +117,54 @@ Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) {
 	return activate(y);
 }
 
-Vector& DenseLayer::operator()(const Vector &x, Vector &ret) {
+Conv1DSame::Conv1DSame(HDF5Reader &dis) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	dis >> w;
+
+	dis >> this->bias;
+}
+
+int Conv1DSame::initial_offset(int xshape, int wshape) {
+	if (xshape > 1) {
+		int l = xshape + (wshape - 1) * (xshape - 1);
+		if (xshape * wshape < l)
+			l = xshape * wshape;
+		return wshape
+				- (2 * wshape + l - (l + wshape - 1) / wshape * wshape + 1) / 2;
+	} else
+		return -((xshape - wshape) / 2);
+}
+
+Matrix Conv1DSame::operator()(const Matrix &x) const {
+	Matrix y;
+	return (*this)(x, y);
+}
+
+//	#stride=(1,1)
+Matrix& Conv1DSame::operator()(const Matrix &x, Matrix &y) const {
+	int yshape0 = x.rows();
+	y = Matrix::Zero(yshape0, x.cols());
+
+	int d0 = initial_offset(yshape0, w.size());
+	for (int i = 0; i < yshape0; ++i) {
+		int _i = i - d0;
+		int di_end = std::min((int) w.size(), (int) x.rows() - _i);
+		for (int di = std::max(0, -_i); di < di_end; ++di) {
+			y.row(i) += x.row(_i + di) * w[di];
+		}
+
+		y.row(i) += bias;
+	}
+
+	return activate(y);
+}
+
+Vector& DenseLayer::operator()(const Vector &x, Vector &ret) const {
 	ret = x * wDense + bDense;
 	return ret;
 }
 
-Vector& DenseLayer::operator()(Vector &x) {
+Vector& DenseLayer::operator()(Vector &x) const {
 
 	x *= wDense;
 	if (bDense.data())
@@ -131,26 +173,26 @@ Vector& DenseLayer::operator()(Vector &x) {
 	return x;
 }
 
-Matrix& DenseLayer::operator()(Matrix &x, Matrix &wDense) {
+Matrix& DenseLayer::operator()(Matrix &x, Matrix &wDense) const {
 	wDense = this->wDense;
 	return operator ()(x);
 }
 
-Matrix& DenseLayer::operator()(Matrix &x) {
+Matrix& DenseLayer::operator()(Matrix &x) const {
 	x *= wDense;
 	if (bDense.data())
 		add(x, bDense);
 	return x;
 }
 
-vector<Vector>& DenseLayer::operator()(vector<Vector> &x) {
+vector<Vector>& DenseLayer::operator()(vector<Vector> &x) const {
 	x *= wDense;
 	if (bDense.data())
 		x += bDense;
 	return x;
 }
 
-Tensor& DenseLayer::operator()(Tensor &x) {
+Tensor& DenseLayer::operator()(Tensor &x) const {
 	x *= wDense;
 	if (bDense.data())
 		x += bDense;
@@ -166,7 +208,8 @@ DenseLayer::DenseLayer(HDF5Reader &dis, bool use_bias, Activator activation) :
 		dis >> bDense;
 }
 
-Matrix& Embedding::operator()(const VectorI &words, Matrix &wordEmbedding) {
+Matrix& Embedding::operator()(const VectorI &words,
+		Matrix &wordEmbedding) const {
 	int length = words.size();
 
 	wordEmbedding.resize(length, wEmbedding.cols());
@@ -177,19 +220,19 @@ Matrix& Embedding::operator()(const VectorI &words, Matrix &wordEmbedding) {
 	return wordEmbedding;
 }
 
-Tensor& Embedding::operator()(const vector<VectorI> &words) {
-	static Tensor wordEmbedding;
+Tensor Embedding::operator()(const vector<VectorI> &words) const {
+	Tensor wordEmbedding;
 	operator ()(words, wordEmbedding);
 	return wordEmbedding;
 }
 
-Matrix Embedding::operator()(const VectorI &words) {
+Matrix Embedding::operator()(const VectorI &words) const {
 	Matrix wordEmbedding;
 	return operator ()(words, wordEmbedding);
 }
 
 Tensor& Embedding::operator()(const vector<VectorI> &words,
-		Tensor &wordEmbedding) {
+		Tensor &wordEmbedding) const {
 
 	int batch_size = words.size();
 	wordEmbedding.resize(batch_size);
@@ -201,13 +244,13 @@ Tensor& Embedding::operator()(const vector<VectorI> &words,
 }
 
 Matrix& Embedding::operator()(const VectorI &words, Matrix &wordEmbedding,
-		Matrix &wEmbedding) {
+		Matrix &wEmbedding) const {
 	wEmbedding = this->wEmbedding;
 	return this->operator ()(words, wordEmbedding);
 }
 
 Matrix& Embedding::operator()(VectorI &word, Matrix &wordEmbedding,
-		size_t max_length) {
+		size_t max_length) const {
 	word.resize(max_length);
 	return (*this)(word, wordEmbedding);
 
@@ -337,7 +380,7 @@ Vector& LSTM::call_reverse(const Matrix &x, Vector &h) {
 	return h;
 }
 
-Matrix& Bidirectional::operator ()(const Matrix &x, Matrix &ret) {
+Matrix& Bidirectional::operator ()(const Matrix &x, Matrix &ret) const {
 	Matrix forward;
 	this->forward->call_return_sequences(x, forward);
 	Matrix backward;
@@ -360,7 +403,7 @@ Matrix& Bidirectional::operator ()(const Matrix &x, Matrix &ret) {
 	return ret;
 }
 
-Vector& Bidirectional::operator()(const Matrix &x, Vector &ret) {
+Vector& Bidirectional::operator()(const Matrix &x, Vector &ret) const {
 	Vector forward;
 	this->forward->call(x, forward);
 	Vector backward;
@@ -385,7 +428,7 @@ Vector& Bidirectional::operator()(const Matrix &x, Vector &ret) {
 }
 
 Vector& Bidirectional::operator()(const Matrix &x, Vector &ret,
-		vector<vector<double>> &arr) {
+		vector<vector<double>> &arr) const {
 	Vector forward;
 	forward = this->forward->call(x, forward, arr);
 	arr.push_back(convert2vector(forward));

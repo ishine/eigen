@@ -25,7 +25,7 @@ vector<MatrixI> CrossAttentionMask::operator ()(
 
 	mask.resize(batch_size);
 
-	auto &vec = segment_ids * 2;
+	auto vec = segment_ids * 2;
 	vec -= 1;
 
 	for (int k = 0; k < batch_size; ++k) {
@@ -65,7 +65,7 @@ Vector& FeedForward::operator()(const Vector &x, Vector &ret) {
 }
 
 vector<Vector> FeedForward::operator()(const vector<Vector> &x) {
-	auto &y = x * W1;
+	auto y = x * W1;
 	if (b1.data())
 		y += b1;
 
@@ -92,7 +92,7 @@ Vector FeedForward::operator()(const Vector &x) {
 }
 
 Tensor FeedForward::operator()(const Tensor &x) {
-	auto &y = x * W1;
+	auto y = x * W1;
 	if (b1.data())
 		y += b1;
 
@@ -140,7 +140,8 @@ Tensor& LayerNormalization::operator ()(Tensor &x) {
 	Tensor deviation_copy;
 	deviation_copy = deviation;
 
-	return deviation / sqrt(mean(square(deviation_copy)) + epsilon) * gamma
+	auto mean_x = mean(square(deviation_copy));
+	return deviation / sqrt(mean_x + epsilon) * gamma
 			+ beta;
 }
 
@@ -166,7 +167,8 @@ vector<Vector>& LayerNormalization::operator()(vector<Vector> &x) {
 	vector<Vector> deviation_copy;
 	deviation_copy = deviation;
 
-	return deviation / sqrt(mean(square(deviation_copy)) + epsilon) * gamma
+	auto mean_x = mean(square(deviation_copy));
+	return deviation / sqrt(mean_x + epsilon) * gamma
 			+ beta;
 }
 
@@ -642,17 +644,17 @@ bool BertEmbedding::factorization(bool word_embedding_only) {
 	return hidden_size != embed_dim && !factorization_on_word_embedding_only;
 }
 
-Tensor& BertEmbedding::operator ()(vector<VectorI> &inputToken,
+Tensor BertEmbedding::operator ()(vector<VectorI> &inputToken,
 		const vector<int> &inputMid, const vector<VectorI> &inputSegment,
 		vector<Vector> &mask) {
-	auto &embeddings = wordEmbedding(inputToken);
+	auto embeddings = wordEmbedding(inputToken);
 	mask = this->positionEmbedding.compute_mask(inputToken);
 
 	if (factorization(true)) {
 		embeddings = embeddingMapping(embeddings);
 	}
 
-	auto &segment_layer = segmentEmbedding(inputSegment);
+	auto segment_layer = segmentEmbedding(inputSegment);
 	embeddings += segment_layer;
 	auto &embed_layer = positionEmbedding(embeddings, inputMid);
 
@@ -918,7 +920,7 @@ vector<double> Paraphrase::operator ()(vector<VectorI> &input_ids) {
 //	auto &matrixAttention = CrossAttentionMask(inputSegment);
 
 	vector<Vector> mask;
-	auto &embed_layer = bertEmbedding(input_ids, inputMid, inputSegment, mask);
+	auto embed_layer = bertEmbedding(input_ids, inputMid, inputSegment, mask);
 
 	vector<Vector> clsEmbedding;
 	transformer(embed_layer, mask, clsEmbedding);
@@ -1008,9 +1010,19 @@ FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
+FullTokenizer &FullTokenizer::instance_cn(){
+	static FullTokenizer instance(cnModelsDirectory() + "bert/vocab.txt");
+	return instance;
+}
+
+FullTokenizer &FullTokenizer::instance_en(){
+	static FullTokenizer instance(modelsDirectory() + "en/bert/vocab.txt");
+	return instance;
+}
+
 vector<String> FullTokenizer::tokenize(String &text) {
 	vector<String> split_tokens;
-	split_tokens.clear();
+//	split_tokens.clear();
 	for (String &token : this->BasicTokenizer::tokenize(text)) {
 		for (String &sub_token : this->WordpieceTokenizer::tokenize(token)) {
 			split_tokens << sub_token;
@@ -1047,16 +1059,16 @@ WordpieceTokenizer::WordpieceTokenizer(const string &vocab_file) :
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-unordered_map<String, int> WordpieceTokenizer::load_vocab(
+dict<String, int> WordpieceTokenizer::load_vocab(
 		const string &vocab_file) {
 	//        """Loads a vocabulary file into a dictionary."""
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	unordered_map<String, int> vocab;
+	dict<String, int> vocab;
 	Text(vocab_file) >> vocab;
 	return vocab;
 }
 
-WordpieceTokenizer::WordpieceTokenizer(unordered_map<String, int> vocab,
+WordpieceTokenizer::WordpieceTokenizer(dict<String, int> vocab,
 		String unk_token, size_t max_input_chars_per_word) :
 		vocab(vocab), unk_token(unk_token), max_input_chars_per_word(
 				max_input_chars_per_word) {
@@ -1148,7 +1160,7 @@ vector<String> BasicTokenizer::tokenize(String &text) {
 
 	vector<String> orig_tokens = whitespace_tokenize(text);
 	vector<String> split_tokens;
-	split_tokens.clear();
+//	split_tokens.clear();
 	for (String &token : orig_tokens) {
 		if (do_lower_case) {
 			tolower(token);
@@ -1188,7 +1200,7 @@ vector<String> BasicTokenizer::_run_split_on_punc(String &text) {
 String BasicTokenizer::_tokenize_chinese_chars(const String &text) {
 //        """Adds whitespace around any CJK character."""
 	String output;
-	output.clear();
+//	output.clear();
 	for (word ch : text) {
 		if (_is_chinese_char(ch)) {
 			output += ' ';

@@ -15,7 +15,7 @@ struct CRF {
 
 	Matrix& viterbi_one_hot(const Matrix &X, Matrix &oneHot);
 
-	VectorI& call(const Matrix &X, VectorI &best_paths);
+	VectorI& operator ()(const Matrix &X, VectorI &best_paths) const;
 	CRF(HDF5Reader &dis);
 };
 
@@ -29,8 +29,22 @@ struct Conv1D {
 	static int initial_offset(int xshape, int yshape, int wshape, int sshape);
 
 //	#stride=(1,1)
-	Matrix& operator()(const Matrix &x, Matrix &y, int s = 1);
-	Matrix& operator()(const Matrix &x, int s = 1);
+	Matrix& operator()(const Matrix &x, Matrix &y, int s = 1) const;
+	Matrix operator()(const Matrix &x, int s = 1) const;
+};
+
+struct Conv1DSame {
+	Tensor w;
+	Vector bias;
+	Activation activate = { Activator::relu };
+
+	Conv1DSame(HDF5Reader &dis);
+
+	static int initial_offset(int xshape, int wshape);
+
+//	#stride=(1,1)
+	Matrix& operator()(const Matrix &x, Matrix &y) const;
+	Matrix operator()(const Matrix &x) const;
 };
 
 struct DenseLayer {
@@ -42,13 +56,13 @@ struct DenseLayer {
 	Vector bDense;
 	Activation activation = { Activator::tanh };
 
-	Vector& operator()(const Vector &x, Vector &ret);
-	Vector& operator()(Vector &x);
+	Vector& operator()(const Vector &x, Vector &ret) const;
+	Vector& operator()(Vector &x) const;
 
-	Matrix& operator()(Matrix &x, Matrix &wDense);
-	Matrix& operator()(Matrix &x);
-	Tensor& operator()(Tensor &x);
-	vector<Vector>& operator()(vector<Vector> &x);
+	Matrix& operator()(Matrix &x, Matrix &wDense) const;
+	Matrix& operator()(Matrix &x) const;
+	Tensor& operator()(Tensor &x) const;
+	vector<Vector>& operator()(vector<Vector> &x) const;
 
 	DenseLayer(HDF5Reader &dis, bool use_bias = true, Activator activator =
 			Activator::tanh);
@@ -58,16 +72,16 @@ struct DenseLayer {
 struct Embedding {
 	Matrix wEmbedding;
 
-	Matrix& operator()(VectorI &word, Matrix &wordEmbedding, size_t max_length);
+	Matrix& operator()(VectorI &word, Matrix &wordEmbedding, size_t max_length) const;
 
-	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding);
+	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding) const;
 
 	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding,
-			Matrix &wEmbedding);
+			Matrix &wEmbedding) const;
 
-	Tensor& operator()(const vector<VectorI> &word, Tensor &y);
-	Tensor& operator()(const vector<VectorI> &word);
-	Matrix operator()(const VectorI &word);
+	Tensor& operator()(const vector<VectorI> &word, Tensor &y) const;
+	Tensor operator()(const vector<VectorI> &word) const;
+	Matrix operator()(const VectorI &word) const;
 
 	void initialize(HDF5Reader &dis);
 
@@ -83,30 +97,30 @@ struct RNN {
 	virtual ~RNN() {
 	}
 
-	virtual Vector& call(const Matrix &x, Vector &ret) {
+	virtual Vector& call(const Matrix &x, Vector &ret) const {
 		return ret;
 	}
 
 	virtual Vector& call(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr) {
+			vector<vector<double>> &arr) const {
 		return ret;
 	}
 
-	virtual Vector& call_reverse(const Matrix &x, Vector &ret) {
+	virtual Vector& call_reverse(const Matrix &x, Vector &ret) const {
 		return ret;
 	}
 
 	virtual Vector& call_reverse(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr) {
+			vector<vector<double>> &arr) const {
 		return ret;
 	}
 
-	virtual Matrix& call_return_sequences(const Matrix &x, Matrix &ret) {
+	virtual Matrix& call_return_sequences(const Matrix &x, Matrix &ret) const {
 		return ret;
 	}
 
 	virtual Matrix& call_return_sequences_reverse(const Matrix &x,
-			Matrix &ret) {
+			Matrix &ret) const {
 		return ret;
 	}
 
@@ -124,11 +138,11 @@ struct Bidirectional {
 
 	merge_mode mode;
 
-	Matrix& operator()(const Matrix &x, Matrix &ret);
+	Matrix& operator()(const Matrix &x, Matrix &ret) const;
 
-	Vector& operator()(const Matrix &x, Vector &ret);
+	Vector& operator()(const Matrix &x, Vector &ret) const;
 	Vector& operator()(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr);
+			vector<vector<double>> &arr) const;
 //private:
 //	Bidirectional(RNN *forward, RNN *backward, merge_mode mode);
 };
