@@ -141,8 +141,7 @@ Tensor& LayerNormalization::operator ()(Tensor &x) {
 	deviation_copy = deviation;
 
 	auto mean_x = mean(square(deviation_copy));
-	return deviation / sqrt(mean_x + epsilon) * gamma
-			+ beta;
+	return deviation / sqrt(mean_x + epsilon) * gamma + beta;
 }
 
 Matrix& LayerNormalization::operator ()(Matrix &x) {
@@ -168,8 +167,7 @@ vector<Vector>& LayerNormalization::operator()(vector<Vector> &x) {
 	deviation_copy = deviation;
 
 	auto mean_x = mean(square(deviation_copy));
-	return deviation / sqrt(mean_x + epsilon) * gamma
-			+ beta;
+	return deviation / sqrt(mean_x + epsilon) * gamma + beta;
 }
 
 Vector& LayerNormalization::operator()(Vector &x) {
@@ -461,6 +459,9 @@ Tensor& MultiHeadAttention::reshape_from_batches(Tensor &x) {
 	return x;
 }
 
+MultiHeadAttention::MultiHeadAttention() { // @suppress("Class members should be properly initialized")
+}
+
 vector<Vector>& MultiHeadAttention::reshape_from_batches(vector<Vector> &x) {
 	int batch_size = x.size() / num_attention_heads;
 	int size_per_head = x[0].cols();
@@ -476,10 +477,6 @@ vector<Vector>& MultiHeadAttention::reshape_from_batches(vector<Vector> &x) {
 
 	x.resize(batch_size);
 	return x;
-
-}
-
-MultiHeadAttention::MultiHeadAttention() {
 
 }
 
@@ -724,9 +721,6 @@ Encoder::Encoder(HDF5Reader &dis, int num_attention_heads) :
 				dis), FeedForward(dis), FeedForwardNorm(dis) {
 }
 
-Encoder::Encoder() {
-}
-
 Tensor& Encoder::wrap_attention(Tensor &input_layer,
 		const Tensor &attention_matrix, const vector<Vector> &mask) {
 	return MultiHeadAttentionNorm(
@@ -791,6 +785,9 @@ Matrix& Encoder::operator ()(Matrix &input_layer) {
 	return wrap_feedforward(inputs);
 }
 
+Encoder::Encoder() {
+}
+
 vector<Vector>& Encoder::operator ()(Tensor &input_layer,
 		const vector<Vector> &mask, vector<Vector> &y) {
 	auto &inputs = wrap_attention(input_layer, mask, y);
@@ -802,22 +799,32 @@ Vector& Encoder::operator ()(Matrix &input_layer, Vector &y) {
 	return wrap_feedforward(inputs);
 }
 
-Transformer::Transformer(HDF5Reader &dis, bool cross_layer_parameter_sharing,
-		int num_hidden_layers, int num_attention_heads) :
-		num_hidden_layers(num_hidden_layers) {
+AlbertTransformer::AlbertTransformer(HDF5Reader &dis, int num_hidden_layers,
+		int num_attention_heads) :
+		num_hidden_layers(num_hidden_layers), encoder(dis, num_attention_heads) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	if (cross_layer_parameter_sharing) {
-		encoder = new Encoder(dis, num_attention_heads);
-	} else {
-		encoder = new Encoder[num_hidden_layers];
+}
 
-		for (int i = 0; i < num_hidden_layers; ++i) {
-			new (&encoder[i]) Encoder(dis, num_attention_heads);
-		}
+BertTransformer::BertTransformer(HDF5Reader &dis, int num_hidden_layers,
+		int num_attention_heads) :
+		num_hidden_layers(num_hidden_layers), encoder(num_hidden_layers) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+
+	for (int i = 0; i < num_hidden_layers; ++i) {
+		encoder[i] = Encoder(dis, num_attention_heads);
 	}
 }
 
-Tensor& Transformer::operator ()(Tensor &input_layer,
+Tensor& AlbertTransformer::operator ()(Tensor &input_layer,
+		const Tensor &attention_matrix, const vector<Vector> &mask) {
+	auto &last_layer = input_layer;
+	for (int i = 0; i < num_hidden_layers; ++i) {
+		last_layer = encoder(last_layer, attention_matrix, mask);
+	}
+	return last_layer;
+}
+
+Tensor& BertTransformer::operator ()(Tensor &input_layer,
 		const Tensor &attention_matrix, const vector<Vector> &mask) {
 	auto &last_layer = input_layer;
 	for (int i = 0; i < num_hidden_layers; ++i) {
@@ -827,11 +834,24 @@ Tensor& Transformer::operator ()(Tensor &input_layer,
 	return last_layer;
 }
 
-Encoder& Transformer::operator [](int i) {
-	return encoder.color ? encoder[i] : *encoder;
+Encoder& BertTransformer::operator [](int i) {
+	return encoder[i];
 }
 
-vector<Vector>& Transformer::operator ()(Tensor &input_layer,
+vector<Vector>& AlbertTransformer::operator ()(Tensor &input_layer,
+		const vector<MatrixI> &attention_matrix, RevertMask &fn,
+		const vector<Vector> &mask, vector<Vector> &y) {
+	auto &last_layer = input_layer;
+	for (int i = 0; i < num_hidden_layers; ++i) {
+		if (i == num_hidden_layers - 1) {
+			y = encoder(last_layer, mask, y);
+		} else
+			last_layer = encoder(last_layer, fn(attention_matrix), mask);
+	}
+	return y;
+}
+
+vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
 		const vector<MatrixI> &attention_matrix, RevertMask &fn,
 		const vector<Vector> &mask, vector<Vector> &y) {
 	auto &last_layer = input_layer;
@@ -844,7 +864,19 @@ vector<Vector>& Transformer::operator ()(Tensor &input_layer,
 	return y;
 }
 
-vector<Vector>& Transformer::operator ()(Tensor &input_layer,
+vector<Vector>& AlbertTransformer::operator ()(Tensor &input_layer,
+		const vector<Vector> &mask, vector<Vector> &y) {
+	auto &last_layer = input_layer;
+	for (int i = 0; i < num_hidden_layers; ++i) {
+		if (i == num_hidden_layers - 1) {
+			y = encoder(last_layer, mask, y);
+		} else
+			last_layer = encoder(last_layer, mask);
+	}
+	return y;
+}
+
+vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
 		const vector<Vector> &mask, vector<Vector> &y) {
 	auto &last_layer = input_layer;
 	for (int i = 0; i < num_hidden_layers; ++i) {
@@ -856,7 +888,18 @@ vector<Vector>& Transformer::operator ()(Tensor &input_layer,
 	return y;
 }
 
-Vector& Transformer::operator ()(Matrix &input_layer, Vector &y) {
+Vector& AlbertTransformer::operator ()(Matrix &input_layer, Vector &y) {
+	auto &last_layer = input_layer;
+	for (int i = 0; i < num_hidden_layers; ++i) {
+		if (i == num_hidden_layers - 1) {
+			y = encoder(last_layer, y);
+		} else
+			last_layer = encoder(last_layer);
+	}
+	return y;
+}
+
+Vector& BertTransformer::operator ()(Matrix &input_layer, Vector &y) {
 	auto &last_layer = input_layer;
 	for (int i = 0; i < num_hidden_layers; ++i) {
 		if (i == num_hidden_layers - 1) {
@@ -867,14 +910,14 @@ Vector& Transformer::operator ()(Matrix &input_layer, Vector &y) {
 	return y;
 }
 
+//bool cross_layer_parameter_sharing = true;
 Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
 		int num_attention_heads, bool factorization_on_word_embedding_only,
-		bool cross_layer_parameter_sharing, bool symmetric_positional_embedding,
-		int num_hidden_layers) :
+		bool symmetric_positional_embedding, int num_hidden_layers) :
 		tokenizer(vocab), symmetric_positional_embedding(
 				symmetric_positional_embedding), midIndex(tokenizer.vocab.at(u"[SEP]")), bertEmbedding(
 		dis, num_attention_heads, factorization_on_word_embedding_only), transformer(
-		dis, cross_layer_parameter_sharing, num_hidden_layers,
+		dis, num_hidden_layers,
 		num_attention_heads), poolerDense(dis), similarityDense(dis,
 		true, Activator::sigmoid) {
 			cout << "in " << __PRETTY_FUNCTION__ << endl;
@@ -885,7 +928,7 @@ Json::Value readFromStream(const string &json_file);
 
 Paraphrase& Paraphrase::instance() {
 	static const auto &config = readFromStream(
-			cnModelsDirectory() + "bert/paraphrase/config.json");
+			modelsDirectory() + "cn/bert/paraphrase/config.json");
 
 //	std::cout << config << std::endl;
 //	for (auto &key : config.getMemberNames()) {
@@ -895,8 +938,8 @@ Paraphrase& Paraphrase::instance() {
 	static int num_attention_heads = 12;
 	static bool factorization_on_word_embedding_only =
 			config["factorization_on_word_embedding_only"].asBool();
-	static bool cross_layer_parameter_sharing =
-			config["cross_layer_parameter_sharing"].asBool();
+//	static bool cross_layer_parameter_sharing =
+//			config["cross_layer_parameter_sharing"].asBool();
 	static bool symmetric_positional_embedding =
 			config["symmetric_positional_embedding"].asBool();
 
@@ -904,9 +947,10 @@ Paraphrase& Paraphrase::instance() {
 
 	static Paraphrase inst(
 			(HDF5Reader&) (const HDF5Reader&) HDF5Reader(
-					cnModelsDirectory() + "bert/paraphrase/model.h5"),
-			cnModelsDirectory() + "bert/vocab.txt", num_attention_heads,
-			factorization_on_word_embedding_only, cross_layer_parameter_sharing,
+					modelsDirectory() + "cn/bert/paraphrase/model.h5"),
+			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
+			factorization_on_word_embedding_only,
+//			cross_layer_parameter_sharing,
 			symmetric_positional_embedding, num_hidden_layers);
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	return inst;
@@ -1006,30 +1050,21 @@ vector<String> whitespace_tokenize(String &text) {
 }
 
 FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
-		BasicTokenizer(do_lower_case), WordpieceTokenizer(vocab_file) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-}
-
-FullTokenizer &FullTokenizer::instance_cn(){
-	static FullTokenizer instance(cnModelsDirectory() + "bert/vocab.txt");
-	return instance;
-}
-
-FullTokenizer &FullTokenizer::instance_en(){
-	static FullTokenizer instance(modelsDirectory() + "en/bert/vocab.txt");
-	return instance;
-}
-
-vector<String> FullTokenizer::tokenize(String &text) {
-	vector<String> split_tokens;
-//	split_tokens.clear();
-	for (String &token : this->BasicTokenizer::tokenize(text)) {
-		for (String &sub_token : this->WordpieceTokenizer::tokenize(token)) {
-			split_tokens << sub_token;
+		vocab(load_vocab(vocab_file)), unk_token(u"[UNK]"),
+		max_input_chars_per_word(200), do_lower_case(do_lower_case) {
+			cout << "in " << __PRETTY_FUNCTION__ << endl;
 		}
-	}
 
-	return split_tokens;
+FullTokenizer& FullTokenizer::instance_cn() {
+	static FullTokenizer instance(
+			modelsDirectory() + "cn/pretraining/vocab.txt");
+	return instance;
+}
+
+FullTokenizer& FullTokenizer::instance_en() {
+	static FullTokenizer instance(
+			modelsDirectory() + "en/pretraining/vocab.txt");
+	return instance;
 }
 
 VectorI FullTokenizer::convert_tokens_to_ids(vector<String> &items) {
@@ -1054,13 +1089,7 @@ VectorI FullTokenizer::convert_tokens_to_ids(vector<String> &items) {
 	return output;
 }
 
-WordpieceTokenizer::WordpieceTokenizer(const string &vocab_file) :
-		WordpieceTokenizer(load_vocab(vocab_file)) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-}
-
-dict<String, int> WordpieceTokenizer::load_vocab(
-		const string &vocab_file) {
+dict<String, int> FullTokenizer::load_vocab(const string &vocab_file) {
 	//        """Loads a vocabulary file into a dictionary."""
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dict<String, int> vocab;
@@ -1068,14 +1097,7 @@ dict<String, int> WordpieceTokenizer::load_vocab(
 	return vocab;
 }
 
-WordpieceTokenizer::WordpieceTokenizer(dict<String, int> vocab,
-		String unk_token, size_t max_input_chars_per_word) :
-		vocab(vocab), unk_token(unk_token), max_input_chars_per_word(
-				max_input_chars_per_word) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-}
-
-vector<String> WordpieceTokenizer::tokenize(String &text) {
+vector<String> FullTokenizer::wordpiece_tokenize(String &chars) {
 //        """Tokenizes a piece of text into its word pieces.
 //
 //        This uses a greedy longest-match-first algorithm to perform tokenization
@@ -1087,22 +1109,23 @@ vector<String> WordpieceTokenizer::tokenize(String &text) {
 //
 //        Args:
 //            text: A single token or whitespace separated tokens. This should have
-//                already been passed through `BasicTokenizer.
+//                already been passed through `FullTokenizer.
 //
 //        Returns:
 //            A list of wordpiece tokens.
 //        """
 
-//        text = convert_to_unicode(text)
 	vector<String> output_tokens;
-	for (String &chars : whitespace_tokenize(text)) {
-		if (chars.size() > max_input_chars_per_word) {
-			output_tokens << unk_token;
-			continue;
-		}
+
+	if (chars.size() > max_input_chars_per_word) {
+		output_tokens << unk_token;
+	} else {
+		if (do_lower_case)
+			tolower(chars);
+
 		bool is_bad = false;
 		size_t start = 0;
-		vector<String> sub_tokens;
+
 		while (start < chars.size()) {
 			auto end = chars.size();
 			String cur_substr, substr;
@@ -1130,56 +1153,24 @@ vector<String> WordpieceTokenizer::tokenize(String &text) {
 				break;
 			}
 
-			sub_tokens << cur_substr;
+			output_tokens << cur_substr;
 			start = end;
 		}
 
 		if (is_bad)
 			output_tokens << unk_token;
-		else
-			output_tokens << sub_tokens;
 	}
+
+	chars.clear();
 	return output_tokens;
 }
 
-BasicTokenizer::BasicTokenizer(bool do_lower_case) :
-		do_lower_case(do_lower_case) {
-}
-
-vector<String> BasicTokenizer::tokenize(String &text) {
-//        """Tokenizes a piece of text."""
-	text = _clean_text(text);
-
-//# This was added on November 1st, 2018 for the multilingual and Chinese
-//# models. This is also applied to the English models now, but it doesn't
-//# matter since the English models were not trained on any Chinese data
-//# and generally don't have any Chinese data in them (there are Chinese
-//# characters in the vocabulary because Wikipedia does have some Chinese
-//# words in the English Wikipedia.).
-	text = _tokenize_chinese_chars(text);
-
-	vector<String> orig_tokens = whitespace_tokenize(text);
-	vector<String> split_tokens;
-//	split_tokens.clear();
-	for (String &token : orig_tokens) {
-		if (do_lower_case) {
-			tolower(token);
-			token = _run_strip_accents(token);
-		}
-
-		split_tokens << _run_split_on_punc(token);
-	}
-	return split_tokens;
-//        output_tokens = whitespace_tokenize(" ".join(split_tokens));
-//        return output_tokens;
-}
-
-vector<String> BasicTokenizer::_run_split_on_punc(String &text) {
+vector<String> FullTokenizer::_run_split_on_punc(String &text) {
 //        """Splits punctuation on a piece of text."""
 	size_t i = 0;
 	bool start_new_word = true;
 	vector<String> output;
-	output.clear();
+
 	while (i < text.size()) {
 		auto ch = text[i];
 		if (_is_punctuation(ch)) {
@@ -1197,22 +1188,59 @@ vector<String> BasicTokenizer::_run_split_on_punc(String &text) {
 	return output;
 }
 
-String BasicTokenizer::_tokenize_chinese_chars(const String &text) {
+vector<String> FullTokenizer::tokenize(const String &text) {
+	//# This was added on November 1st, 2018 for the multilingual and Chinese
+	//# models. This is also applied to the English models now, but it doesn't
+	//# matter since the English models were not trained on any Chinese data
+	//# and generally don't have any Chinese data in them (there are Chinese
+	//# characters in the vocabulary because Wikipedia does have some Chinese
+	//# words in the English Wikipedia.).
+
 //        """Adds whitespace around any CJK character."""
-	String output;
-//	output.clear();
-	for (word ch : text) {
-		if (_is_chinese_char(ch)) {
-			output += ' ';
-			output += ch;
-			output += ' ';
-		} else
-			output += ch;
+	//cout << "text = " << text << endl;
+
+	vector<String> output;
+	String word;
+
+	for (auto ch : text) {
+		if (ch == 0 || ch == 0xfffd || iswcntrl(ch)) {
+			continue;
+		}
+
+		if (iswspace(ch)) {
+			if (!!word) {
+			//	cout << "word = " << word << endl;
+				output << wordpiece_tokenize(word);
+			}
+			continue;
+		}
+
+		if (_is_chinese_char(ch) || _is_punctuation(ch)) {
+			if (!!word) {
+		//		cout << "word = " << word << endl;
+				output << wordpiece_tokenize(word);
+			}
+
+			String substr(1, ch);
+			if (vocab.count(substr))
+				output << substr;
+			else
+				output << this->unk_token;
+		} else {
+			word += ch;
+		}
 	}
+
+	if (!!word) {
+	//	cout << "word = " << word << endl;
+		output << wordpiece_tokenize(word);
+	}
+
+//	cout << "output = " << output << endl;
 	return output;
 }
 
-bool BasicTokenizer::_is_punctuation(word cp) {
+bool FullTokenizer::_is_punctuation(word cp) {
 //        """Checks whether `chars` is a punctuation character."""
 //    # We treat all non-letter/number ASCII as punctuation.
 //    # Characters such as "^", "$", and "`" are not in the Unicode
@@ -1224,7 +1252,7 @@ bool BasicTokenizer::_is_punctuation(word cp) {
 	return iswpunct(cp);
 }
 
-bool BasicTokenizer::_is_chinese_char(word cp) {
+bool FullTokenizer::_is_chinese_char(word cp) {
 //        """Checks whether CP is the codepoint of a CJK character."""
 //# This defines a "chinese character" as anything in the CJK Unicode block:
 //#   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
@@ -1247,7 +1275,7 @@ bool BasicTokenizer::_is_chinese_char(word cp) {
 	return false;
 }
 
-String& BasicTokenizer::_clean_text(String &text) {
+String& FullTokenizer::_clean_text(String &text) {
 //        """Performs invalid character removal and whitespace cleanup on text."""
 	for (size_t i = 0; i < text.size();) {
 		word ch = text[i];
@@ -1264,7 +1292,7 @@ String& BasicTokenizer::_clean_text(String &text) {
 	return text;
 }
 
-String& BasicTokenizer::_run_strip_accents(String &text) {
+String& FullTokenizer::_run_strip_accents(String &text) {
 //        """Strips accents from a piece of text."""
 	return text;
 //        text = unicodedata.normalize("NFD", text);

@@ -248,6 +248,9 @@ struct Text {
 	Text& operator >>(String &v);
 	Text& operator >>(vector<String> &v);
 	Text& operator >>(dict<String, int> &word2id);
+	Text& operator >>(dict<char16_t, int> &word2id);
+	dict<String, int> read_vocab();
+	dict<char16_t, int> read_char_vocab();
 	String toString();
 	operator bool();
 	static char str[];

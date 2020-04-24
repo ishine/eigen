@@ -4,12 +4,11 @@
 #include "bert.h"
 
 struct Classifier {
-	dict<String, int> word2id;
+	dict<char16_t, int> word2id;
 	Embedding embedding;
 	Conv1D con1D0, con1D1, con1D2;
 	BidirectionalLSTM lstm;
 	DenseLayer dense_tanh, dense_pred;
-	FullTokenizer *tokenizer;
 
 	Vector predict(const String &predict_text);
 	Vector predict(String &predict_text);
@@ -19,16 +18,68 @@ struct Classifier {
 	vector<vector<double>>& predict(String &predict_text,
 			vector<vector<double>> &arr);
 
-	Classifier(const string &binaryFilePath, const string &vocabFilePath,
-			FullTokenizer *tokenizer);
-	Classifier(HDF5Reader &dis, FullTokenizer *tokenizer);
-	Classifier(HDF5Reader &dis, const string &vocab, FullTokenizer *tokenizer);
+	Classifier(const string &binaryFilePath, const string &vocabFilePath);
+	Classifier(HDF5Reader &dis);
+	Classifier(HDF5Reader &dis, const string &vocab);
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
 	static Classifier& phatic_classifier();
 	static Classifier& qatype_classifier();
-	static Classifier& keyword_cn_classifier(bool reinitialize = false);
-	static Classifier& keyword_en_classifier(bool reinitialize = false);
+};
+
+struct ClassifierChar {
+	dict<char16_t, int> word2id;
+	Embedding embedding;
+	Conv1DSame con1D0, con1D1;
+	BidirectionalGRU gru;
+	DenseLayer dense_pred;
+
+	Vector predict(const String &predict_text);
+	Vector predict_debug(const String &predict_text);
+	int predict(const String &predict_text, int &argmax);
+	vector<int>& predict(const vector<String> &predict_text,
+			vector<int> &argmax);
+
+	vector<vector<double>>& predict(String &predict_text,
+			vector<vector<double>> &arr);
+
+	ClassifierChar(const string &binaryFilePath, const string &vocabFilePath);
+	ClassifierChar(HDF5Reader &dis, const string &vocab);
+
+	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
+
+	static ClassifierChar& keyword_cn_classifier();
+	static void instantiate_keyword_cn_classifier();
+
+};
+
+struct ClassifierWord {
+	dict<String, int> word2id;
+	Embedding embedding;
+	Conv1DSame con1D0, con1D1;
+	BidirectionalGRU gru;
+	DenseLayer dense_pred;
+	FullTokenizer *tokenizer;
+
+	Vector predict(const String &predict_text);
+	Vector predict(String &predict_text);
+	Vector predict_debug(const String &predict_text);
+	int predict(const String &predict_text, int &argmax);
+	vector<int>& predict(const vector<String> &predict_text,
+			vector<int> &argmax);
+
+	vector<vector<double>>& predict(String &predict_text,
+			vector<vector<double>> &arr);
+
+	ClassifierWord(const string &binaryFilePath, const string &vocabFilePath,
+			FullTokenizer *tokenizer);
+	ClassifierWord(HDF5Reader &dis, const string &vocab,
+			FullTokenizer *tokenizer);
+
+	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
+
+	static ClassifierWord& keyword_en_classifier();
+	static void instantiate_keyword_en_classifier();
 };
 

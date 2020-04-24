@@ -1,7 +1,5 @@
+#include "../std/utility.h"
 #include <map>
-#include <vector>
-using std::vector;
-using String = std::u16string;
 
 #include "Trie.h"
 

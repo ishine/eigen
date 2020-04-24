@@ -4,7 +4,7 @@
 struct NERTagger {
 	typedef ::object<NERTagger> object;
 
-	dict<String, int> word2id;
+	dict<char16_t, int> word2id;
 	Embedding embedding, repertoire_embedding;
 
 	BidirectionalLSTM lstm;

@@ -44,12 +44,10 @@ Vector min(const Matrix &x) {
 //	return 0.2 * x + 0.5;
 //}
 //
-//double relu(double x) {
-//	if (x > 0) {
-//		return x;
-//	}
-//	return 0;
-//}
+
+double relu(double x) {
+	return x < 0 ? 0 : x;
+}
 
 double inverse(double x) {
 	return 1 / x;

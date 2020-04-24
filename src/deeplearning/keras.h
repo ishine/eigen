@@ -1,6 +1,7 @@
 #pragma once
-#include "utility.h"
 #include "matrix.h"
+#include<vector>
+using std::vector;
 
 struct CRF {
 	Vector bias;
@@ -40,8 +41,6 @@ struct Conv1DSame {
 
 	Conv1DSame(HDF5Reader &dis);
 
-	static int initial_offset(int xshape, int wshape);
-
 //	#stride=(1,1)
 	Matrix& operator()(const Matrix &x, Matrix &y) const;
 	Matrix operator()(const Matrix &x) const;
@@ -72,7 +71,8 @@ struct DenseLayer {
 struct Embedding {
 	Matrix wEmbedding;
 
-	Matrix& operator()(VectorI &word, Matrix &wordEmbedding, size_t max_length) const;
+	Matrix& operator()(VectorI &word, Matrix &wordEmbedding,
+			size_t max_length) const;
 
 	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding) const;
 
@@ -91,38 +91,29 @@ struct Embedding {
 struct RNN {
 	typedef ::object<RNN> object;
 
-	Activation sigmoid = { Activator::hard_sigmoid };
-	Activation tanh = { Activator::tanh };
+//	Activation recurrent_activation = { Activator::hard_sigmoid };
+//	since tensorflow 1.15, recurrent_activation=sigmoid
+	Activation recurrent_activation = { Activator::sigmoid };
+	Activation activation = { Activator::tanh };
 
 	virtual ~RNN() {
 	}
 
-	virtual Vector& call(const Matrix &x, Vector &ret) const {
-		return ret;
-	}
+	virtual Vector& call(const Matrix &x, Vector &ret) const = 0;
 
-	virtual Vector& call(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr) const {
-		return ret;
-	}
+//	Vector& call(const Matrix &x, Vector &ret,
+//			vector<vector<double>> &arr) const;
+//
+	virtual Vector& call_reverse(const Matrix &x, Vector &ret) const = 0;
 
-	virtual Vector& call_reverse(const Matrix &x, Vector &ret) const {
-		return ret;
-	}
+//	virtual Vector& call_reverse(const Matrix &x, Vector &ret,
+//			vector<vector<double>> &arr) const = 0;
 
-	virtual Vector& call_reverse(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr) const {
-		return ret;
-	}
-
-	virtual Matrix& call_return_sequences(const Matrix &x, Matrix &ret) const {
-		return ret;
-	}
+	virtual Matrix& call_return_sequences(const Matrix &x,
+			Matrix &ret) const = 0;
 
 	virtual Matrix& call_return_sequences_reverse(const Matrix &x,
-			Matrix &ret) const {
-		return ret;
-	}
+			Matrix &ret) const = 0;
 
 	virtual vector<vector<vector<double>>>& weight(
 			vector<vector<vector<double>>> &arr) {
@@ -177,18 +168,19 @@ struct GRU: RNN {
 	Matrix Whh;
 	Vector bh;
 
-	Vector& call(const Matrix &x, Vector &h);
-	Vector& call_reverse(const Matrix &x, Vector &h);
-	Vector& call(const Matrix &x, Vector &h, vector<vector<double>> &arr);
+	Vector& call(const Matrix &x, Vector &h) const;
+	Vector& call_reverse(const Matrix &x, Vector &h) const;
+	Vector& call(const Matrix &x, Vector &h, vector<vector<double>> &arr) const;
 	Vector& call_reverse(const Matrix &x, Vector &h,
-			vector<vector<double>> &arr);
+			vector<vector<double>> &arr) const;
 
-	Matrix& call_return_sequences(const Matrix &x, Matrix &ret);
-	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &ret);
+	Matrix& call_return_sequences(const Matrix &x, Matrix &ret) const;
+	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &ret) const;
 
-	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h);
+	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x,
+			Vector &h) const;
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
-			vector<vector<double>> &arr);
+			vector<vector<double>> &arr) const;
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
@@ -218,12 +210,12 @@ struct LSTM: RNN {
 
 	LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi, Matrix Whf,
 			Matrix Whc, Matrix Who, Vector bi, Vector bf, Vector bc, Vector bo);
-	Vector& call(const Matrix &x, Vector &h);
+	Vector& call(const Matrix &x, Vector &h) const;
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
-			Vector &c);
+			Vector &c) const;
 
 	LSTM(HDF5Reader &dis);
-	Matrix& call_return_sequences(const Matrix &x, Matrix &arr);
-	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr);
-	Vector& call_reverse(const Matrix &x, Vector &h);
+	Matrix& call_return_sequences(const Matrix &x, Matrix &arr) const;
+	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr) const;
+	Vector& call_reverse(const Matrix &x, Vector &h) const;
 };

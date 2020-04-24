@@ -12,19 +12,14 @@ string& modelsDirectory() {
 	return modelsDirectory;
 }
 
-string& cnModelsDirectory() {
-	static string cnModelsDirectory = modelsDirectory() + "cn/";
-	return cnModelsDirectory;
-}
-
 string& nerModelsDirectory() {
-	static string nerModelsDirectory = cnModelsDirectory() + "ner/";
+	static string nerModelsDirectory = modelsDirectory() + "cn/ner/";
 	return nerModelsDirectory;
 
 }
 
 string& serviceModelsDirectory() {
-	static string serviceModelsDirectory = cnModelsDirectory() + "gru_data/";
+	static string serviceModelsDirectory = modelsDirectory() + "cn/gru_data/";
 	return serviceModelsDirectory;
 }
 
@@ -35,6 +30,8 @@ HDF5Reader::HDF5Reader(const string &s_FilePath) :
 				openAttribute(hdf5, "layer_names")), layer_index(0), group(
 				hdf5.openGroup(layer_names[layer_index])), weight_index(-1) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
+
+//	cout << "weight_index = " << weight_index << endl;
 
 //	this->s_FilePath = s_FilePath;
 }
@@ -163,12 +160,21 @@ HDF5Reader& HDF5Reader::operator >>(
 			const string &weight_name,
 			std::pair<vector<int>, vector<double>> &tuple);
 
+//	cout << "layer_names = " << layer_names << endl;
+//	cout << "weight_index = " << weight_index << endl;
+
 	while (true) {
+//		cout << "weight_names = " << weight_names << endl;
 		if (++weight_index < (int) weight_names.size()) {
 			break;
 		}
 
-		assert(++layer_index < (int ) layer_names.size());
+		++layer_index;
+		assert(layer_index < (int ) layer_names.size());
+
+//		cout << "layer_names[" << layer_index << "] = "
+//				<< layer_names[layer_index] << endl;
+
 		group = hdf5.openGroup(layer_names[layer_index]);
 
 		this->weight_names = openAttribute(group, "weight_names");
@@ -229,31 +235,30 @@ vector<double> convert2vector(const Vector &m) {
 	return v;
 }
 
-VectorI string2id(const String &s, const unordered_map<String, int> &dict) {
-	VectorI v;
-	v.resize(s.size());
-
-	for (size_t i = 0; i < s.size(); ++i) {
-		auto iter = dict.find(s.substr(i, 1));
-		v(i) = iter == dict.end() ? dict.at(u"[UNK]") : iter->second;
-	}
-	return v;
-}
-
-VectorI string2id(const vector<String> &s,
-		const unordered_map<String, int> &dict) {
+VectorI string2id(const String &s, const ::dict<char16_t, int> &dict) {
 	VectorI v;
 	v.resize(s.size());
 
 	for (size_t i = 0; i < s.size(); ++i) {
 		auto iter = dict.find(s[i]);
-		v(i) = iter == dict.end() ? dict.at(u"[UNK]") : iter->second;
+		v(i) = iter == dict.end() ? 1 : iter->second;
+	}
+	return v;
+}
+
+VectorI string2id(const vector<String> &s, const ::dict<String, int> &dict) {
+	VectorI v;
+	v.resize(s.size());
+
+	for (size_t i = 0; i < s.size(); ++i) {
+		auto iter = dict.find(s[i]);
+		v(i) = iter == dict.end() ? 1 : iter->second;
 	}
 	return v;
 }
 
 vector<VectorI> string2ids(const vector<String> &s,
-		const unordered_map<String, int> &dict) {
+		const unordered_map<char16_t, int> &dict) {
 	vector<VectorI> v;
 	int batch_size = s.size();
 	v.reserve(batch_size);
@@ -263,7 +268,6 @@ vector<VectorI> string2ids(const vector<String> &s,
 	}
 	return v;
 }
-
 
 /*
  int test_matmul() {
@@ -355,17 +359,6 @@ vector<VectorI> string2ids(const vector<String> &s,
  Ctrl + Shift + Plus
  */
 
-//http://eigen.tuxfamily.org/dox/
-//https://blog.csdn.net/zong596568821xp/article/details/81134406
-void test_eigen() {
-	Matrix A = Matrix::Ones(2560, 2560);
-	Matrix B = Matrix::Ones(2560, 2560);
-	auto start = clock();
-	Matrix C = A * B;
-	auto end = clock();
-	cout << "time cost = " << (end - start) << endl;
-}
-
 struct Object {
 	Object() {
 		x = y = z = 0;
@@ -401,4 +394,59 @@ Object return_tmp() {
 	Object obj;
 	obj.reset();
 	return obj;
+}
+
+#include <omp.h>
+#include <iostream>
+int cpu_count = []() -> int {
+//	http://eigen.tuxfamily.org/dox/TopicMultiThreading.html
+	int cpu_count = omp_get_max_threads();
+	Eigen::setNbThreads(cpu_count);
+	Eigen::initParallel();
+	cout << "Eigen::initParallel() is called!" << endl;
+	cout << "cpu_count = " << cpu_count << endl;
+	return cpu_count;
+}();
+
+#include <chrono>
+//gcc -mavx -mfma
+void test_speed() {
+	const int dim = 100;
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+
+	int n;
+	n = Eigen::nbThreads();
+	cout << n << "\n";
+
+	Matrix m1(dim, dim);
+	Matrix m2(dim, dim);
+	Matrix m_res(dim, dim);
+	m1.setRandom(dim, dim);
+	m2.setRandom(dim, dim);
+
+	start = std::chrono::system_clock::now();
+
+	for (int i = 0; i < 100000; ++i) {
+		m_res = m1 * m2;
+	}
+
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end - start;
+
+	std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+}
+
+//http://eigen.tuxfamily.org/dox/
+//https://blog.csdn.net/zong596568821xp/article/details/81134406
+void test_eigen() {
+	Matrix A = Matrix::Random(3000, 3000);  // 随机初始化矩阵
+	Matrix B = Matrix::Random(3000, 3000);
+
+	double start = clock();
+	Matrix C = A * B;    // 乘法好简洁
+	double endd = clock();
+	double thisTime = (double) (endd - start) / CLOCKS_PER_SEC;
+
+	cout << "time cost for 3000 * 3000 matrix multiplication: = " << thisTime
+			<< endl;
 }

@@ -1,5 +1,9 @@
 #pragma once
 #include "../std/utility.h"
+#include <omp.h>
+//#define EIGEN_HAS_OPENMP
+//#define EIGEN_DONT_PARALLELIZE
+//#define EIGEN_USE_MKL_ALL
 #include "../Eigen/Dense"
 
 using floatx = double;
@@ -30,7 +34,6 @@ struct HDF5Reader {
 };
 
 string& modelsDirectory();
-string& cnModelsDirectory();
 string& nerModelsDirectory();
 string& serviceBinary();
 
@@ -38,11 +41,12 @@ vector<double> convert2vector(const Matrix &m, int row_index);
 vector<double> convert2vector(const Vector &m);
 vector<vector<double>> convert2vector(const Matrix &m);
 
-VectorI string2id(const String &s, const dict<String, int> &dict);
+VectorI string2id(const String &s, const dict<char16_t, int> &dict);
 VectorI string2id(const vector<String> &s, const dict<String, int> &dict);
 
 vector<VectorI> string2ids(const vector<String> &s,
-		const dict<String, int> &dict);
+		const dict<char16_t, int> &dict);
 
 //forward declaration to prevent runtime linking error.
 extern string workingDirectory;
+extern int cpu_count;

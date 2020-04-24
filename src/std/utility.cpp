@@ -310,10 +310,22 @@ Text& Text::operator >>(String &v) {
 	return *this;
 }
 
+dict<String, int> Text::read_vocab() {
+	dict<String, int> word2id;
+	*this >> word2id;
+	return word2id;
+}
+
+dict<char16_t, int> Text::read_char_vocab() {
+	dict<char16_t, int> word2id;
+	*this >> word2id;
+	return word2id;
+}
+
 Text& Text::operator >>(dict<String, int> &word2id) {
 	word2id.clear();
 	String s;
-	size_t index = 0;
+	size_t index = 2;
 	for (String &s : *this) {
 		strip(s);
 		assert(!s.empty());
@@ -325,7 +337,27 @@ Text& Text::operator >>(dict<String, int> &word2id) {
 	}
 	cout << "word2id.size() = " << word2id.size() << endl;
 	cout << "index = " << index << endl;
-	assert(word2id.size() == index);
+	assert(word2id.size() == index - 2);
+	return *this;
+}
+
+Text& Text::operator >>(dict<char16_t, int> &word2id) {
+	word2id.clear();
+	String s;
+	size_t index = 2;
+	for (String &s : *this) {
+		strip(s);
+		assert(s.size() == 1);
+		char16_t ch = s[0];
+//		cout << s << " = " << index << endl;
+//		cout << "s.size() = " << s.size() << endl;
+		assert(word2id.count(ch) == 0);
+
+		word2id[ch] = index++;
+	}
+	cout << "word2id.size() = " << word2id.size() << endl;
+	cout << "index = " << index << endl;
+	assert(word2id.size() == index - 2);
 	return *this;
 }
 
@@ -553,7 +585,7 @@ char16_t tolower(char16_t ch) {
 		return ch;
 	}
 }
-
+//∑∫∪∩√∈∏
 char16_t toupper(char16_t ch) {
 	switch (ch) {
 //English small letters:
@@ -694,4 +726,20 @@ char16_t toupper(char16_t ch) {
 	default:
 		return ch;
 	}
+}
+
+double pi_test(int n) {
+	double sum = 0.0;
+//#pragma omp parallel for num_threads(cpu_count()) reduction(+:sum)
+
+	for (int i = 0; i < n; i++) {
+		double factor;
+		if (i % 2 == 0)
+			factor = 1.0;
+		else
+			factor = -1.0;
+		sum += factor / (2 * i + 1);
+	}
+
+	return 4.0 * sum;
 }

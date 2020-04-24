@@ -124,17 +124,6 @@ Conv1DSame::Conv1DSame(HDF5Reader &dis) {
 	dis >> this->bias;
 }
 
-int Conv1DSame::initial_offset(int xshape, int wshape) {
-	if (xshape > 1) {
-		int l = xshape + (wshape - 1) * (xshape - 1);
-		if (xshape * wshape < l)
-			l = xshape * wshape;
-		return wshape
-				- (2 * wshape + l - (l + wshape - 1) / wshape * wshape + 1) / 2;
-	} else
-		return -((xshape - wshape) / 2);
-}
-
 Matrix Conv1DSame::operator()(const Matrix &x) const {
 	Matrix y;
 	return (*this)(x, y);
@@ -145,7 +134,8 @@ Matrix& Conv1DSame::operator()(const Matrix &x, Matrix &y) const {
 	int yshape0 = x.rows();
 	y = Matrix::Zero(yshape0, x.cols());
 
-	int d0 = initial_offset(yshape0, w.size());
+	int d0 = (w.size() - 1) / 2;
+//#pragma omp parallel for num_threads(cpu_count)
 	for (int i = 0; i < yshape0; ++i) {
 		int _i = i - d0;
 		int di_end = std::min((int) w.size(), (int) x.rows() - _i);
@@ -285,11 +275,11 @@ LSTM::LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi,
 	this->bc = bc;
 	this->bo = bo;
 
-//	this->sigmoid = ::hard_sigmoid;
-//	this->tanh = ::tanh;
+//	this->recurrent_activation = ::hard_sigmoid;
+//	this->activation = ::activation;
 }
 
-Vector& LSTM::call(const Matrix &x, Vector &h) {
+Vector& LSTM::call(const Matrix &x, Vector &h) const{
 	Vector c;
 	h = c = Vector::Zero(x.cols());
 
@@ -301,17 +291,17 @@ Vector& LSTM::call(const Matrix &x, Vector &h) {
 }
 
 Vector& LSTM::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
-		Vector &c) {
+		Vector &c) const {
 	Vector i = x * Wxi + h * Whi + bi;
 	Vector f = x * Wxf + h * Whf + bf;
 	Vector _c = x * Wxc + h * Whc + bc;
 
-	_c = sigmoid(f).cwiseProduct(c) + sigmoid(i).cwiseProduct(tanh(_c));
+	_c = recurrent_activation(f).cwiseProduct(c) + recurrent_activation(i).cwiseProduct(activation(_c));
 
 	Vector o = x * Wxo + h * Who + bo;
 
 	c = _c;
-	h = sigmoid(o).cwiseProduct(tanh(_c));
+	h = recurrent_activation(o).cwiseProduct(activation(_c));
 	return h;
 }
 
@@ -341,11 +331,11 @@ LSTM::LSTM(HDF5Reader &dis) {
 	bo.resize(b.size() / 4);
 	b >> bi, bf, bc, bo;
 
-//	sigmoid = ::hard_sigmoid;
-//	tanh = ::tanh;
+//	recurrent_activation = ::hard_sigmoid;
+//	activation = ::activation;
 }
 
-Matrix& LSTM::call_return_sequences(const Matrix &x, Matrix &arr) {
+Matrix& LSTM::call_return_sequences(const Matrix &x, Matrix &arr) const {
 	arr.resize(x.rows(), x.cols());
 	Vector h, c;
 	h = c = Vector::Zero(x.cols());
@@ -357,7 +347,7 @@ Matrix& LSTM::call_return_sequences(const Matrix &x, Matrix &arr) {
 	return arr;
 }
 
-Matrix& LSTM::call_return_sequences_reverse(const Matrix &x, Matrix &arr) {
+Matrix& LSTM::call_return_sequences_reverse(const Matrix &x, Matrix &arr) const {
 	arr.resize(x.rows(), x.cols());
 	Vector h, c;
 	h = c = Vector::Zero(x.cols());
@@ -369,7 +359,7 @@ Matrix& LSTM::call_return_sequences_reverse(const Matrix &x, Matrix &arr) {
 	return arr;
 }
 
-Vector& LSTM::call_reverse(const Matrix &x, Vector &h) {
+Vector& LSTM::call_reverse(const Matrix &x, Vector &h) const {
 	Vector c;
 	h = c = Vector::Zero(x.cols());
 
@@ -406,8 +396,13 @@ Matrix& Bidirectional::operator ()(const Matrix &x, Matrix &ret) const {
 Vector& Bidirectional::operator()(const Matrix &x, Vector &ret) const {
 	Vector forward;
 	this->forward->call(x, forward);
+
+//	printf("forward.shape = (%lld * %lld)\n", forward.rows(), forward.cols());
+
 	Vector backward;
 	this->backward->call_reverse(x, backward);
+
+//	printf("backward.shape = (%lld * %lld)\n", backward.rows(), backward.cols());
 
 	switch (mode) {
 	case sum:
@@ -430,11 +425,11 @@ Vector& Bidirectional::operator()(const Matrix &x, Vector &ret) const {
 Vector& Bidirectional::operator()(const Matrix &x, Vector &ret,
 		vector<vector<double>> &arr) const {
 	Vector forward;
-	forward = this->forward->call(x, forward, arr);
+//	forward = this->forward->call(x, forward, arr);
 	arr.push_back(convert2vector(forward));
 
 	Vector backward;
-	backward = this->backward->call_reverse(x, backward, arr);
+//	backward = this->backward->call_reverse(x, backward, arr);
 	arr.push_back(convert2vector(backward));
 
 	switch (mode) {
@@ -470,7 +465,7 @@ BidirectionalLSTM::BidirectionalLSTM(HDF5Reader &dis, merge_mode mode) {
 	this->mode = mode;
 }
 
-Vector& GRU::call(const Matrix &x, Vector &h) {
+Vector& GRU::call(const Matrix &x, Vector &h) const {
 	h = Vector::Zero(x.cols());
 	for (int t = 0; t < x.rows(); ++t) {
 		h = activate(x.row(t), h);
@@ -478,7 +473,7 @@ Vector& GRU::call(const Matrix &x, Vector &h) {
 	return h;
 }
 
-Vector& GRU::call_reverse(const Matrix &x, Vector &h) {
+Vector& GRU::call_reverse(const Matrix &x, Vector &h) const {
 	h = Vector::Zero(x.cols());
 	for (int t = x.rows() - 1; t >= 0; --t) {
 		h = activate(x.row(t), h);
@@ -486,7 +481,7 @@ Vector& GRU::call_reverse(const Matrix &x, Vector &h) {
 	return h;
 }
 
-Vector& GRU::call(const Matrix &x, Vector &h, vector<vector<double>> &arr) {
+Vector& GRU::call(const Matrix &x, Vector &h, vector<vector<double>> &arr) const {
 	h = Vector::Zero(x.cols());
 //	arr.push_back(convert2vector(this->Wxu, 0));
 //	arr.push_back(convert2vector(this->Wxr, 0));
@@ -506,7 +501,7 @@ Vector& GRU::call(const Matrix &x, Vector &h, vector<vector<double>> &arr) {
 }
 
 Vector& GRU::call_reverse(const Matrix &x, Vector &h,
-		vector<vector<double>> &arr) {
+		vector<vector<double>> &arr) const {
 	h = Vector::Zero(x.cols());
 //	arr.push_back(convert2vector(this->Wxu, 0));
 //	arr.push_back(convert2vector(this->Wxr, 0));
@@ -527,18 +522,26 @@ Vector& GRU::call_reverse(const Matrix &x, Vector &h,
 	return h;
 }
 
-Matrix& GRU::call_return_sequences(const Matrix &x, Matrix &ret) {
-	Vector h = Vector::Zero(x.cols());
-	return ret;
+Matrix& GRU::call_return_sequences(const Matrix &x, Matrix &arr) const {
+
+	arr.resize(x.rows(), x.cols());
+	Vector h;
+	h = Vector::Zero(x.cols());
+
+	for (int t = 0, length = x.rows(); t < length; ++t) {
+		arr.row(t) = activate(x.row(t), h);
+	}
+
+	return arr;
 }
 
-Matrix& GRU::call_return_sequences_reverse(const Matrix &x, Matrix &ret) {
+Matrix& GRU::call_return_sequences_reverse(const Matrix &x, Matrix &ret) const {
 	Vector h = Vector::Zero(x.cols());
 	return ret;
 }
 
 Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
-		vector<vector<double>> &arr) {
+		vector<vector<double>> &arr) const {
 	Vector tmp = x * Wxr;
 	arr.push_back(convert2vector(tmp)); //3
 
@@ -549,15 +552,15 @@ Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 
 	Vector r = x * Wxr + h * Whr + br;
 	arr.push_back(convert2vector(r));
-	r = sigmoid(r);
+	r = recurrent_activation(r);
 //	arr.push_back(convert2vector(r));
 
 	Vector u = x * Wxu + h * Whu + bu;
-	u = sigmoid(u);
+	u = recurrent_activation(u);
 	arr.push_back(convert2vector(u));
 
 	Vector gh = x * Wxh + r.cwiseProduct(h) * Whh + bh;
-	gh = tanh(gh);
+	gh = activation(gh);
 	arr.push_back(convert2vector(gh));
 
 	h = (Vector::Ones(u.cols()) - u).cwiseProduct(gh) + u.cwiseProduct(h);
@@ -565,35 +568,47 @@ Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 }
 
 Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x,
-		Vector &h) {
+		Vector &h) const {
 	Vector r = x * Wxr + h * Whr + br;
-	r = sigmoid(r);
+	r = recurrent_activation(r);
 
 	Vector u = x * Wxu + h * Whu + bu;
-	u = sigmoid(u);
+	u = recurrent_activation(u);
 
 	Vector gh = x * Wxh + r.cwiseProduct(h) * Whh + bh;
-	gh = tanh(gh);
+	gh = activation(gh);
 
 	h = (Vector::Ones(u.cols()) - u).cwiseProduct(gh) + u.cwiseProduct(h);
 	return h;
 }
 
 GRU::GRU(HDF5Reader &dis) {
-	dis >> Wxu;
-	dis >> Wxr;
-	dis >> Wxh;
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
 
-	dis >> Whu;
-	dis >> Whr;
-	dis >> Whh;
+	Matrix Wx;
+	dis >> Wx;
 
-	dis >> bu;
-	dis >> br;
-	dis >> bh;
+	Wxu.resize(Wx.rows(), Wx.cols() / 3);
+	Wxr.resize(Wx.rows(), Wx.cols() / 3);
+	Wxh.resize(Wx.rows(), Wx.cols() / 3);
+	Wx >> Wxu, Wxr, Wxh;
 
-//	this->sigmoid = ::hard_sigmoid;
-//	this->tanh = ::tanh;
+	Matrix Wh;
+	dis >> Wh;
+	Whu.resize(Wh.rows(), Wh.cols() / 3);
+	Whr.resize(Wh.rows(), Wh.cols() / 3);
+	Whh.resize(Wh.rows(), Wh.cols() / 3);
+	Wh >> Whu, Whr, Whh;
+
+	Vector b;
+	dis >> b;
+	bu.resize(b.size() / 3);
+	br.resize(b.size() / 3);
+	bh.resize(b.size() / 3);
+	b >> bu, br, bh;
+
+//	this->recurrent_activation = ::hard_sigmoid;
+//	this->activation = ::activation;
 //	this->softmax = ::softmax;
 
 }

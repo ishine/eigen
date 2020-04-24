@@ -1,4 +1,8 @@
 #pragma once
+#include "../std/utility.h"
+#include<vector>
+using std::vector;
+
 #include "keras.h"
 
 template<typename _Ty>
@@ -151,9 +155,8 @@ struct BertEmbedding {
 	DenseLayer embeddingMapping;
 	int embed_dim, hidden_size;
 
-	Tensor operator ()(vector<VectorI> &inputToken,
-			const vector<int> &inputMid, const vector<VectorI> &inputSegment,
-			vector<Vector> &mask);
+	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
+			const vector<VectorI> &inputSegment, vector<Vector> &mask);
 
 	Matrix operator ()(VectorI &inputToken, int inputMid,
 			const VectorI &inputSegment);
@@ -166,8 +169,8 @@ struct BertEmbedding {
 };
 
 struct Encoder {
-	Encoder(HDF5Reader &dis, int num_attention_heads);
 	Encoder();
+	Encoder(HDF5Reader &dis, int num_attention_heads);
 	::MultiHeadAttention MultiHeadAttention;
 	LayerNormalization MultiHeadAttentionNorm;
 	::FeedForward FeedForward;
@@ -200,11 +203,38 @@ struct Encoder {
 			vector<Vector> &y);
 };
 
-struct Transformer {
-	Transformer(HDF5Reader &dis, bool cross_layer_parameter_sharing,
-			int num_hidden_layers, int num_attention_heads);
+struct AlbertTransformer {
+	AlbertTransformer(HDF5Reader &dis, int num_hidden_layers,
+			int num_attention_heads);
 	int num_hidden_layers;
-	object<Encoder> encoder;
+	Encoder encoder;
+
+	Tensor& operator ()(Tensor &input_layer,
+			const vector<MatrixI> &attention_matrix, RevertMask &fn,
+			const vector<Vector> &mask);
+
+	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
+
+	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
+			const vector<Vector> &mask);
+
+	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
+			vector<Vector> &y);
+
+	Vector& operator ()(Matrix &input_layer, Vector &y);
+
+	vector<Vector>& operator ()(Tensor &input_layer,
+			const vector<MatrixI> &attention_matrix, RevertMask &fn,
+			const vector<Vector> &mask, vector<Vector> &y);
+
+};
+
+struct BertTransformer {
+	BertTransformer(HDF5Reader &dis, int num_hidden_layers,
+			int num_attention_heads);
+	int num_hidden_layers;
+	vector<Encoder> encoder;
+
 	Encoder& operator [](int i);
 
 	Tensor& operator ()(Tensor &input_layer,
@@ -227,63 +257,38 @@ struct Transformer {
 
 };
 
-vector<String> whitespace_tokenize(String &text);
+struct FullTokenizer {
+	//Runs end-to-end tokenziation."""
 
-struct BasicTokenizer {
-//    """Runs basic tokenization (punctuation splitting, lower casing, etc.)."""
+	FullTokenizer(const string &vocab_file, bool do_lower_case = true);
+	//    """Runs WordPiece tokenziation."""
 
-	BasicTokenizer(bool do_lower_case = true);
-//        """Constructs a BasicTokenizer.
-//        Args:
+	dict<String, int> vocab;
+	String unk_token;
+	size_t max_input_chars_per_word;
 	bool do_lower_case;
 
-	vector<String> tokenize(String &text);
+	dict<String, int> unknownSet;
+
+	vector<String> basic_tokenize(const String &text);
 
 	String& _run_strip_accents(String &text);
 
 	vector<String> _run_split_on_punc(String &text);
 
-	String _tokenize_chinese_chars(const String &text);
+	vector<String> _tokenize_chinese_chars(const String &text);
 
 	bool _is_punctuation(word cp);
 
 	bool _is_chinese_char(word cp);
 
 	String& _clean_text(String &text);
-};
-
-struct WordpieceTokenizer {
-//    """Runs WordPiece tokenziation."""
-	dict<String, int> vocab;
-	String unk_token;
-	size_t max_input_chars_per_word;
-	dict<String, int> unknownSet;
-	WordpieceTokenizer(const string &vocab_file);
 
 	static dict<String, int> load_vocab(const string &vocab_file);
 
-	WordpieceTokenizer(dict<String, int> vocab, String unk_token = u"[UNK]",
-	size_t max_input_chars_per_word = 200);
+	vector<String> wordpiece_tokenize(String &text);
 
-	vector<String> tokenize(String &text);
-//    vector<String> unknown_words(){
-//        cout << "unknown characters:" << endl;
-//        items = [*unknownSet.items()];
-//        items.sort(key=lambda xy: xy[1], reverse=true);
-//        for (key, repetition in items){
-//            printf("%s = %s\n", key, repetition);
-////#             print('%s = %s' % (key, repetition), file='report.txt')
-//        }
-//        return [key for key, _ in items];
-//    }
-};
-
-struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
-	//Runs end-to-end tokenziation."""
-
-	FullTokenizer(const string &vocab_file, bool do_lower_case = true);
-
-	vector<String> tokenize(String &text);
+	vector<String> tokenize(const String &text);
 
 	VectorI convert_tokens_to_ids(vector<String> &items);
 
@@ -294,7 +299,7 @@ struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
 struct Paraphrase {
 	Paraphrase(HDF5Reader &dis, const string &vocab, int num_attention_heads,
 			bool factorization_on_word_embedding_only = true,
-			bool cross_layer_parameter_sharing = true,
+//			bool cross_layer_parameter_sharing = true,
 			bool symmetric_positional_embedding = true, int num_hidden_layers =
 					12);
 	FullTokenizer tokenizer;
@@ -306,7 +311,7 @@ struct Paraphrase {
 //	::RevertMask RevertMask;
 	BertEmbedding bertEmbedding;
 
-	Transformer transformer;
+	AlbertTransformer transformer;
 	DenseLayer poolerDense;
 	DenseLayer similarityDense;
 

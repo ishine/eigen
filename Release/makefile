@@ -2,7 +2,7 @@ target = eigen
 
 artifact = $(target).dll
 
-GCC = g++ -Wall -std=c++11 -fPIC -fopenmp
+GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp -mavx -mfma
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 
@@ -41,7 +41,7 @@ src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
 	
 src/%.o: ../src/%.c
-	gcc -w -std=c99 -fPIC $(CMD)
+	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
 src/%.o: ../src/%.asm
 	as -o $@ $<

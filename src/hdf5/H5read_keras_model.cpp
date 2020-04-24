@@ -12,6 +12,8 @@ using namespace H5;
 vector<string> openAttribute(const Group &group, const char *name) {
 	const Attribute &attribute = group.openAttribute(name);
 	auto storageSize = attribute.getStorageSize();
+//	cout << "name = " << name << endl;
+
 //	cout << "attribute.getStorageSize() = " << storageSize << endl;
 	std::vector<string> attributes;
 	if (!storageSize)

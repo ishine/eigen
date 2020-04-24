@@ -11,6 +11,7 @@
 #include "../deeplearning/CWSTagger.h"
 
 #include "java.h"
+void test_eigen();
 
 extern "C" {
 void JNICALL Java_com_util_Native_initializeH5Model(JNIEnv *env, jobject obj,
@@ -24,6 +25,12 @@ void JNICALL Java_com_util_Native_initializeH5Model(JNIEnv *env, jobject obj,
 		workingDirectory += '/';
 	}
 	cout << "initialize workingDirectory = " << workingDirectory << endl;
+
+	test_eigen();
+
+	CWSTagger::instance();
+	ClassifierChar::keyword_cn_classifier();
+	ClassifierWord::keyword_en_classifier();
 }
 
 jint JNICALL Java_com_util_Native_sum8args(JNIEnv *env, jobject obj, jint rcx,
@@ -87,43 +94,94 @@ jdouble JNICALL Java_com_util_Native_phatic(JNIEnv *env, jobject obj,
 	return Classifier::phatic_classifier().predict(s)[1];
 }
 
-jstring JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
+jobjectArray JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
 		jstring text) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, text);
 	return Object(env, CWSTagger::instance().predict(s));
 }
 
+//inputs: String [] text;
+//ouputs: String [][] segment;
+
+jobjectArray JNICALL Java_com_util_Native_segmentCNs(JNIEnv *env, jobject _,
+		jobjectArray text) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	return Object(env, CWSTagger::instance().predict(JArray<String>(env, text)));
+}
+//inputs: String [][] text;
+//ouputs: String [][][] segment;
+jobjectArray JNICALL Java_com_util_Native_segmentCNss(JNIEnv *env, jobject _,
+		jobjectArray text) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	return Object(env,
+			CWSTagger::instance().predict(JArray<vector<String>>(env, text)));
+}
+
 void JNICALL Java_com_util_Native_reinitializeCWSTagger(JNIEnv *env,
 		jobject obj) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	CWSTagger::instance(true);
+	CWSTagger::instantiate();
 }
 
 void JNICALL Java_com_util_Native_reinitializeKeywordCN(JNIEnv *env,
 		jobject obj) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	Classifier::keyword_cn_classifier(true);
+	ClassifierChar::instantiate_keyword_cn_classifier();
 }
 
 void JNICALL Java_com_util_Native_reinitializeKeywordEN(JNIEnv *env,
 		jobject obj) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	Classifier::keyword_en_classifier(true);
+	ClassifierWord::instantiate_keyword_en_classifier();
 }
 
-jdouble JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
+jint JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
 		jstring str) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, str);
-	return Classifier::keyword_cn_classifier().predict(s)[1];
+	int index;
+	return ClassifierChar::keyword_cn_classifier().predict(s, index);
 }
 
-jdouble JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_keywordCNDouble(JNIEnv *env, jobject obj,
 		jstring str) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, str);
-	return Classifier::keyword_en_classifier().predict(s)[1];
+	return ClassifierChar::keyword_cn_classifier().predict_debug(s)[1];
+}
+
+jdouble JNICALL Java_com_util_Native_keywordENDouble(JNIEnv *env, jobject obj,
+		jstring str) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	return ClassifierWord::keyword_en_classifier().predict_debug(s)[1];
+}
+
+jintArray JNICALL Java_com_util_Native_keywordCNs(JNIEnv *env, jobject _,
+		jobjectArray str) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	vector<String> ss = JArray<String>(env, str);
+	vector<int> index;
+	return Object(env,
+			ClassifierChar::keyword_cn_classifier().predict(ss, index));
+}
+
+jint JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
+		jstring str) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	String s = JString(env, str);
+	int index;
+	return ClassifierWord::keyword_en_classifier().predict(s, index);
+}
+
+jintArray JNICALL Java_com_util_Native_keywordENs(JNIEnv *env, jobject _,
+		jobjectArray str) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	vector<String> ss = JArray<String>(env, str);
+	vector<int> index;
+	return Object(env,
+			ClassifierWord::keyword_en_classifier().predict(ss, index));
 }
 
 jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
