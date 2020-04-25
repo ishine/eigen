@@ -79,3 +79,6 @@ int main(int argc, char **argv) {
 //https://academy.zhihuiya.com/#/user/learning/index
 //15821495341
 //https://ks.wjx.top/jq/69262900.aspx
+
+//{"training":true,"text":"____、____是我们负责任的表现","infix":"(____/PU/pu)(、/PU/pu)(____/PU/pu)是/VC/root((((我们/PN/suj)负/VT/de(责任/NN/obj))的/DE/adj)表现/VBG/va)"}
+//{"training":true,"text":",我们不能忘怀.这比山还高比海还深的情谊,我们怎么能忘怀?改","infix":"(,/PU/pu)(我们/PN/suj)(不能/MD/adv)忘怀/VT/root(./PU/pu)(((这/DT/adj)(((比/P/adv(山/NN/obj))(还/AD/adv)高/VA/de)((比/P/adv(海/NN/obj))(还/AD/adv)深/VA/de)的/DE/adj)情谊/NN/suj)(,/PU/pu)(我们/PN/suj)(怎么/AD/adv)(能/MD/adv)忘怀/VT/obj)((?/PU/pu)改/VT/cs)"}

@@ -246,6 +246,16 @@ VectorI string2id(const String &s, const ::dict<char16_t, int> &dict) {
 	return v;
 }
 
+vector<VectorI> string2id(const vector<String> &s,
+		const ::dict<char16_t, int> &dict) {
+	vector<VectorI> v(s.size());
+
+	for (size_t i = 0; i < s.size(); ++i) {
+		v[i] = string2id(s[i], dict);
+	}
+	return v;
+}
+
 VectorI string2id(const vector<String> &s, const ::dict<String, int> &dict) {
 	VectorI v;
 	v.resize(s.size());
@@ -400,13 +410,13 @@ Object return_tmp() {
 #include <iostream>
 int cpu_count = []() -> int {
 //	http://eigen.tuxfamily.org/dox/TopicMultiThreading.html
-	int cpu_count = omp_get_max_threads();
-	Eigen::setNbThreads(cpu_count);
-	Eigen::initParallel();
-	cout << "Eigen::initParallel() is called!" << endl;
-	cout << "cpu_count = " << cpu_count << endl;
-	return cpu_count;
-}();
+		int cpu_count = omp_get_max_threads();
+		Eigen::setNbThreads(cpu_count);
+		Eigen::initParallel();
+		cout << "Eigen::initParallel() is called!" << endl;
+		cout << "cpu_count = " << cpu_count << endl;
+		return cpu_count;
+	}();
 
 #include <chrono>
 //gcc -mavx -mfma

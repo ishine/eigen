@@ -260,6 +260,11 @@ String Text::toString() {
 	return tmp;
 }
 
+vector<String> Text::readlines() {
+	vector<String> v;
+	*this >> v;
+	return v;
+}
 Text& Text::operator >>(vector<String> &v) {
 	String line;
 	if (v.size()) {

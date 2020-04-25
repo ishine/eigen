@@ -244,6 +244,7 @@ struct Text {
 	Text(const string &file);
 	ifstream file;
 
+	vector<String> readlines();
 	Text& operator >>(int &unicode);
 	Text& operator >>(String &v);
 	Text& operator >>(vector<String> &v);

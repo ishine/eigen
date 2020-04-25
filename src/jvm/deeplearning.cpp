@@ -9,6 +9,7 @@
 #include "../deeplearning/lagacy.h"
 #include "../deeplearning/classification.h"
 #include "../deeplearning/CWSTagger.h"
+#include "../deeplearning/POSTagger.h"
 
 #include "java.h"
 void test_eigen();
@@ -99,6 +100,15 @@ jobjectArray JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, text);
 	return Object(env, CWSTagger::instance().predict(s));
+}
+
+//inputs: String [] text;
+//ouputs: String [][] segment;
+
+jobjectArray JNICALL Java_com_util_Native_posCN(JNIEnv *env, jobject _,
+		jobjectArray text) {
+//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	return Object(env, POSTagger::instance().predict(JArray<String>(env, text)));
 }
 
 //inputs: String [] text;

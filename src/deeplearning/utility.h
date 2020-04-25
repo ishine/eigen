@@ -43,6 +43,7 @@ vector<vector<double>> convert2vector(const Matrix &m);
 
 VectorI string2id(const String &s, const dict<char16_t, int> &dict);
 VectorI string2id(const vector<String> &s, const dict<String, int> &dict);
+vector<VectorI> string2id(const vector<String> &s, const dict<char16_t, int> &dict);
 
 vector<VectorI> string2ids(const vector<String> &s,
 		const dict<char16_t, int> &dict);
