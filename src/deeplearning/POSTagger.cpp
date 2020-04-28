@@ -66,12 +66,12 @@ VectorI POSTagger::predict(const vector<VectorI> &predict_text) {
 
 POSTagger::POSTagger(const string &h5FilePath, const string &vocabFilePath,
 		const string &posTagsFilePath) :
-		POSTagger((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+		POSTagger((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath, posTagsFilePath) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-POSTagger::POSTagger(HDF5Reader &dis, const string &vocabFilePath,
+POSTagger::POSTagger(KerasReader &dis, const string &vocabFilePath,
 		const string &posTagsFilePath) :
 		posTags(Text(posTagsFilePath).readlines()), word2id(
 				Text(vocabFilePath).read_char_vocab()), embedding(dis), gru(dis,

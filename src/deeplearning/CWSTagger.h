@@ -19,7 +19,7 @@ struct CWSTaggerLSTM {
 			vector<vector<vector<double>>> &arr);
 
 	CWSTaggerLSTM(const string &h5FilePath, const string &vocabFilePath);
-	CWSTaggerLSTM(HDF5Reader &dis, const string &vocabFilePath);
+	CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath);
 
 	static CWSTaggerLSTM& instance(bool reinitialize = false);
 };
@@ -42,7 +42,7 @@ struct CWSTagger {
 			vector<vector<vector<double>>> &arr);
 
 	CWSTagger(const string &h5FilePath, const string &vocabFilePath);
-	CWSTagger(HDF5Reader &dis, const string &vocabFilePath);
+	CWSTagger(KerasReader &dis, const string &vocabFilePath);
 
 	static CWSTagger& instance();
 	static CWSTagger& instantiate();

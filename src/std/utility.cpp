@@ -315,22 +315,14 @@ Text& Text::operator >>(String &v) {
 	return *this;
 }
 
-dict<String, int> Text::read_vocab() {
+dict<String, int> Text::read_vocab(int index) {
 	dict<String, int> word2id;
-	*this >> word2id;
-	return word2id;
+	return read_vocab(word2id, index);
 }
 
-dict<char16_t, int> Text::read_char_vocab() {
-	dict<char16_t, int> word2id;
-	*this >> word2id;
-	return word2id;
-}
-
-Text& Text::operator >>(dict<String, int> &word2id) {
+dict<String, int> &Text::read_vocab(dict<String, int> &word2id, int index) {
 	word2id.clear();
 	String s;
-	size_t index = 2;
 	for (String &s : *this) {
 		strip(s);
 		assert(!s.empty());
@@ -342,7 +334,17 @@ Text& Text::operator >>(dict<String, int> &word2id) {
 	}
 	cout << "word2id.size() = " << word2id.size() << endl;
 	cout << "index = " << index << endl;
-	assert(word2id.size() == index - 2);
+	return word2id;
+}
+
+dict<char16_t, int> Text::read_char_vocab() {
+	dict<char16_t, int> word2id;
+	*this >> word2id;
+	return word2id;
+}
+
+Text& Text::operator >>(dict<String, int> &word2id) {
+	this->read_vocab(word2id, 2);
 	return *this;
 }
 

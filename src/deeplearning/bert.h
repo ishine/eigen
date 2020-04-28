@@ -33,7 +33,7 @@ struct FeedForward {
 
 	Tensor operator()(const Tensor &x);
 	vector<Vector> operator()(const vector<Vector> &x);
-	FeedForward(HDF5Reader &dis, bool bias = true);
+	FeedForward(KerasReader &dis, bool bias = true);
 	FeedForward();
 };
 
@@ -50,7 +50,7 @@ struct CrossAttentionMask {
 };
 
 struct LayerNormalization {
-	LayerNormalization(HDF5Reader &dis);
+	LayerNormalization(KerasReader &dis);
 	LayerNormalization();
 	const static double epsilon;
 	Vector gamma, beta;
@@ -70,7 +70,7 @@ struct MidIndex {
 };
 
 struct MultiHeadAttention {
-	MultiHeadAttention(HDF5Reader &dis, int num_attention_heads);
+	MultiHeadAttention(KerasReader &dis, int num_attention_heads);
 	MultiHeadAttention();
 
 	Tensor operator()(const Tensor &sequence, const Tensor &attention_matrix,
@@ -115,7 +115,7 @@ struct MultiHeadAttention {
 };
 
 struct PositionEmbedding {
-	PositionEmbedding(HDF5Reader &dis, int num_attention_heads);
+	PositionEmbedding(KerasReader &dis, int num_attention_heads);
 
 	Matrix embeddings;
 	int num_attention_heads;
@@ -143,7 +143,7 @@ struct SegmentInput {
 };
 
 struct BertEmbedding {
-	BertEmbedding(HDF5Reader &dis, int num_attention_heads,
+	BertEmbedding(KerasReader &dis, int num_attention_heads,
 			bool factorization_on_word_embedding_only);
 
 	bool factorization_on_word_embedding_only;
@@ -170,7 +170,7 @@ struct BertEmbedding {
 
 struct Encoder {
 	Encoder();
-	Encoder(HDF5Reader &dis, int num_attention_heads);
+	Encoder(KerasReader &dis, int num_attention_heads);
 	::MultiHeadAttention MultiHeadAttention;
 	LayerNormalization MultiHeadAttentionNorm;
 	::FeedForward FeedForward;
@@ -204,7 +204,7 @@ struct Encoder {
 };
 
 struct AlbertTransformer {
-	AlbertTransformer(HDF5Reader &dis, int num_hidden_layers,
+	AlbertTransformer(KerasReader &dis, int num_hidden_layers,
 			int num_attention_heads);
 	int num_hidden_layers;
 	Encoder encoder;
@@ -230,7 +230,7 @@ struct AlbertTransformer {
 };
 
 struct BertTransformer {
-	BertTransformer(HDF5Reader &dis, int num_hidden_layers,
+	BertTransformer(KerasReader &dis, int num_hidden_layers,
 			int num_attention_heads);
 	int num_hidden_layers;
 	vector<Encoder> encoder;
@@ -297,7 +297,7 @@ struct FullTokenizer {
 };
 
 struct Paraphrase {
-	Paraphrase(HDF5Reader &dis, const string &vocab, int num_attention_heads,
+	Paraphrase(KerasReader &dis, const string &vocab, int num_attention_heads,
 			bool factorization_on_word_embedding_only = true,
 //			bool cross_layer_parameter_sharing = true,
 			bool symmetric_positional_embedding = true, int num_hidden_layers =

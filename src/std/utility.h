@@ -1,6 +1,7 @@
 #pragma once
 //gcc -Werror=return-local-addr
 #pragma GCC diagnostic error "-Wreturn-local-addr"
+#pragma GCC diagnostic error "-Wreturn-type"
 
 #include <iostream>
 #include <fstream>
@@ -217,6 +218,40 @@ std::ostream& operator <<(std::ostream &cout, const vector<_Ty> &v) {
 	return cout;
 }
 
+#include <set>
+template<typename _Ty>
+std::ostream& operator <<(std::ostream &cout, const std::set<_Ty> &v) {
+	cout << '{';
+	bool initial = true;
+	for (const auto &e : v) {
+		if (initial) {
+			cout << e;
+			initial = false;
+		} else
+			cout << ", " << e;
+	}
+
+	cout << '}';
+	return cout;
+}
+
+template<typename _Key, typename _Ty>
+std::ostream& operator <<(std::ostream &cout, const dict<_Key, _Ty> &map) {
+	cout << '{';
+	bool initial = true;
+	for (const auto &p : map) {
+		if (initial) {
+			initial = false;
+		} else
+			cout << ", ";
+		cout << p.first << " : " << p.second;;
+	}
+
+	cout << '}';
+	return cout;
+}
+
+
 template<typename _Ty>
 _Ty gcd(_Ty x, _Ty y) {
 	if (!y)
@@ -250,7 +285,9 @@ struct Text {
 	Text& operator >>(vector<String> &v);
 	Text& operator >>(dict<String, int> &word2id);
 	Text& operator >>(dict<char16_t, int> &word2id);
-	dict<String, int> read_vocab();
+	dict<String, int> read_vocab(int index = 2);
+	dict<String, int>& read_vocab(dict<String, int> &word2id, int index = 2);
+
 	dict<char16_t, int> read_char_vocab();
 	String toString();
 	operator bool();
@@ -374,3 +411,38 @@ vector<_Ty> sample(vector<_Ty> v, int size) {
 
 #include <queue>
 #include <forward_list>
+
+template<typename _Ty>
+std::set<_Ty> as_set(std::initializer_list<_Ty> list) {
+	std::set<_Ty> s;
+	for (const auto &x : list) {
+		s.insert(x);
+	}
+	return s;
+}
+
+template<typename _Ty>
+std::vector<_Ty> list(const std::set<_Ty> &c) {
+	std::vector<_Ty> v;
+	for (const auto &x : c) {
+		v.push_back(x);
+	}
+	return v;
+}
+
+template<typename T>
+int indexOf(const vector<T> &elementData, const T &o, int index = 0) {
+	for (int i = index, size = elementData.size(); i < size; ++i)
+		if (o == elementData[i])
+			return i;
+	return -1;
+}
+
+template<typename T>
+bool contains(const vector<T> &elementData, const T &o) {
+	return indexOf(elementData, o) >= 0;
+}
+
+const double oo = std::numeric_limits<double>::infinity();
+
+#define __cout(symbol) {std::cout << #symbol << " = \n" << symbol << std::endl;}

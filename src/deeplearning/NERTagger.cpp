@@ -69,7 +69,7 @@ vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
 	return result;
 }
 
-NERTagger::NERTagger(HDF5Reader &dis) :
+NERTagger::NERTagger(KerasReader &dis) :
 		embedding(Embedding(dis)), repertoire_embedding(Embedding(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D0(Conv1D(dis)), con1D1(
 				Conv1D(dis)), con1D2(Conv1D(dis)), wCRF(CRF(dis)) {
@@ -80,7 +80,7 @@ NERTagger::NERTagger(HDF5Reader &dis) :
 NERTagger::object& NERTaggerDict::getTagger(const string &service) {
 	if (!dict.count(service)) {
 		cout << "in " << __PRETTY_FUNCTION__ << endl;
-		HDF5Reader dis(service);
+		KerasReader dis(service);
 		dict[service] = new NERTagger(dis);
 	}
 

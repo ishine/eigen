@@ -102,11 +102,11 @@ vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 
 CWSTaggerLSTM::CWSTaggerLSTM(const string &h5FilePath,
 		const string &vocabFilePath) :
-		CWSTaggerLSTM((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+		CWSTaggerLSTM((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath) {
 }
 
-CWSTaggerLSTM::CWSTaggerLSTM(HDF5Reader &dis, const string &vocabFilePath) :
+CWSTaggerLSTM::CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath) :
 		embedding(Embedding(dis)),
 //		repertoire_embedding(Embedding(dis)),
 		con1D0(Conv1D(dis)), con1D1(Conv1D(dis)), lstm(
@@ -193,11 +193,11 @@ vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 }
 
 CWSTagger::CWSTagger(const string &h5FilePath, const string &vocabFilePath) :
-		CWSTagger((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+		CWSTagger((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath) {
 }
 
-CWSTagger::CWSTagger(HDF5Reader &dis, const string &vocabFilePath) :
+CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 		word2id(Text(vocabFilePath).read_char_vocab()), embedding(dis), con1D(
 				dis), wCRF(dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;

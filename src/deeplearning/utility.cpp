@@ -25,10 +25,16 @@ string& serviceModelsDirectory() {
 
 vector<string> openAttribute(const H5::Group &group, const char *name);
 
-HDF5Reader::HDF5Reader(const string &s_FilePath) :
-		hdf5(s_FilePath, H5F_ACC_RDONLY), layer_names(
-				openAttribute(hdf5, "layer_names")), layer_index(0), group(
-				hdf5.openGroup(layer_names[layer_index])), weight_index(-1) {
+KerasReader::KerasReader(const string &s_FilePath) :
+		hdf5(s_FilePath, H5F_ACC_RDONLY),
+
+		layer_names(openAttribute(hdf5, "layer_names")),
+
+		layer_index(0),
+
+		group(hdf5.openGroup(layer_names[layer_index])),
+
+		weight_index(-1) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 
 //	cout << "weight_index = " << weight_index << endl;
@@ -36,7 +42,19 @@ HDF5Reader::HDF5Reader(const string &s_FilePath) :
 //	this->s_FilePath = s_FilePath;
 }
 
-HDF5Reader& HDF5Reader::operator >>(Vector &arr) {
+Vector KerasReader::read_vector() {
+	Vector v;
+	*this >> v;
+	return v;
+}
+
+Matrix KerasReader::read_matrix() {
+	Matrix v;
+	*this >> v;
+	return v;
+}
+
+KerasReader& KerasReader::operator >>(Vector &arr) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
@@ -59,55 +77,8 @@ HDF5Reader& HDF5Reader::operator >>(Vector &arr) {
 //https://blog.csdn.net/renyhui/article/details/77735314
 //http://web.mit.edu/fwtools_v3.1.0/www/H5.intro.html#Intro-TOC
 //http://web.mit.edu/fwtools_v3.1.0/www/cpplus_RM/files.html
-//void HDF5Reader::read_hdf5() {
-//	vector<int> content;
-//	int x;
-//	dis.seekg(0, std::ios::end);
-//	int size = dis.tellg();
-//	cout << "size = " << size << endl;
-//	dis.seekg(0, std::ios::beg);
-//
-//	for (int i = 0; i < size / 4; ++i) {
-//		this->dis.read((char*) &x, 4);
-//		content.push_back(x);
-//	}
-//
-//	int _size = dis.tellg();
-//	assert(_size == size);
-//	cout << "finish reading " << endl;
-//}
 
-//void* HDF5Reader::read(void *x, int size) {
-//	char *arr = (char*) x;
-//	this->dis.read(arr, size);
-//	for (int i = 0, length = size / 2; i < length; ++i) {
-//		std::swap(arr[i], arr[size - 1 - i]);
-//	}
-//	return x;
-//}
-//
-//int HDF5Reader::read(int &x) {
-//	this->read(&x, sizeof(int));
-//	return x;
-//}
-
-//double HDF5Reader::read(double &x) {
-//	this->read(&x, sizeof(double));
-//	return x;
-//}
-//
-//float HDF5Reader::read(float &x) {
-//	this->read(&x, sizeof(float));
-//	return x;
-//}
-//
-//word HDF5Reader::read(word &x) {
-//	this->read(&x, sizeof(word));
-//	return x;
-//}
-//
-
-HDF5Reader& HDF5Reader::operator >>(Matrix &arr) {
+KerasReader& KerasReader::operator >>(Matrix &arr) {
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
@@ -133,32 +104,12 @@ HDF5Reader& HDF5Reader::operator >>(Matrix &arr) {
 	return *this;
 }
 
-//unordered_map<word, int>& HDF5Reader::read(unordered_map<word, int> &char2id) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
-//	int length;
-//	read(length);
-//
-//	cout << "length = " << length << endl;
-////	print_primitive_type_size();
-//
-//	assert(length >= 0);
-//
-//	for (int i = 0; i < length; ++i) {
-//		word key;
-//		read(key);
-//		read(char2id[key]);
-//
-////		cout << "char2id[" << key << "] = " << char2id[key] << endl;
-//	}
-//	return char2id;
-//}
+std::pair<vector<int>, vector<double>>& readDataSet(const H5::Group &group,
+		const string &weight_name,
+		std::pair<vector<int>, vector<double>> &tuple);
 
-HDF5Reader& HDF5Reader::operator >>(
+KerasReader& KerasReader::operator >>(
 		std::pair<vector<int>, vector<double>> &tuple) {
-	std::pair<vector<int>, vector<double>>& read_keras_model(
-			const H5::H5File &file, const H5::Group &group,
-			const string &weight_name,
-			std::pair<vector<int>, vector<double>> &tuple);
 
 //	cout << "layer_names = " << layer_names << endl;
 //	cout << "weight_index = " << weight_index << endl;
@@ -180,11 +131,11 @@ HDF5Reader& HDF5Reader::operator >>(
 		this->weight_names = openAttribute(group, "weight_names");
 		weight_index = -1;
 	}
-	read_keras_model(hdf5, group, weight_names[weight_index], tuple);
+	readDataSet(group, weight_names[weight_index], tuple);
 	return *this;
 }
 
-HDF5Reader& HDF5Reader::operator >>(Tensor &arr) {
+KerasReader& KerasReader::operator >>(Tensor &arr) {
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;
@@ -369,54 +320,218 @@ vector<VectorI> string2ids(const vector<String> &s,
  Ctrl + Shift + Plus
  */
 
-struct Object {
-	Object() {
-		x = y = z = 0;
-		kinder = new Object(2, 2, 2);
-		cout << "in " << __PRETTY_FUNCTION__ << endl;
+TorchReader::TorchReader(const string &s_FilePath) :
+		self(new TorchModule(s_FilePath)) {
+}
+
+TorchModule::TorchModule(const string &s_FilePath) :
+		TorchModule(H5::H5File(s_FilePath, H5F_ACC_RDONLY), 0, "") {
+}
+
+TorchModule::TorchModule(const H5::Group &group, TorchModule *parent,
+		const string &path) :
+		parent(parent),
+
+//		group(group),
+
+		Parameter(openAttribute(group, "Parameter")),
+
+		Module(openAttribute(group, "Module")),
+
+		tuple(Parameter.size()),
+
+		children(Module.size()),
+
+		indexParameter(0),
+
+		indexModule(0),
+
+		path(parent ? parent->path + "/" + path : path) {
+
+	int index = 0;
+	for (auto &dataset : Parameter) {
+		cout << "reading Parameter = " << dataset << endl;
+		readDataSet(group, dataset, tuple[index++]);
+	}
+	index = 0;
+	for (auto &module : Module) {
+		module = strip(module);
+		cout << "processing Module = " << module << endl;
+
+		children[index++] = new TorchModule(group.openGroup(module), this,
+				module);
+	}
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+
+}
+
+TorchModule::~TorchModule() {
+	for (auto p : children) {
+		delete p;
+	}
+}
+
+TorchReader::~TorchReader() {
+	while (self->parent)
+		self = self->parent;
+	delete self;
+}
+
+Vector TorchReader::read_vector() {
+	Vector v;
+	*this >> v;
+	return v;
+}
+
+Matrix TorchReader::read_matrix() {
+	Matrix v;
+	*this >> v;
+	return v;
+}
+
+Tensor TorchReader::read_tensor() {
+	Tensor v;
+	*this >> v;
+	return v;
+}
+
+double TorchReader::read_double() {
+	double v;
+	*this >> v;
+	return v;
+}
+
+TorchReader& TorchReader::operator >>(Vector &arr) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	cout << "shape = " << shape << endl;
+	assert(shape.size() == 1);
+
+	int dimension = shape[0];
+	cout << "x = " << dimension << endl;
+
+	arr.resize(dimension);
+	assert(arr.cols() == dimension);
+	for (int i = 0; i < dimension; ++i) {
+		arr[i] = weight[i];
+	}
+	return *this;
+}
+
+TorchReader& TorchReader::operator >>(double &a) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	cout << "shape = " << shape << endl;
+	cout << "shape.size() = " << shape.size() << endl;
+	assert(shape.size() == 1 && weight.size() == 1);
+
+	a = weight[0];
+	return *this;
+}
+
+//https://bitbucket.hdfgroup.org/projects/HDFFV/repos/hdf5/browse
+//https://blog.csdn.net/renyhui/article/details/77735314
+//http://web.mit.edu/fwtools_v3.1.0/www/H5.intro.html#Intro-TOC
+//http://web.mit.edu/fwtools_v3.1.0/www/cpplus_RM/files.html
+
+TorchReader& TorchReader::operator >>(Matrix &arr) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	cout << "shape = " << shape << endl;
+	cout << "shape.size() = " << shape.size() << endl;
+
+	assert(shape.size() == 2);
+
+	int dimension0 = shape[0];
+	int dimension1 = shape[1];
+	cout << "x = " << dimension0 << ", " << "y = " << dimension1 << endl;
+
+	arr.resize(dimension0, dimension1);
+
+	int index = 0;
+	for (int i0 = 0; i0 < dimension0; ++i0) {
+		for (int i1 = 0; i1 < dimension1; ++i1) {
+			arr(i0, i1) = weight[index++];
+		}
+	}
+	return *this;
+}
+
+TorchReader& TorchReader::operator >>(
+		std::pair<vector<int>, vector<double>> &tuple) {
+	cout << "reading path: " << self->path << endl;
+
+	cout << "self->Parameter = " << self->Parameter << endl;
+	cout << "self->Module = " << self->Module << endl;
+
+	if (self->indexParameter < self->Parameter.size()) {
+		tuple = self->tuple[self->indexParameter++];
+//		readDataSet(group, Parameter[indexParameter++], tuple);
+	} else if (self->indexModule < self->Module.size()) {
+		self = self->children[self->indexModule++];
+		*this >> tuple;
+	} else {
+
+		while (self->parent) {
+			size_t index = indexOf(self->parent->children, self);
+			if (++index < self->parent->children.size()) {
+				self = self->parent->children[index];
+				*this >> tuple;
+				break;
+			}
+			self = self->parent;
+		}
+	}
+	return *this;
+}
+
+TorchReader& TorchReader::operator >>(Tensor &arr) {
+	std::pair<vector<int>, vector<double>> tuple;
+	*this >> tuple;
+	auto &shape = tuple.first;
+	auto &weight = tuple.second;
+	assert(shape.size() == 3);
+
+	int dimension0 = shape[0];
+	int dimension1 = shape[1];
+	int dimension2 = shape[2];
+	cout << "shape = " << shape << endl;
+	printf("d0 = %d, d1 = %d, d2 = %d\n", dimension0, dimension1, dimension2);
+	arr.resize(dimension0);
+
+	int index = 0;
+	for (int i0 = 0; i0 < dimension0; ++i0) {
+		arr[i0].resize(dimension1, dimension2);
+		for (int i1 = 0; i1 < dimension1; ++i1) {
+			for (int i2 = 0; i2 < dimension2; ++i2) {
+				arr[i0](i1, i2) = weight[index++];
+			}
+		}
 	}
 
-	Object(int x, int y, int z) :
-			x(x), y(y), z(z) {
-		cout << "in " << __PRETTY_FUNCTION__ << endl;
-	}
-
-	~Object() {
-		cout << "in " << __PRETTY_FUNCTION__ << endl;
-	}
-
-	void reset() {
-		x = y = z = 1;
-		kinder = nullptr;
-	}
-
-	int x, y, z;
-	object<Object> kinder;
-	friend std::ostream& operator <<(std::ostream &cout, const Object &p) {
-		cout << "x = " << p.x << ",\t";
-		cout << "y = " << p.y << ",\t";
-		cout << "z = " << p.z << endl;
-		return cout;
-	}
-};
-
-Object return_tmp() {
-	Object obj;
-	obj.reset();
-	return obj;
+	return *this;
 }
 
 #include <omp.h>
 #include <iostream>
 int cpu_count = []() -> int {
 //	http://eigen.tuxfamily.org/dox/TopicMultiThreading.html
-		int cpu_count = omp_get_max_threads();
-		Eigen::setNbThreads(cpu_count);
-		Eigen::initParallel();
-		cout << "Eigen::initParallel() is called!" << endl;
-		cout << "cpu_count = " << cpu_count << endl;
-		return cpu_count;
-	}();
+	int cpu_count = omp_get_max_threads();
+	Eigen::setNbThreads(cpu_count);
+	Eigen::initParallel();
+	cout << "Eigen::initParallel() is called!" << endl;
+	cout << "cpu_count = " << cpu_count << endl;
+	return cpu_count;
+}();
 
 #include <chrono>
 //gcc -mavx -mfma
@@ -459,4 +574,9 @@ void test_eigen() {
 
 	cout << "time cost for 3000 * 3000 matrix multiplication: = " << thisTime
 			<< endl;
+}
+
+void print_tensor(const Tensor &matrix, const char *name) {
+	std::cout << name << ".shape = (" << matrix.size() << ", "
+			<< matrix[0].rows() << ", " << matrix[0].cols() << ")" << std::endl;
 }

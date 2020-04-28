@@ -19,8 +19,8 @@ struct Classifier {
 			vector<vector<double>> &arr);
 
 	Classifier(const string &binaryFilePath, const string &vocabFilePath);
-	Classifier(HDF5Reader &dis);
-	Classifier(HDF5Reader &dis, const string &vocab);
+	Classifier(KerasReader &dis);
+	Classifier(KerasReader &dis, const string &vocab);
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
@@ -45,7 +45,7 @@ struct ClassifierChar {
 			vector<vector<double>> &arr);
 
 	ClassifierChar(const string &binaryFilePath, const string &vocabFilePath);
-	ClassifierChar(HDF5Reader &dis, const string &vocab);
+	ClassifierChar(KerasReader &dis, const string &vocab);
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
@@ -74,7 +74,7 @@ struct ClassifierWord {
 
 	ClassifierWord(const string &binaryFilePath, const string &vocabFilePath,
 			FullTokenizer *tokenizer);
-	ClassifierWord(HDF5Reader &dis, const string &vocab,
+	ClassifierWord(KerasReader &dis, const string &vocab,
 			FullTokenizer *tokenizer);
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);

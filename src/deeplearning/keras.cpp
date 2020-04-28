@@ -64,7 +64,7 @@ VectorI& CRF::operator()(const Matrix &X, VectorI &best_paths) const {
 	return best_paths;
 }
 
-CRF::CRF(HDF5Reader &dis) {
+CRF::CRF(KerasReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis >> kernel;
 	dis >> G;
@@ -73,7 +73,7 @@ CRF::CRF(HDF5Reader &dis) {
 	dis >> right_boundary;
 }
 
-Conv1D::Conv1D(HDF5Reader &dis, bool bias) {
+Conv1D::Conv1D(KerasReader &dis, bool bias) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis >> w;
 
@@ -117,7 +117,7 @@ Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) const {
 	return activate(y);
 }
 
-Conv1DSame::Conv1DSame(HDF5Reader &dis) {
+Conv1DSame::Conv1DSame(KerasReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis >> w;
 
@@ -150,52 +150,56 @@ Matrix& Conv1DSame::operator()(const Matrix &x, Matrix &y) const {
 }
 
 Vector& DenseLayer::operator()(const Vector &x, Vector &ret) const {
-	ret = x * wDense + bDense;
-	return ret;
+	ret = x * weight + bias;
+	return activation(ret);
 }
 
 Vector& DenseLayer::operator()(Vector &x) const {
 
-	x *= wDense;
-	if (bDense.data())
-		x += bDense;
-	activation(x);
-	return x;
+	x *= weight;
+	x += bias;
+	return activation(x);
 }
 
-Matrix& DenseLayer::operator()(Matrix &x, Matrix &wDense) const {
-	wDense = this->wDense;
-	return operator ()(x);
+Matrix& DenseLayer::operator()(const Matrix &x, Matrix &ret) const {
+	ret = x * weight;
+	add(ret, bias);
+	return activation(ret);
 }
 
 Matrix& DenseLayer::operator()(Matrix &x) const {
-	x *= wDense;
-	if (bDense.data())
-		add(x, bDense);
-	return x;
+	x *= weight;
+	add(x, bias);
+	return activation(x);
 }
 
 vector<Vector>& DenseLayer::operator()(vector<Vector> &x) const {
-	x *= wDense;
-	if (bDense.data())
-		x += bDense;
-	return x;
+	x *= weight;
+
+	x += bias;
+	return activation(x);
 }
 
 Tensor& DenseLayer::operator()(Tensor &x) const {
-	x *= wDense;
-	if (bDense.data())
-		x += bDense;
-	return x;
+	x *= weight;
+
+	x += bias;
+	return activation(x);
 }
 
-DenseLayer::DenseLayer(HDF5Reader &dis, bool use_bias, Activator activation) :
+DenseLayer::DenseLayer(KerasReader &dis, Activator activation) :
 		activation( { activation }) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	dis >> wDense;
+	dis >> weight;
 
-	if (use_bias)
-		dis >> bDense;
+	dis >> bias;
+}
+
+DenseLayer::DenseLayer(TorchReader &dis, Activator activation) :
+		weight(dis.read_matrix().transpose()), bias(dis.read_vector()),
+
+		activation( { activation }) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
 Matrix& Embedding::operator()(const VectorI &words,
@@ -246,13 +250,23 @@ Matrix& Embedding::operator()(VectorI &word, Matrix &wordEmbedding,
 
 }
 
-void Embedding::initialize(HDF5Reader &dis) {
+void Embedding::initialize(KerasReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 
 	dis >> wEmbedding;
 }
 
-Embedding::Embedding(HDF5Reader &dis) {
+void Embedding::initialize(TorchReader &dis) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	dis >> wEmbedding;
+}
+
+Embedding::Embedding(KerasReader &dis) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	initialize(dis);
+}
+
+Embedding::Embedding(TorchReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	initialize(dis);
 }
@@ -279,7 +293,7 @@ LSTM::LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi,
 //	this->activation = ::activation;
 }
 
-Vector& LSTM::call(const Matrix &x, Vector &h) const{
+Vector& LSTM::call(const Matrix &x, Vector &h) const {
 	Vector c;
 	h = c = Vector::Zero(x.cols());
 
@@ -296,7 +310,8 @@ Vector& LSTM::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 	Vector f = x * Wxf + h * Whf + bf;
 	Vector _c = x * Wxc + h * Whc + bc;
 
-	_c = recurrent_activation(f).cwiseProduct(c) + recurrent_activation(i).cwiseProduct(activation(_c));
+	_c = recurrent_activation(f).cwiseProduct(c)
+			+ recurrent_activation(i).cwiseProduct(activation(_c));
 
 	Vector o = x * Wxo + h * Who + bo;
 
@@ -305,7 +320,7 @@ Vector& LSTM::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 	return h;
 }
 
-LSTM::LSTM(HDF5Reader &dis) {
+LSTM::LSTM(KerasReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	Matrix Wx;
 	dis >> Wx;
@@ -347,7 +362,8 @@ Matrix& LSTM::call_return_sequences(const Matrix &x, Matrix &arr) const {
 	return arr;
 }
 
-Matrix& LSTM::call_return_sequences_reverse(const Matrix &x, Matrix &arr) const {
+Matrix& LSTM::call_return_sequences_reverse(const Matrix &x,
+		Matrix &arr) const {
 	arr.resize(x.rows(), x.cols());
 	Vector h, c;
 	h = c = Vector::Zero(x.cols());
@@ -450,14 +466,14 @@ Vector& Bidirectional::operator()(const Matrix &x, Vector &ret,
 	return ret;
 }
 
-BidirectionalGRU::BidirectionalGRU(HDF5Reader &dis, merge_mode mode) {
+BidirectionalGRU::BidirectionalGRU(KerasReader &dis, merge_mode mode) {
 //enforce the construction order of forward and backward! never to use the member initializer list of the super class!
 	this->forward = new GRU(dis);
 	this->backward = new GRU(dis);
 	this->mode = mode;
 }
 
-BidirectionalLSTM::BidirectionalLSTM(HDF5Reader &dis, merge_mode mode) {
+BidirectionalLSTM::BidirectionalLSTM(KerasReader &dis, merge_mode mode) {
 	//enforce the construction order of forward and backward! never to use the member initializer list of the super class!
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	this->forward = new LSTM(dis);
@@ -481,7 +497,8 @@ Vector& GRU::call_reverse(const Matrix &x, Vector &h) const {
 	return h;
 }
 
-Vector& GRU::call(const Matrix &x, Vector &h, vector<vector<double>> &arr) const {
+Vector& GRU::call(const Matrix &x, Vector &h,
+		vector<vector<double>> &arr) const {
 	h = Vector::Zero(x.cols());
 //	arr.push_back(convert2vector(this->Wxu, 0));
 //	arr.push_back(convert2vector(this->Wxr, 0));
@@ -582,7 +599,7 @@ Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x,
 	return h;
 }
 
-GRU::GRU(HDF5Reader &dis) {
+GRU::GRU(KerasReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 
 	Matrix Wx;

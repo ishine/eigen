@@ -122,7 +122,7 @@ FeedForward::FeedForward() {
 
 }
 
-FeedForward::FeedForward(HDF5Reader &dis, bool use_bias) {
+FeedForward::FeedForward(KerasReader &dis, bool use_bias) {
 	dis >> W1;
 	if (use_bias) {
 		dis >> b1;
@@ -185,7 +185,7 @@ Vector& LayerNormalization::operator()(Vector &x) {
 LayerNormalization::LayerNormalization() {
 }
 
-LayerNormalization::LayerNormalization(HDF5Reader &dis) {
+LayerNormalization::LayerNormalization(KerasReader &dis) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis >> gamma;
 	dis >> beta;
@@ -480,7 +480,8 @@ vector<Vector>& MultiHeadAttention::reshape_from_batches(vector<Vector> &x) {
 
 }
 
-MultiHeadAttention::MultiHeadAttention(HDF5Reader &dis, int num_attention_heads) :
+MultiHeadAttention::MultiHeadAttention(KerasReader &dis,
+		int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	dis >> Wq;
@@ -553,7 +554,7 @@ vector<Vector> PositionEmbedding::compute_mask(vector<VectorI> &inputToken) {
 	return revert_mask(mask, 10000.0);
 }
 
-PositionEmbedding::PositionEmbedding(HDF5Reader &dis, int num_attention_heads) :
+PositionEmbedding::PositionEmbedding(KerasReader &dis, int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
 	dis >> embeddings;
 }
@@ -620,25 +621,25 @@ VectorI SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 	return inputSegment;
 }
 
-BertEmbedding::BertEmbedding(HDF5Reader &dis, int num_attention_heads,
+BertEmbedding::BertEmbedding(KerasReader &dis, int num_attention_heads,
 		bool factorization_on_word_embedding_only) :
 		factorization_on_word_embedding_only(
 				factorization_on_word_embedding_only), wordEmbedding(dis), segmentEmbedding(
 				dis), positionEmbedding(dis, num_attention_heads), layerNormalization(
-				dis), embeddingMapping(dis, false, Activator::linear) {
+				dis), embeddingMapping(dis, Activator::linear) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	embed_dim = wordEmbedding.wEmbedding.cols();
-	hidden_size = embeddingMapping.wDense.cols();
+	hidden_size = embeddingMapping.weight.cols();
 
-	if (factorization(false)) {
-		dis >> embeddingMapping.bDense;
-	}
+//	if (factorization(false)) {
+//		dis >> embeddingMapping.bias;
+//	}
 }
 
 bool BertEmbedding::factorization(bool word_embedding_only) {
 	if (word_embedding_only)
-		return hidden_size != embed_dim && factorization_on_word_embedding_only;
-	return hidden_size != embed_dim && !factorization_on_word_embedding_only;
+		return false;
+	return hidden_size != embed_dim;
 }
 
 Tensor BertEmbedding::operator ()(vector<VectorI> &inputToken,
@@ -716,7 +717,7 @@ Matrix BertEmbedding::operator ()(VectorI &input_ids,
 	return embeddings;
 }
 
-Encoder::Encoder(HDF5Reader &dis, int num_attention_heads) :
+Encoder::Encoder(KerasReader &dis, int num_attention_heads) :
 		MultiHeadAttention(dis, num_attention_heads), MultiHeadAttentionNorm(
 				dis), FeedForward(dis), FeedForwardNorm(dis) {
 }
@@ -799,13 +800,13 @@ Vector& Encoder::operator ()(Matrix &input_layer, Vector &y) {
 	return wrap_feedforward(inputs);
 }
 
-AlbertTransformer::AlbertTransformer(HDF5Reader &dis, int num_hidden_layers,
+AlbertTransformer::AlbertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads) :
 		num_hidden_layers(num_hidden_layers), encoder(dis, num_attention_heads) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-BertTransformer::BertTransformer(HDF5Reader &dis, int num_hidden_layers,
+BertTransformer::BertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads) :
 		num_hidden_layers(num_hidden_layers), encoder(num_hidden_layers) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
@@ -911,15 +912,14 @@ Vector& BertTransformer::operator ()(Matrix &input_layer, Vector &y) {
 }
 
 //bool cross_layer_parameter_sharing = true;
-Paraphrase::Paraphrase(HDF5Reader &dis, const string &vocab,
+Paraphrase::Paraphrase(KerasReader &dis, const string &vocab,
 		int num_attention_heads, bool factorization_on_word_embedding_only,
 		bool symmetric_positional_embedding, int num_hidden_layers) :
 		tokenizer(vocab), symmetric_positional_embedding(
 				symmetric_positional_embedding), midIndex(tokenizer.vocab.at(u"[SEP]")), bertEmbedding(
 		dis, num_attention_heads, factorization_on_word_embedding_only), transformer(
 		dis, num_hidden_layers,
-		num_attention_heads), poolerDense(dis), similarityDense(dis,
-		true, Activator::sigmoid) {
+		num_attention_heads), poolerDense(dis), similarityDense(dis, Activator::sigmoid) {
 			cout << "in " << __PRETTY_FUNCTION__ << endl;
 		}
 
@@ -946,7 +946,7 @@ Paraphrase& Paraphrase::instance() {
 	static int num_hidden_layers = 4;
 
 	static Paraphrase inst(
-			(HDF5Reader&) (const HDF5Reader&) HDF5Reader(
+			(KerasReader&) (const KerasReader&) KerasReader(
 					modelsDirectory() + "cn/bert/paraphrase/model.h5"),
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 			factorization_on_word_embedding_only,
@@ -1209,7 +1209,7 @@ vector<String> FullTokenizer::tokenize(const String &text) {
 
 		if (iswspace(ch)) {
 			if (!!word) {
-			//	cout << "word = " << word << endl;
+				//	cout << "word = " << word << endl;
 				output << wordpiece_tokenize(word);
 			}
 			continue;
@@ -1217,7 +1217,7 @@ vector<String> FullTokenizer::tokenize(const String &text) {
 
 		if (_is_chinese_char(ch) || _is_punctuation(ch)) {
 			if (!!word) {
-		//		cout << "word = " << word << endl;
+				//		cout << "word = " << word << endl;
 				output << wordpiece_tokenize(word);
 			}
 
@@ -1232,7 +1232,7 @@ vector<String> FullTokenizer::tokenize(const String &text) {
 	}
 
 	if (!!word) {
-	//	cout << "word = " << word << endl;
+		//	cout << "word = " << word << endl;
 		output << wordpiece_tokenize(word);
 	}
 

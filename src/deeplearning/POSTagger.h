@@ -16,7 +16,7 @@ struct POSTagger {
 
 	POSTagger(const string &h5FilePath, const string &vocabFilePath,
 			const string &posTagsFilePath);
-	POSTagger(HDF5Reader &dis, const string &vocabFilePath,
+	POSTagger(KerasReader &dis, const string &vocabFilePath,
 			const string &posTagsFilePath);
 
 	static POSTagger& instance();

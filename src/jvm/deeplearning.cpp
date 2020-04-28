@@ -10,6 +10,7 @@
 #include "../deeplearning/classification.h"
 #include "../deeplearning/CWSTagger.h"
 #include "../deeplearning/POSTagger.h"
+#include "../deeplearning/SyntaxParser.h"
 
 #include "java.h"
 void test_eigen();
@@ -100,6 +101,25 @@ jobjectArray JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
 //	cout << "in " << __PRETTY_FUNCTION__ << endl;
 	String s = JString(env, text);
 	return Object(env, CWSTagger::instance().predict(s));
+}
+
+//inputs: String [] text;
+//ouputs: String [][] segment;
+
+jintArray JNICALL Java_com_util_Native_depCN(JNIEnv *env, jobject _,
+		jobjectArray seg, jobjectArray pos, jobjectArray dep) {
+	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	vector<String> depCPP;
+	auto ret = Object(env,
+			SyntaxParser::instance().predict(JArray<String>(env, seg),
+					JArray<String>(env, pos), depCPP));
+
+	JArray<String> depJava(env, dep);
+	for (int i = 0, size = depCPP.size(); i < size; ++i) {
+		depJava[i] = depCPP[i];
+	}
+
+	return ret;
 }
 
 //inputs: String [] text;

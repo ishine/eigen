@@ -246,7 +246,8 @@ vector<vector<double>>& Classifier::predict(String &predict_text,
 
 Classifier::Classifier(const string &binaryFilePath,
 		const string &vocabFilePath) :
-		Classifier((HDF5Reader&) (const HDF5Reader&) HDF5Reader(binaryFilePath),
+		Classifier(
+				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
@@ -254,7 +255,7 @@ Classifier::Classifier(const string &binaryFilePath,
 ClassifierChar::ClassifierChar(const string &binaryFilePath,
 		const string &vocabFilePath) :
 		ClassifierChar(
-				(HDF5Reader&) (const HDF5Reader&) HDF5Reader(binaryFilePath),
+				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
@@ -262,41 +263,41 @@ ClassifierChar::ClassifierChar(const string &binaryFilePath,
 ClassifierWord::ClassifierWord(const string &binaryFilePath,
 		const string &vocabFilePath, FullTokenizer *tokenizer) :
 		ClassifierWord(
-				(HDF5Reader&) (const HDF5Reader&) HDF5Reader(binaryFilePath),
+				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath, tokenizer) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
 #include "lagacy.h"
 
-Classifier::Classifier(HDF5Reader &dis) :
+Classifier::Classifier(KerasReader &dis) :
 		embedding(Embedding(dis)), con1D0(dis), con1D1(dis), con1D2(dis), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
-				DenseLayer(dis, true, Activator::softmax)) {
+				DenseLayer(dis, Activator::softmax)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-Classifier::Classifier(HDF5Reader &dis, const string &vocab) :
+Classifier::Classifier(KerasReader &dis, const string &vocab) :
 		word2id(Text(vocab).read_char_vocab()), embedding(Embedding(dis)), con1D0(
 				dis), con1D1(dis), con1D2(dis), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
-				DenseLayer(dis, true, Activator::softmax)) {
+				DenseLayer(dis, Activator::softmax)) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-ClassifierChar::ClassifierChar(HDF5Reader &dis, const string &vocab) :
+ClassifierChar::ClassifierChar(KerasReader &dis, const string &vocab) :
 		word2id(Text(vocab).read_char_vocab()), embedding(dis), con1D0(dis), con1D1(
-				dis), gru(dis, Bidirectional::sum), dense_pred(dis, true,
+				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }
 
-ClassifierWord::ClassifierWord(HDF5Reader &dis, const string &vocab,
+ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab,
 		FullTokenizer *tokenizer) :
 		word2id(Text(vocab).read_vocab()), embedding(dis), con1D0(dis), con1D1(
-				dis), gru(dis, Bidirectional::sum), dense_pred(dis, true,
+				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax), tokenizer(tokenizer) {
 	cout << "in " << __PRETTY_FUNCTION__ << endl;
 }

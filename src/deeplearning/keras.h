@@ -17,7 +17,7 @@ struct CRF {
 	Matrix& viterbi_one_hot(const Matrix &X, Matrix &oneHot);
 
 	VectorI& operator ()(const Matrix &X, VectorI &best_paths) const;
-	CRF(HDF5Reader &dis);
+	CRF(KerasReader &dis);
 };
 
 struct Conv1D {
@@ -25,7 +25,7 @@ struct Conv1D {
 	Vector bias;
 	Activation activate = { Activator::relu };
 
-	Conv1D(HDF5Reader &dis, bool bias = true);
+	Conv1D(KerasReader &dis, bool bias = true);
 
 	static int initial_offset(int xshape, int yshape, int wshape, int sshape);
 
@@ -39,7 +39,7 @@ struct Conv1DSame {
 	Vector bias;
 	Activation activate = { Activator::relu };
 
-	Conv1DSame(HDF5Reader &dis);
+	Conv1DSame(KerasReader &dis);
 
 //	#stride=(1,1)
 	Matrix& operator()(const Matrix &x, Matrix &y) const;
@@ -51,21 +51,22 @@ struct DenseLayer {
 	 *
 	 */
 
-	Matrix wDense;
-	Vector bDense;
+	Matrix weight;
+	Vector bias;
 	Activation activation = { Activator::tanh };
 
 	Vector& operator()(const Vector &x, Vector &ret) const;
 	Vector& operator()(Vector &x) const;
 
-	Matrix& operator()(Matrix &x, Matrix &wDense) const;
+	Matrix& operator()(const Matrix &x, Matrix &wDense) const;
 	Matrix& operator()(Matrix &x) const;
 	Tensor& operator()(Tensor &x) const;
 	vector<Vector>& operator()(vector<Vector> &x) const;
 
-	DenseLayer(HDF5Reader &dis, bool use_bias = true, Activator activator =
-			Activator::tanh);
-	void init(HDF5Reader &dis, bool use_bias = true);
+	DenseLayer(KerasReader &dis, Activator activator = Activator::tanh);
+	void init(KerasReader &dis);
+	DenseLayer(TorchReader &dis, Activator activator = Activator::tanh);
+
 };
 
 struct Embedding {
@@ -83,9 +84,11 @@ struct Embedding {
 	Tensor operator()(const vector<VectorI> &word) const;
 	Matrix operator()(const VectorI &word) const;
 
-	void initialize(HDF5Reader &dis);
+	void initialize(KerasReader &dis);
+	void initialize(TorchReader &dis);
 
-	Embedding(HDF5Reader &dis);
+	Embedding(KerasReader &dis);
+	Embedding(TorchReader &dis);
 };
 
 struct RNN {
@@ -144,11 +147,11 @@ struct Bidirectional {
 
 struct BidirectionalGRU: Bidirectional {
 
-	BidirectionalGRU(HDF5Reader &dis, merge_mode mode);
+	BidirectionalGRU(KerasReader &dis, merge_mode mode);
 };
 
 struct BidirectionalLSTM: Bidirectional {
-	BidirectionalLSTM(HDF5Reader &dis, merge_mode mode);
+	BidirectionalLSTM(KerasReader &dis, merge_mode mode);
 };
 
 /**
@@ -184,7 +187,7 @@ struct GRU: RNN {
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
-	GRU(HDF5Reader &dis);
+	GRU(KerasReader &dis);
 };
 
 struct LSTM: RNN {
@@ -214,7 +217,7 @@ struct LSTM: RNN {
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 			Vector &c) const;
 
-	LSTM(HDF5Reader &dis);
+	LSTM(KerasReader &dis);
 	Matrix& call_return_sequences(const Matrix &x, Matrix &arr) const;
 	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr) const;
 	Vector& call_reverse(const Matrix &x, Vector &h) const;
