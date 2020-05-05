@@ -18,7 +18,7 @@ struct StackedBidirectionalLstm {
 	StackedBidirectionalLstm(TorchReader &dis);
 	AugmentedLstm forward_layer_0, backward_layer_0, forward_layer_1,
 			backward_layer_1, forward_layer_2, backward_layer_2;
-	Matrix &operator ()(Matrix &x);
+	Matrix& operator ()(Matrix &x);
 };
 
 struct BilinearMatrixAttention {
@@ -26,13 +26,6 @@ struct BilinearMatrixAttention {
 	Matrix _weight_matrix;
 	double _bias;
 	Matrix operator ()(const Matrix &x, const Matrix &y);
-};
-
-struct Bilinear {
-	Bilinear(TorchReader &dis);
-	Tensor weight;
-	Vector bias;
-	Tensor operator ()(Tensor &x, const Tensor &y);
 };
 
 struct BiaffineDependencyParser {
@@ -81,3 +74,5 @@ struct SyntaxParser {
 	static SyntaxParser& instantiate();
 };
 
+vector<int> hyponymStructureCN(const vector<String> &keywords, const vector<int> &frequency);
+vector<int> hyponymStructureEN(const vector<String> &keywords, const vector<int> &frequency);

@@ -48,7 +48,7 @@ jintArray SetIntArrayRegion(JNIEnv *env, jsize size, const jint *array) {
 }
 
 jintArray Object(JNIEnv *env, const vector<int> &s) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 //	cout << "s = " << s << endl;
 //	jsize size = s.size();
 
@@ -74,6 +74,20 @@ jintArray Object(JNIEnv *env, const VectorI &s) {
 
 	return SetIntArrayRegion(env, size, (const jint*) v.data());
 
+}
+
+jobjectArray Object(JNIEnv *env, const Matrix &A) {
+	int n = A.rows();
+	int m = A.cols();
+	vector<vector<double>> matrix(n);
+
+	for (int i = 0; i < n; ++i) {
+		matrix[i].resize(m);
+		for (int j = 0; j < m; ++j) {
+			matrix[i][j] = A(i, j);
+		}
+	}
+	return Object(env, matrix);
 }
 
 jfloatArray Object(JNIEnv *env, const vector<float> &s) {
@@ -116,7 +130,7 @@ std::ostream& operator <<(std::ostream &cout, const JArray<int> &v) {
 	cout << '[';
 	if (!v) {
 		cout << v[0];
-		for (jsize i = 1; i < v.length(); ++i) {
+		for (jsize i = 1; i < v.length; ++i) {
 			cout << ", " << v[i];
 		}
 	}

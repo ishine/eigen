@@ -222,3 +222,15 @@ struct LSTM: RNN {
 	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr) const;
 	Vector& call_reverse(const Matrix &x, Vector &h) const;
 };
+
+struct Bilinear {
+	Bilinear(TorchReader &dis, Activation activation = { Activator::linear });
+	Bilinear(KerasReader &dis, Activation activation = { Activator::linear });
+	Tensor weight;
+	Vector bias;
+	Activation activation;
+	Tensor operator ()(const Tensor &x, const Tensor &y);
+	Vector operator ()(const Vector &x, const Vector &y);
+	Matrix operator ()(const Matrix &x, const Matrix &y);
+};
+

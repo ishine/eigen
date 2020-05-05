@@ -21,6 +21,17 @@ Vector& min(const Matrix &x, Vector &min, vector<int> &argmin) {
 	return aggregate(x, min, argmin, &Matrix::ConstRowXpr::minCoeff);
 }
 
+int max(const vector<int>&x, int&index) {
+	int max = std::numeric_limits<int>::min();
+	for (int i = 0, size = x.size(); i < size; ++i) {
+		if (x[i] > max) {
+			max = x[i];
+			index = i;
+		}
+	}
+	return max;
+}
+
 Vector max(const Matrix &x) {
 	Vector y;
 	vector<int> argmax;
@@ -227,18 +238,46 @@ Tensor& gelu(Tensor &x) {
 	return function(x, gelu);
 }
 
+//Matrix& log_softmax(Matrix &x) {
+//	__cout(__PRETTY_FUNCTION__)
+////	__cout(x);
+//	print_shape(x);
+//
+//	for (int i = 0, size = x.rows(); i < size; ++i) {
+//		cout << "processing " << i << endl;
+//		auto row = x.row(i);
+//		double lambda = row.maxCoeff();
+//
+//		cout << "lambda " << lambda << endl;
+//		row.array() -= lambda;
+//
+//		cout << "row.array().exp().sum() = " << row.array().exp().sum() << endl;
+//		row.array() -= log(row.array().exp().sum());
+//	}
+//
+//	return x;
+//}
+
 Matrix& log_softmax(Matrix &x) {
+	__cout(__PRETTY_FUNCTION__)
+//	__cout(x);
+//	print_shape(x);
+
 	for (int i = 0, size = x.rows(); i < size; ++i) {
-		auto row = x.row(i);
-		double lambda = row.maxCoeff();
-		row.array() -= lambda;
-		row.array() -= log(row.array().exp().sum());
+//		cout << "processing " << i << endl;
+		Vector row = x.row(i);
+
+		row -= row.maxCoeff();
+		row -= log(exp(row).sum());
+
+		x.row(i) = row;
 	}
 
 	return x;
 }
 
 Tensor& log_softmax(Tensor &x) {
+	__cout(__PRETTY_FUNCTION__)
 	for (int i = 0, size = x.size(); i < size; ++i) {
 		log_softmax(x[i]);
 	}
@@ -762,18 +801,6 @@ Matrix dot(const Tensor &x, const Tensor &y) {
 	return z;
 }
 
-Tensor& dot(const Tensor &x, const Tensor &y, Tensor &z, int z_dimension) {
-	int n = x.size();
-	int m = x[0].rows();
-
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < m; ++j) {
-			z[i](j, z_dimension) = x[i].row(j) * y[i].row(j).transpose();
-		}
-	}
-	return z;
-}
-
 Matrix broadcast(const Vector &x, int rows) {
 	Matrix ret;
 	ret.resize(rows, x.cols());
@@ -812,10 +839,15 @@ Tensor transpose<0, 2, 1>(const Tensor &x) {
 
 template<>
 Tensor transpose<2, 0, 1>(const Tensor &x) {
+	__cout(__PRETTY_FUNCTION__)
 	int n = x.size();
 	int m = x[0].rows();
 	int z_dimension = x[0].cols();
-	Tensor y = tensor(z_dimension, n, m);
+
+//	__cout(n)
+//	__cout(m)
+//	__cout(z_dimension)
+	Tensor y = ndarray(z_dimension, n, m);
 	for (int z = 0; z < z_dimension; ++z) {
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < m; ++j) {
@@ -831,7 +863,7 @@ Tensor transpose<2, 1, 0>(const Tensor &x) {
 	int n = x.size();
 	int m = x[0].rows();
 	int z_dimension = x[0].cols();
-	Tensor y = tensor(z_dimension, m, n);
+	Tensor y = ndarray(z_dimension, m, n);
 	for (int z = 0; z < z_dimension; ++z) {
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < m; ++j) {
@@ -842,10 +874,22 @@ Tensor transpose<2, 1, 0>(const Tensor &x) {
 	return y;
 }
 
-Tensor tensor(int x_shape, int y_shape, int z_shape) {
+Tensor ndarray(int x_shape, int y_shape, int z_shape) {
 	Tensor t(x_shape);
 	for (int i = 0; i < x_shape; ++i) {
 		t[i].resize(y_shape, z_shape);
 	}
+	return t;
+}
+
+Matrix ndarray(int x_shape, int y_shape) {
+	Matrix t;
+	t.resize(x_shape, y_shape);
+	return t;
+}
+
+Vector ndarray(int x_shape) {
+	Vector t;
+	t.resize(x_shape);
 	return t;
 }

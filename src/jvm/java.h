@@ -125,6 +125,8 @@ jbyteArray Object(JNIEnv *env, const vector<byte> &s);
 jshortArray Object(JNIEnv *env, const vector<short> &s);
 jintArray Object(JNIEnv *env, const vector<int> &s);
 jintArray Object(JNIEnv *env, const VectorI &s);
+jobjectArray Object(JNIEnv *env, const Matrix &s);
+
 jfloatArray Object(JNIEnv *env, const vector<float> &s);
 jlongArray Object(JNIEnv *env, const vector<long> &s);
 jdoubleArray Object(JNIEnv *env, const vector<double> &s);
@@ -303,15 +305,28 @@ struct FindClass<int> {
 template<>
 struct JArray<int> {
 	JArray(JNIEnv *env, jintArray arr) :
-			env(env), arr(arr), ptr(env->GetIntArrayElements(arr, JNI_FALSE)) {
+			env(env),
+
+			arr(arr),
+
+			ptr(env->GetIntArrayElements(arr, JNI_FALSE)),
+
+			length(env->GetArrayLength(arr)) {
+	}
+
+	JArray &operator =(const vector<int> &rhs) {
+		for (int i = 0, size = rhs.size(); i < size; ++i) {
+			ptr[i] = rhs[i];
+		}
+		return *this;
 	}
 
 	operator vector<int>() const {
-		return vector<int>(ptr, ptr + this->length());
+		return vector<int>(ptr, ptr + length);
 	}
 
 	operator VectorI() const {
-		return Eigen::Map<VectorI>((int*) ptr, this->length());
+		return Eigen::Map<VectorI>((int*) ptr, length);
 	}
 
 	jint operator [](size_t i) const {
@@ -326,10 +341,6 @@ struct JArray<int> {
 		return !ptr;
 	}
 
-	jsize length() const {
-		return env->GetArrayLength(arr);
-	}
-
 	~JArray() {
 		env->ReleaseIntArrayElements(arr, ptr, 0);
 	}
@@ -337,6 +348,7 @@ struct JArray<int> {
 	JNIEnv * const env;
 	const jintArray arr;
 	jint * const ptr;
+	int length;
 };
 
 template<>
@@ -499,7 +511,7 @@ const char *FindClass<vector<_Ty>>::name = [](const char *name)->const char * {
 
 template<typename _Ty>
 jobjectArray Object(JNIEnv *env, const vector<_Ty> &arr) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	int sz = arr.size();
 
 //	cout << "vector size = " << sz << endl;

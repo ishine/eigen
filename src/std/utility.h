@@ -244,13 +244,13 @@ std::ostream& operator <<(std::ostream &cout, const dict<_Key, _Ty> &map) {
 			initial = false;
 		} else
 			cout << ", ";
-		cout << p.first << " : " << p.second;;
+		cout << p.first << " : " << p.second;
+		;
 	}
 
 	cout << '}';
 	return cout;
 }
-
 
 template<typename _Ty>
 _Ty gcd(_Ty x, _Ty y) {
@@ -396,6 +396,7 @@ namespace std {
 int strlen(const String &value);
 
 String toString(int);
+String toString(const string &s);
 
 template<typename _Ty>
 vector<_Ty> sample(vector<_Ty> v, int size) {
@@ -445,4 +446,206 @@ bool contains(const vector<T> &elementData, const T &o) {
 
 const double oo = std::numeric_limits<double>::infinity();
 
+#ifdef _DEBUG
 #define __cout(symbol) {std::cout << #symbol << " = \n" << symbol << std::endl;}
+#else
+#define __cout(symbol)
+#endif
+
+struct Timer {
+	Timer();
+	clock_t start;
+	void report(const char *message);
+};
+
+// implements a maximum priority queue;
+template<typename _Ty, typename _Pr = std::less<_Ty>>
+struct priority_queue: std::vector<_Ty> {
+	priority_queue() {
+	}
+	priority_queue(std::vector<_Ty> &c) :
+			std::vector<_Ty>(c) {
+		// make non-trivial [_First, _Last) into a heap, using _Pred
+		int _Top = this->size() >> 1;
+		while (0 < _Top--) {
+			int _Hole = _Top;
+			adjust_heap(_Hole, _Pred);
+		}
+	}
+
+	void insert(const _Ty &_Val) {	// push operation;
+		int _Hole = this->size();
+		this->push_back(_Val);
+		push_heap(_Hole, 0, _Val, _Pred);
+	}
+
+	//precondition : size > 0 && _Where < size;
+	_Ty erase(int _Where = 0) {
+		int size = this->size();
+		assert(_Where < size);
+//		if (_Where >= size()) {
+//			throw std::exception("_Where < size in " __FUNCTION__, __LINE__);
+//		}
+		const _Ty &_Val = (*this)[_Where];
+		const _Ty &end = this->back();
+		--size;
+		this->pop_back();
+		if (_Where != size) {
+			(*this)[_Where] = end;
+			adjust_heap(_Where, _Pred);
+		}
+
+		return _Val;
+	}
+
+	_Pr _Pred;	// the comparator functor
+protected:
+
+	void mov(int &_Hole, int _Idx) {
+		(*this)[_Hole] = (*this)[_Idx];
+		_Hole = _Idx;
+	}
+
+	// precondition: ptr[_Hole] is the element to be adjusted;
+	void adjust_heap(int &_Hole, _Pr &_Pred) { // percolate _Hole to _Bottom, then push _Val, using _Pred
+		_Ty _Val = (*this)[_Hole];
+		int _Top = _Hole;
+		int _Idx = _Hole;
+		int size = this->size();
+		while ((++_Idx <<= 1) < size) { // move _Hole down to larger kinder
+			if (_Pred((*this)[_Idx], (*this)[_Idx - 1]))
+				--_Idx;
+			mov(_Hole, _Idx);
+		}
+		if (_Idx == size) // only kinder at bottom, move _Hole down to it
+			mov(_Hole, --_Idx); // a possible bug here, _Top and _Hole might still be the same, thus overwriting ptr[_Top] which must be used as an argument in the push_heap function call;
+		push_heap(_Hole, _Top, _Val, _Pred);
+	}
+
+	void push_heap(int &_Hole, int _Top, const _Ty &_Val, _Pr &_Pred) { // percolate _Hole to _Top or where _Val belongs
+		auto _Idx = _Hole;
+		while (_Top < _Idx && _Pred((*this)[--_Idx >>= 1], _Val)) // move _Hole up to parent
+			mov(_Hole, _Idx);
+		(*this)[_Hole] = _Val;    // drop _Val into final hole
+	}
+};
+
+//template <typename _Ty, typename _Pr>
+//_Pr priority_queue<_Ty, _Pr>::_Pred;
+
+// implements a maximum priority queue whose elements are unique keys, ie, no duplicate items;
+template<typename _Ty, typename _Pr = std::less<_Ty>>
+struct priority_dict: std::vector<_Ty> {
+	priority_dict() {
+	}
+	priority_dict(const _Pr &_Pred) :
+			_Pred(_Pred) {
+	}
+
+	priority_dict(const std::set<_Ty> &c) :
+			std::vector<_Ty>(c.begin(), c.end()) {
+		// make non-trivial [_First, _Last) into a heap, using _Pred
+		int size = this->size();
+		for (int i = 0; i < size; ++i) {
+			this->map[(*this)[i]] = i;
+		}
+
+		int _Top = size >> 1;
+		while (0 < _Top--) {
+			int _Hole = _Top;
+			adjust_heap(_Hole, _Pred);
+		}
+	}
+
+	void insert(const _Ty &_Val) {    // push operation;
+		if (map.count(_Val))
+			return;
+		int _Hole = this->size();
+		this->push_back(_Val);
+		map[_Val] = _Hole;
+		push_heap(_Hole, 0, _Val, _Pred);
+//		validity_check();
+	}
+
+	void erase(const _Ty &x) {
+		if (!map.count(x))
+			return;
+		int index = map[x];
+		map.erase(x);
+		erase_indexed(index);
+//		validity_check();
+	}
+
+	_Ty pop() {
+		int index = 0;
+		_Ty x = (*this)[index];
+		map.erase(x);
+		erase_indexed(index);
+//		validity_check();
+		return x;
+	}
+
+	//precondition : size > 0 && _Where < size;
+	void erase_indexed(int _Where = 0) {
+		int size = this->size();
+		assert(_Where < size);
+
+//		_Ty _Val = (*this)[_Where];
+		const _Ty &end = this->back();
+		--size;
+
+		if (_Where != size) {
+			(*this)[_Where] = end;
+			map[end] = _Where;
+			this->pop_back();
+
+			adjust_heap(_Where, _Pred);
+		} else
+			this->pop_back();
+//		return _Val;
+	}
+
+	dict<_Ty, int> map;
+	_Pr _Pred;	// the comparator functor
+protected:
+	void validity_check() {
+		assert(map.size() == this->size());
+		for (const auto &p : map) {
+			if ((*this)[p.second] != p.first) {
+				throw std::exception("(*this)[p.second] != p.first");
+			}
+		}
+	}
+
+	void mov(int &_Hole, int _Idx) {
+		(*this)[_Hole] = (*this)[_Idx];
+		map[(*this)[_Idx]] = _Hole;
+		_Hole = _Idx;
+	}
+
+	// precondition: ptr[_Hole] is the element to be adjusted;
+	void adjust_heap(int &_Hole, _Pr &_Pred) { // percolate _Hole to _Bottom, then push _Val, using _Pred
+		_Ty _Val = (*this)[_Hole];
+		int _Top = _Hole;
+		int _Idx = _Hole;
+		int size = this->size();
+		while ((++_Idx <<= 1) < size) { // move _Hole down to larger kinder
+			if (_Pred((*this)[_Idx], (*this)[_Idx - 1]))
+				--_Idx;
+			mov(_Hole, _Idx);
+		}
+		if (_Idx == size) // only kinder at bottom, move _Hole down to it
+			mov(_Hole, --_Idx); // a possible bug here, _Top and _Hole might still be the same, thus overwriting ptr[_Top] which must be used as an argument in the push_heap function call;
+		push_heap(_Hole, _Top, _Val, _Pred);
+	}
+
+	void push_heap(int &_Hole, int _Top, const _Ty &_Val, _Pr &_Pred) { // percolate _Hole to _Top or where _Val belongs
+		auto _Idx = _Hole;
+		while (_Top < _Idx && _Pred((*this)[--_Idx >>= 1], _Val)) // move _Hole up to parent
+			mov(_Hole, _Idx);
+		(*this)[_Hole] = _Val;    // drop _Val into final hole
+		map[_Val] = _Hole;
+	}
+};
+//template <typename _Ty, typename _Pr>
+//_Pr priority_queue<_Ty, _Pr>::_Pred;

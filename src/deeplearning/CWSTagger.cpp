@@ -37,7 +37,7 @@ vector<String> CWSTaggerLSTM::predict(const String &predict_text) {
 }
 
 VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 //	cout << "repertoire_code = " << repertoire_code << endl;
 
@@ -65,7 +65,7 @@ VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
 
 vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 		const String &predict_text, vector<vector<vector<double>>> &result) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -112,7 +112,7 @@ CWSTaggerLSTM::CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath) :
 		con1D0(Conv1D(dis)), con1D1(Conv1D(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D2(
 				Conv1D(dis)), wCRF(CRF(dis)) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Text(vocabFilePath) >> word2id;
 }
 
@@ -162,7 +162,7 @@ vector<vector<vector<String>>> CWSTagger::predict(
 }
 
 VectorI& CWSTagger::predict(VectorI &predict_text) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 
 	Matrix lEmbedding;
@@ -173,7 +173,7 @@ VectorI& CWSTagger::predict(VectorI &predict_text) {
 
 vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 		vector<vector<vector<double>>> &result) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -200,11 +200,11 @@ CWSTagger::CWSTagger(const string &h5FilePath, const string &vocabFilePath) :
 CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 		word2id(Text(vocabFilePath).read_char_vocab()), embedding(dis), con1D(
 				dis), wCRF(dis) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 CWSTagger& CWSTagger::instance() {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
 	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
 	static CWSTagger instance(modelFile, vocab);

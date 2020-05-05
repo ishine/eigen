@@ -12,7 +12,7 @@ vector<String> POSTagger::convertToPOStags(const VectorI &ids) {
 }
 
 vector<String> POSTagger::predict(const vector<String> &predict_text) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	auto ids = string2id(predict_text, this->word2id);
 //	cout << "ids = " << ids << endl;
 	return convertToPOStags(this->predict(ids));
@@ -34,7 +34,7 @@ vector<vector<String>> POSTagger::predict(
 }
 
 VectorI POSTagger::predict(const vector<VectorI> &predict_text) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 
 	Tensor lEmbedding;
@@ -68,7 +68,7 @@ POSTagger::POSTagger(const string &h5FilePath, const string &vocabFilePath,
 		const string &posTagsFilePath) :
 		POSTagger((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath, posTagsFilePath) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 POSTagger::POSTagger(KerasReader &dis, const string &vocabFilePath,
@@ -77,11 +77,11 @@ POSTagger::POSTagger(KerasReader &dis, const string &vocabFilePath,
 				Text(vocabFilePath).read_char_vocab()), embedding(dis), gru(dis,
 				Bidirectional::sum), lstm0(dis, Bidirectional::sum), lstm1(dis,
 				Bidirectional::sum), lstm2(dis, Bidirectional::sum), wCRF(dis) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 POSTagger& POSTagger::instance() {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	static string modelFile = modelsDirectory() + "cn/pos/model.h5";
 	static string vocab = modelsDirectory() + "cn/pos/vocab.txt";
 	static string posTags = modelsDirectory() + "cn/pos/pos.txt";

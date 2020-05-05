@@ -24,7 +24,7 @@ struct FeedForward {
 
 	Matrix W1, W2;
 	Vector b1, b2;
-
+	Activation activation = { Activator::relu };
 	Vector& operator()(const Vector &x, Vector &ret);
 	Vector operator()(const Vector &x);
 
@@ -143,10 +143,7 @@ struct SegmentInput {
 };
 
 struct BertEmbedding {
-	BertEmbedding(KerasReader &dis, int num_attention_heads,
-			bool factorization_on_word_embedding_only);
-
-	bool factorization_on_word_embedding_only;
+	BertEmbedding(KerasReader &dis, int num_attention_heads);
 
 	Embedding wordEmbedding;
 	Embedding segmentEmbedding;
@@ -164,9 +161,30 @@ struct BertEmbedding {
 	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
-
-	bool factorization(bool word_embedding_only = true);
 };
+
+struct NonSegmentedBertEmbedding {
+	NonSegmentedBertEmbedding(KerasReader &dis, int num_attention_heads);
+
+	Embedding wordEmbedding;
+	PositionEmbedding positionEmbedding;
+	LayerNormalization layerNormalization;
+	DenseLayer embeddingMapping;
+	int embed_dim, hidden_size;
+
+	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
+			const vector<VectorI> &inputSegment, vector<Vector> &mask);
+
+	Matrix operator ()(VectorI &inputToken, int inputMid,
+			const VectorI &inputSegment);
+
+	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
+
+	Matrix operator ()(const VectorI &inputToken);
+
+	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
+};
+
 
 struct Encoder {
 	Encoder();
@@ -272,11 +290,7 @@ struct FullTokenizer {
 
 	vector<String> basic_tokenize(const String &text);
 
-	String& _run_strip_accents(String &text);
-
 	vector<String> _run_split_on_punc(String &text);
-
-	vector<String> _tokenize_chinese_chars(const String &text);
 
 	bool _is_punctuation(word cp);
 
@@ -284,26 +298,24 @@ struct FullTokenizer {
 
 	String& _clean_text(String &text);
 
-	static dict<String, int> load_vocab(const string &vocab_file);
-
 	vector<String> wordpiece_tokenize(String &text);
 
 	vector<String> tokenize(const String &text);
 
-	VectorI convert_tokens_to_ids(vector<String> &items);
+	vector<String> tokenize(const String &text, const String &_text);
 
-	static FullTokenizer &instance_cn();
-	static FullTokenizer &instance_en();
+	VectorI convert_tokens_to_ids(const vector<String> &items);
+
+	static FullTokenizer& instance_cn();
+	static FullTokenizer& instance_en();
 };
 
-struct Paraphrase {
-	Paraphrase(KerasReader &dis, const string &vocab, int num_attention_heads,
-			bool factorization_on_word_embedding_only = true,
-//			bool cross_layer_parameter_sharing = true,
-			bool symmetric_positional_embedding = true, int num_hidden_layers =
-					12);
+struct Pairwise {
+	Pairwise(KerasReader &dis, const string &vocab, int num_attention_heads,
+			bool symmetric_position_embedding = true,
+			int num_hidden_layers = 12);
 	FullTokenizer tokenizer;
-	bool symmetric_positional_embedding;
+	bool symmetric_position_embedding;
 
 	MidIndex midIndex;
 	SegmentInput segmentInput;
@@ -317,9 +329,33 @@ struct Paraphrase {
 
 	vector<double> operator ()(vector<VectorI> &input_ids);
 	double operator ()(VectorI &input_ids);
-
+	double operator ()(const vector<String> &s);
 	double operator ()(String &x, String &y);
 	double operator ()(const char16_t *x, const char16_t *y);
-	static Paraphrase& instance();
+	static Pairwise& paraphrase();
+	static Pairwise& hyponym();
+};
+
+struct PairwiseVector {
+	PairwiseVector(KerasReader &dis, const string &vocab, int num_attention_heads,
+			int num_hidden_layers = 12);
+	dict<String, int> word2id;
+	NonSegmentedBertEmbedding bertEmbedding;
+
+	AlbertTransformer transformer;
+	Bilinear bilinear;
+//	DenseLayer poolerDense;
+//	DenseLayer similarityDense;
+
+	Matrix operator ()(const vector<VectorI> &input_ids);
+	Vector operator ()(const VectorI &input_ids);
+	double operator ()(const VectorI &input_ids, const VectorI &input_ids1);
+	Matrix operator ()(const vector<String> &s);
+	double operator ()(const String &x, const String &y);
+	double operator ()(const char16_t *x, const char16_t *y);
+	static PairwiseVector& hyponymEN();
+	static PairwiseVector& hyponymCN();
+	static PairwiseVector& instantiateHyponymCN();
+	static PairwiseVector& instantiateHyponymEN();
 };
 

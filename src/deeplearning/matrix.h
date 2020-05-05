@@ -6,6 +6,7 @@ Vector& max(const Matrix &x, Vector &m, vector<int> &argmax);
 
 Vector min(const Matrix &x);
 Vector max(const Matrix &x);
+int max(const vector<int>&x, int&index);
 
 Tensor& exp(Tensor &x);
 Matrix& exp(Matrix &x);
@@ -274,7 +275,7 @@ Matrix& mult(Matrix &x, const Vector &y);
 
 //precondition: x, y are of the same shape!
 Matrix dot(const Tensor &x, const Tensor &y);
-Tensor& dot(const Tensor &x, const Tensor &y, Tensor &z, int z_dimension);
+//Tensor& dot(const Tensor &x, const Tensor &y, Tensor &z, int z_dimension);
 
 Matrix broadcast(const Vector &x, int rows);
 
@@ -299,4 +300,6 @@ Tensor transpose<2, 0, 1>(const Tensor &x);
 template<>
 Tensor transpose<2, 1, 0>(const Tensor &x);
 
-Tensor tensor(int x_shape, int y_shape, int z_shape);
+Tensor ndarray(int x_shape, int y_shape, int z_shape);
+Matrix ndarray(int x_shape, int y_shape);
+Vector ndarray(int x_shape);

@@ -320,7 +320,7 @@ dict<String, int> Text::read_vocab(int index) {
 	return read_vocab(word2id, index);
 }
 
-dict<String, int> &Text::read_vocab(dict<String, int> &word2id, int index) {
+dict<String, int>& Text::read_vocab(dict<String, int> &word2id, int index) {
 	word2id.clear();
 	String s;
 	for (String &s : *this) {
@@ -443,9 +443,12 @@ int strlen(const String &value) {
 
 #include <sstream>
 String toString(int d) {
-	std::basic_ostringstream<char16_t> sstream;
-	sstream << d;
-	return sstream.str();
+	return toString(std::to_string(d));
+}
+
+String toString(const string &c_str) {
+	String s(c_str.begin(), c_str.end());
+	return s;
 }
 }
 
@@ -749,4 +752,39 @@ double pi_test(int n) {
 	}
 
 	return 4.0 * sum;
+}
+
+Timer::Timer() {
+	start = clock();
+}
+
+void Timer::report(const char *message) {
+	auto end = clock();
+	cout << message << " cost " << (end - start) / CLOCKS_PER_SEC << " seconds"
+			<< endl;
+	start = end;
+}
+
+#include <random>
+void test_priority_dict(){
+	priority_dict<String> pq;
+	pq.insert(u"this");
+	pq.insert(u"that");
+	pq.insert(u"abc");
+	pq.insert(u"def");
+	pq.insert(u"ghi");
+	pq.insert(u"jkl");
+	pq.insert(u"mno");
+	pq.insert(u"pqr");
+	pq.insert(u"stu");
+	pq.insert(u"vwx");
+	pq.insert(u"yz");
+	std::default_random_engine e;
+	while (!pq.empty()) {
+		auto element = pq.map.begin()->first;
+		cout << "removing " << element << endl;
+		pq.erase(pq.map.begin()->first);
+		pq.insert(std::toString(e()));
+	}
+
 }

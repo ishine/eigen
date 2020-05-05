@@ -179,7 +179,7 @@ int Classifier::predict(const String &predict_text, int &argmax) {
 }
 
 int ClassifierChar::predict(const String &predict_text, int &argmax) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	predict(predict_text).maxCoeff(&argmax);
 //	cout << "argmax = " << argmax << endl;
 	return argmax;
@@ -187,7 +187,7 @@ int ClassifierChar::predict(const String &predict_text, int &argmax) {
 
 vector<int>& ClassifierChar::predict(const vector<String> &predict_text,
 		vector<int> &argmax) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	auto size = predict_text.size();
 	argmax.resize(size);
 #pragma omp parallel for num_threads(cpu_count)
@@ -217,7 +217,7 @@ vector<int>& ClassifierWord::predict(const vector<String> &predict_text,
 
 vector<vector<double>>& Classifier::predict(String &predict_text,
 		vector<vector<double>> &arr) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Matrix embedding;
 	this->embedding(string2id(predict_text, word2id), embedding);
 
@@ -249,7 +249,7 @@ Classifier::Classifier(const string &binaryFilePath,
 		Classifier(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 ClassifierChar::ClassifierChar(const string &binaryFilePath,
@@ -257,7 +257,7 @@ ClassifierChar::ClassifierChar(const string &binaryFilePath,
 		ClassifierChar(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 ClassifierWord::ClassifierWord(const string &binaryFilePath,
@@ -265,7 +265,7 @@ ClassifierWord::ClassifierWord(const string &binaryFilePath,
 		ClassifierWord(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath, tokenizer) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 #include "lagacy.h"
@@ -275,7 +275,7 @@ Classifier::Classifier(KerasReader &dis) :
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
 				DenseLayer(dis, Activator::softmax)) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 Classifier::Classifier(KerasReader &dis, const string &vocab) :
@@ -284,14 +284,14 @@ Classifier::Classifier(KerasReader &dis, const string &vocab) :
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
 				DenseLayer(dis, Activator::softmax)) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 ClassifierChar::ClassifierChar(KerasReader &dis, const string &vocab) :
 		word2id(Text(vocab).read_char_vocab()), embedding(dis), con1D0(dis), con1D1(
 				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab,
@@ -299,11 +299,11 @@ ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab,
 		word2id(Text(vocab).read_vocab()), embedding(dis), con1D0(dis), con1D1(
 				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax), tokenizer(tokenizer) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 }
 
 Classifier& Classifier::qatype_classifier() {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	static Classifier service(modelsDirectory() + "cn/qatype/model.h5",
 			modelsDirectory() + "cn/qatype/vocab.txt");
 
@@ -311,7 +311,7 @@ Classifier& Classifier::qatype_classifier() {
 }
 
 Classifier& Classifier::phatic_classifier() {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	static Classifier service(modelsDirectory() + "cn/phatic/model.h5",
 			modelsDirectory() + "cn/phatic/vocab.txt");
 
@@ -319,7 +319,7 @@ Classifier& Classifier::phatic_classifier() {
 }
 
 ClassifierChar& ClassifierChar::keyword_cn_classifier() {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	static ClassifierChar service(modelsDirectory() + "cn/keyword/model.h5",
 			modelsDirectory() + "cn/keyword/vocab.txt");
 
@@ -327,14 +327,14 @@ ClassifierChar& ClassifierChar::keyword_cn_classifier() {
 }
 
 void ClassifierChar::instantiate_keyword_cn_classifier() {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	keyword_cn_classifier() = ClassifierChar(
 			modelsDirectory() + "cn/keyword/model.h5",
 			modelsDirectory() + "cn/keyword/vocab.txt");
 }
 
 ClassifierWord& ClassifierWord::keyword_en_classifier() {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5",
 			modelsDirectory() + "en/keyword/vocab.txt",
 			&FullTokenizer::instance_en());
@@ -343,7 +343,7 @@ ClassifierWord& ClassifierWord::keyword_en_classifier() {
 }
 
 void ClassifierWord::instantiate_keyword_en_classifier() {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 	keyword_en_classifier() = ClassifierWord(
 			modelsDirectory() + "en/keyword/model.h5",
 			modelsDirectory() + "en/keyword/vocab.txt",

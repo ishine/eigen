@@ -30,6 +30,7 @@ struct KerasReader {
 
 	Vector read_vector();
 	Matrix read_matrix();
+	Tensor read_tensor();
 
 	KerasReader& operator >>(Vector &arr);
 	KerasReader& operator >>(Matrix &arr);
@@ -37,7 +38,7 @@ struct KerasReader {
 };
 
 struct TorchModule {
-	TorchModule *const parent;
+	TorchModule * const parent;
 //	H5::Group group;
 	vector<string> Parameter, Module;
 	vector<std::pair<vector<int>, vector<double>>> tuple;
@@ -93,7 +94,13 @@ vector<VectorI> string2ids(const vector<String> &s,
 extern string workingDirectory;
 extern int cpu_count;
 
+#ifdef _DEBUG
 #define print_shape(matrix) {std::cout << #matrix << ".shape = (" << matrix.rows() << ", " << matrix.cols() << ")" << std::endl;}
-
 void print_tensor(const Tensor &matrix, const char *name = "tensor");
+#else
+#define print_shape(matrix)
+#define print_tensor
+#endif
+
+
 
