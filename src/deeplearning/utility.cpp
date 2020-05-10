@@ -530,15 +530,15 @@ TorchReader& TorchReader::operator >>(Tensor &arr) {
 
 #include <omp.h>
 #include <iostream>
-int cpu_count = []() -> int {
-//	http://eigen.tuxfamily.org/dox/TopicMultiThreading.html
-		int cpu_count = omp_get_max_threads();
-		Eigen::setNbThreads(cpu_count);
-		Eigen::initParallel();
-		cout << "Eigen::initParallel() is called!" << endl;
-		cout << "cpu_count = " << cpu_count << endl;
-		return cpu_count;
-	}();
+//int cpu_count = []() -> int {
+////	http://eigen.tuxfamily.org/dox/TopicMultiThreading.html
+//		int cpu_count = omp_get_max_threads();
+//		Eigen::setNbThreads(cpu_count);
+//		Eigen::initParallel();
+//		cout << "Eigen::initParallel() is called!" << endl;
+//		cout << "cpu_count = " << cpu_count << endl;
+//		return cpu_count;
+//	}();
 
 #include <chrono>
 //gcc -mavx -mfma
@@ -582,10 +582,3 @@ void test_eigen() {
 	cout << "time cost for 3000 * 3000 matrix multiplication: = " << thisTime
 			<< endl;
 }
-
-#ifdef _DEBUG
-void print_tensor(const Tensor &matrix, const char *name) {
-	std::cout << name << ".shape = (" << matrix.size() << ", "
-			<< matrix[0].rows() << ", " << matrix[0].cols() << ")" << std::endl;
-}
-#endif

@@ -23,14 +23,16 @@ int main(int argc, char **argv) {
 		workingDirectory = argv[1];
 	}
 
+	void test_sentencepiece_keras();
+	test_sentencepiece_keras();
 //	auto &phatic = Classifier::phatic_classifier();
 //	auto &qatype = Classifier::qatype_classifier();
 	auto &keyword_cn = ClassifierChar::keyword_cn_classifier();
 	auto &keyword_en = ClassifierWord::keyword_en_classifier();
 	auto &paraphrase = Pairwise::paraphrase();
-	auto &hyponym = PairwiseVector::hyponymCN();
+	auto &lexicon = PairwiseVector::lexiconCN();
 
-	cout << "hyponym = " << hyponym(u"Gui", u"服务器") << endl;
+	cout << "lexicon = " << lexicon(u"Gui", u"服务器") << endl;
 	auto &cwsTagger = CWSTagger::instance();
 
 	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;
@@ -69,9 +71,9 @@ int main(int argc, char **argv) {
 			9, 8, 8, 8 };
 
 	Timer timer;
-	cout << hyponymStructureCN(keywords, frequency);
+	cout << lexiconStructureCN(keywords, frequency);
 
-	timer.report("hyponymStructureCN(keywords)");
+	timer.report("lexiconStructureCN(keywords)");
 
 //	cout << "phatic = " << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式") << endl;
 
@@ -80,8 +82,8 @@ int main(int argc, char **argv) {
 	cout << "paraphrase score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
 	cout << "paraphrase score = " << paraphrase(u"周末你去哪里玩", u"今天他去哪里玩？") << endl;
 
-	cout << "hyponym score = " << hyponym(u"业务", u"公司业务") << endl;
-	cout << "hyponym score = " << hyponym(u"今晚", u"今天") << endl;
+	cout << "lexicon score = " << lexicon(u"业务", u"公司业务") << endl;
+	cout << "lexicon score = " << lexicon(u"今晚", u"今天") << endl;
 
 	cout << "zero = " << zero << endl;
 	cout << "one = " << one << endl;
@@ -102,10 +104,6 @@ int main(int argc, char **argv) {
 	cout << "hard_sigmoid(-2.5) = " << hard_sigmoid(-2.5) << endl;
 	cout << "hard_sigmoid(0) = " << hard_sigmoid(0) << endl;
 
-	cout << "cpu_count() = " << cpu_count << endl;
-
-//	double pi_test(int n);
-
 //	for (int n = 100; n < 10000; ++n) {
 //		printf("pi_test(%d) = %f\n", n, pi_test(n));
 //		assert(pi_test(n) > 3);
@@ -119,50 +117,4 @@ int main(int argc, char **argv) {
 //https://academy.zhihuiya.com/#/user/learning/index
 //15821495341
 //https://ks.wjx.top/jq/69262900.aspx
-
-//segment
-//该-项
-//播放|音乐|观看|电视
-//加-装
-
-//non-keyword:
-//响应于
-//应于检测到
-//项技术
-//使用情况
-//检测到
-//根据用户
-//接收到
-//根据用户输入
-//S102
-//S103
-//S101
-//规划路线时
-//公开了
-//获取用户
-//发送给车载设备
-//位置处
-//能够根据
-//根据确定
-//多个传感器
-//次数小于预设阈值
-//目标推送信息包含
-//能够提高用户体验
-//用户使用导航
-//设备还在设备
-//由小到大
-//其他用户
-//方法基于
-//开始导航
-//第二相机接收
-//常用目
-//信息发送给车载
-
-//keyword:
-//便携式电子设备
-//车载终端
-//初始指定位置
-//推送信息库
-//接收车载设备发送
-
-//update tbl_paraphrase_cn set score = 43 where text regexp '数学高手' and paraphrase regexp '数学' limit 40
+//刷子=本领

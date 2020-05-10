@@ -85,6 +85,13 @@ struct JArray {
 		}
 	};
 
+	JArray &operator =(const vector<_Ty> &rhs) {
+		for (int i = 0, size = rhs.size(); i < size; ++i) {
+			(*this)[i] = rhs[i];
+		}
+		return *this;
+	}
+
 	operator vector<_Ty>() const {
 		int length = this->length();
 		vector<_Ty> result(length);
@@ -486,6 +493,13 @@ struct FindClass<String> {
 	static const char *name;
 	typedef jstring jobject;
 	typedef JString JObject;
+};
+
+template<>
+struct FindClass<string> {
+	static const char *name;
+	typedef jstring jobject;
+	typedef CString JObject;
 };
 
 template<typename _Ty>

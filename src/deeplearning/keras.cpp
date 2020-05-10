@@ -669,9 +669,9 @@ Tensor Bilinear::operator ()(const Tensor &x, const Tensor &y) {
 //	cout << "z_dimension = " << z_dimension << endl;
 
 	print_shape(bias)
-	print_tensor(x);
-	print_tensor(y);
-	print_tensor(weight);
+//	print_tensor(x);
+//	print_tensor(y);
+//	print_tensor(weight);
 
 	int n = x.size();
 	int m = x[0].rows();

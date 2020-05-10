@@ -185,7 +185,6 @@ struct NonSegmentedBertEmbedding {
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
 
-
 struct Encoder {
 	Encoder();
 	Encoder(KerasReader &dis, int num_attention_heads);
@@ -333,12 +332,12 @@ struct Pairwise {
 	double operator ()(String &x, String &y);
 	double operator ()(const char16_t *x, const char16_t *y);
 	static Pairwise& paraphrase();
-	static Pairwise& hyponym();
+	static Pairwise& lexicon();
 };
 
 struct PairwiseVector {
-	PairwiseVector(KerasReader &dis, const string &vocab, int num_attention_heads,
-			int num_hidden_layers = 12);
+	PairwiseVector(KerasReader &dis, const string &vocab,
+			int num_attention_heads, int num_hidden_layers = 12);
 	dict<String, int> word2id;
 	NonSegmentedBertEmbedding bertEmbedding;
 
@@ -347,15 +346,23 @@ struct PairwiseVector {
 //	DenseLayer poolerDense;
 //	DenseLayer similarityDense;
 
+	static double probability2score(const Vector &y_pred);
 	Matrix operator ()(const vector<VectorI> &input_ids);
 	Vector operator ()(const VectorI &input_ids);
-	double operator ()(const VectorI &input_ids, const VectorI &input_ids1);
+	Vector operator ()(const VectorI &input_ids, const VectorI &input_ids1);
 	Matrix operator ()(const vector<String> &s);
-	double operator ()(const String &x, const String &y);
-	double operator ()(const char16_t *x, const char16_t *y);
-	static PairwiseVector& hyponymEN();
-	static PairwiseVector& hyponymCN();
+	Vector operator ()(const String &x, const String &y);
+	Vector operator ()(const char16_t *x, const char16_t *y);
+	static PairwiseVector& lexiconEN();
+	static PairwiseVector& lexiconCN();
 	static PairwiseVector& instantiateHyponymCN();
 	static PairwiseVector& instantiateHyponymEN();
+
+	static const String& lexicon_label(const Vector &y_pred);
 };
 
+vector<int> lexiconStructureCN(const vector<String> &keywords, const vector<int> &frequency);
+vector<int> lexiconStructureEN(const vector<String> &keywords, const vector<int> &frequency);
+
+#include "../sentencepiece/sentencepiece_processor.h"
+sentencepiece::SentencePieceProcessor &en_tokenizer();

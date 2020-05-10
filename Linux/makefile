@@ -1,41 +1,34 @@
 target = eigen
 
 artifact = lib$(target).so	
-#MKLROOTPARENT = /home/zhoulizhi/intel/compilers_and_libraries_2020/linux
-#MKLROOT = $(MKLROOTPARENT)/mkl
 
-#GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp -mavx -mfma
 GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
-#GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp -I${MKLROOT}/include
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 
-FOLDERS = $(foreach dir,$(wildcard ../src/*),$(subst ../,,$(dir)))
-$(info $(FOLDERS))
+c_src = $(wildcard ../src/*/*.c)
+#$(info $(c_src))
 
--include $(wildcard src/*/*.d)
+cpp_src = $(wildcard ../src/*/*.cpp)
+#$(info $(cpp_src))
 
-$(foreach dir,$(FOLDERS),$(shell mkdir -p $(dir)))
+cc_src = $(wildcard ../src/*/*.cc ../src/*/*/*.cc)
+#$(info $(cc_src))
 
-C_OBJS = $(foreach dir, $(wildcard ../src/*/*.c),$(subst ../,,$(dir)))
-C_OBJS := $(C_OBJS:%.c=%.o)
-$(info $(C_OBJS))
+asm_src = $(wildcard ../src/*/*.asm)
+#$(info $(asm_src))
 
-CPP_OBJS = $(foreach dir, $(wildcard ../src/*/*.cpp),$(subst ../,,$(dir)))
-CPP_OBJS := $(CPP_OBJS:%.cpp=%.o)
-$(info $(CPP_OBJS))
+obj = $(c_src:%.c=%.o) $(cpp_src:%.cpp=%.o) $(cc_src:%.cc=%.o) $(asm_src:%.asm=%.o)
+obj := $(foreach file,$(obj),$(subst ../,,$(file)))
+#$(info $(obj))
 
-ASM_OBJS = $(foreach dir, $(wildcard ../src/*/*.asm),$(subst ../,,$(dir)))
-ASM_OBJS := $(ASM_OBJS:%.asm=%.o)
-$(info $(ASM_OBJS))
-
-obj = $(CPP_OBJS) $(C_OBJS) $(ASM_OBJS)
+$(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir -p $(file))))
 
 $(artifact): $(obj)
-	$(GCC) -z noexecstack -shared \
-	-o $@ $^
-#	-L${MKLROOT}/lib/intel64 -L${MKLROOTPARENT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl \		
-#	$(GCC) -z noexecstack -shared -o $@ $^
+	$(GCC) -z noexecstack -shared -o $@ $^
+
+#target must be the first command to execute, so the include directive should follow it!
+-include $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
 $(target): $(obj)
 	$(GCC) -o $@ $^ -ldl
@@ -46,6 +39,9 @@ src/jvm/%.o: ../src/jvm/%.cpp
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
 	
+src/%.o: ../src/%.cc
+	$(GCC) $(CMD)
+
 src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        

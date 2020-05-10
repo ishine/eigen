@@ -123,6 +123,7 @@ const char *FindClass<long>::name = "J";
 const char *FindClass<float>::name = "F";
 const char *FindClass<double>::name = "D";
 const char *FindClass<String>::name = "java/lang/String";
+const char *FindClass<string>::name = "java/lang/String";
 //const char *FindClass<vector<String>>::name = "[Ljava/lang/String;";
 //const string FindClass<vector<vector<String>>>::name = "[[Ljava/lang/String;";
 

@@ -964,7 +964,7 @@ PairwiseVector::PairwiseVector(KerasReader &dis, const string &vocab,
 
 		transformer(dis, num_hidden_layers, num_attention_heads),
 
-		bilinear(dis, { Activator::sigmoid }) {
+		bilinear(dis, { Activator::softmax }) {
 	__cout(__PRETTY_FUNCTION__)
 
 }
@@ -1002,9 +1002,9 @@ Pairwise& Pairwise::paraphrase() {
 	return inst;
 }
 
-PairwiseVector& PairwiseVector::hyponymCN() {
+PairwiseVector& PairwiseVector::lexiconCN() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/hyponym/config.json");
+			modelsDirectory() + "cn/lexicon/config.json");
 
 //	std::cout << config << std::endl;
 //	for (auto &key : config.getMemberNames()) {
@@ -1017,7 +1017,7 @@ PairwiseVector& PairwiseVector::hyponymCN() {
 
 	static PairwiseVector inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/hyponym/model.h5"),
+					modelsDirectory() + "cn/lexicon/model.h5"),
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 			num_hidden_layers);
 //	__cout(__PRETTY_FUNCTION__)
@@ -1026,21 +1026,21 @@ PairwiseVector& PairwiseVector::hyponymCN() {
 
 PairwiseVector& PairwiseVector::instantiateHyponymCN() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/hyponym/config.json");
+			modelsDirectory() + "cn/lexicon/config.json");
 
-	auto &inst = hyponymCN();
+	auto &inst = lexiconCN();
 	inst = PairwiseVector(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/hyponym/model.h5"),
+					modelsDirectory() + "cn/lexicon/model.h5"),
 			modelsDirectory() + "cn/bert/vocab.txt", 12,
 			config["num_hidden_layers"].asInt());
 //	__cout(__PRETTY_FUNCTION__)
 	return inst;
 }
 
-PairwiseVector& PairwiseVector::hyponymEN() {
+PairwiseVector& PairwiseVector::lexiconEN() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "en/hyponym/config.json");
+			modelsDirectory() + "en/lexicon/config.json");
 
 //	std::cout << config << std::endl;
 //	for (auto &key : config.getMemberNames()) {
@@ -1053,7 +1053,7 @@ PairwiseVector& PairwiseVector::hyponymEN() {
 
 	static PairwiseVector inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "en/hyponym/model.h5"),
+					modelsDirectory() + "en/lexicon/model.h5"),
 			modelsDirectory() + "en/bert/vocab.txt", num_attention_heads,
 			num_hidden_layers);
 //	__cout(__PRETTY_FUNCTION__)
@@ -1062,21 +1062,21 @@ PairwiseVector& PairwiseVector::hyponymEN() {
 
 PairwiseVector& PairwiseVector::instantiateHyponymEN() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "en/hyponym/config.json");
+			modelsDirectory() + "en/lexicon/config.json");
 
-	auto &inst = hyponymEN();
+	auto &inst = lexiconEN();
 	inst = PairwiseVector(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "en/hyponym/model.h5"),
+					modelsDirectory() + "en/lexicon/model.h5"),
 			modelsDirectory() + "en/bert/vocab.txt", 12,
 			config["num_hidden_layers"].asInt());
 //	__cout(__PRETTY_FUNCTION__)
 	return inst;
 }
 
-Pairwise& Pairwise::hyponym() {
+Pairwise& Pairwise::lexicon() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/hyponym_pairwise/config.json");
+			modelsDirectory() + "cn/lexicon_pairwise/config.json");
 
 //	std::cout << config << std::endl;
 //	for (auto &key : config.getMemberNames()) {
@@ -1096,7 +1096,7 @@ Pairwise& Pairwise::hyponym() {
 
 	static Pairwise inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/hyponym_pairwise/model.h5"),
+					modelsDirectory() + "cn/lexicon_pairwise/model.h5"),
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
@@ -1173,13 +1173,13 @@ Vector PairwiseVector::operator ()(const VectorI &input_ids) {
 	return clsEmbedding;
 }
 
-double PairwiseVector::operator ()(const VectorI &input_ids,
+Vector PairwiseVector::operator ()(const VectorI &input_ids,
 		const VectorI &input_ids1) {
 //	cout << "input_ids = " << input_ids << endl;
 	Vector sent = (*this)(input_ids);
 	Vector sent1 = (*this)(input_ids1);
 
-	return bilinear(sent, sent1)(0);
+	return bilinear(sent, sent1);
 }
 
 Matrix PairwiseVector::operator ()(const vector<VectorI> &input_ids) {
@@ -1192,7 +1192,6 @@ Matrix PairwiseVector::operator ()(const vector<VectorI> &input_ids) {
 		sent[index] = (*this)(input_ids[index]);
 	}
 
-	vector<Vector> pairs;
 	Matrix scores;
 	scores.resize(n, n);
 
@@ -1209,7 +1208,7 @@ Matrix PairwiseVector::operator ()(const vector<VectorI> &input_ids) {
 		if (j >= i)
 			++j;
 
-		scores(i, j) = bilinear(sent[i], sent[j])(0);
+		scores(i, j) = probability2score(bilinear(sent[i], sent[j]));
 	}
 	return scores;
 }
@@ -1233,7 +1232,7 @@ double Pairwise::operator ()(String &x, String &y) {
 	return (*this)(tokenizer.tokenize(x, y));
 }
 
-double PairwiseVector::operator ()(const String &x, const String &y) {
+Vector PairwiseVector::operator ()(const String &x, const String &y) {
 //	cout << "x = " << x << endl;
 //	cout << "y = " << y << endl;
 	vector<String> s_x = { u"[CLS]"};
@@ -1280,7 +1279,7 @@ double Pairwise::operator ()(const char16_t *_x, const char16_t *_y) {
 	return (*this)(x, y);
 }
 
-double PairwiseVector::operator ()(const char16_t *_x, const char16_t *_y) {
+Vector PairwiseVector::operator ()(const char16_t *_x, const char16_t *_y) {
 	String x = _x;
 	String y = _y;
 	cout << "first sentence: " << x << endl;
@@ -1568,21 +1567,21 @@ struct ClusteringAlgorithm {
 
 			pq(less(&priority_of_cluster[0])) {
 
-		for (int i = 0; i < n; ++i) {
-			for (int j = 0; j < n; ++j) {
-				auto &s = scores(i, j);
-				if (s >= 0.9)
-					s *= 4;
-				else if (s >= 0.8)
-					s *= 2;
-				else if (s >= 0.5)
-					s *= 1.5;
-				else if (s >= 0.1)
-					s *= 0.5;
-				else
-					s *= 0.25;
-			}
-		}
+//		for (int i = 0; i < n; ++i) {
+//			for (int j = 0; j < n; ++j) {
+//				auto &s = scores(i, j);
+//				if (s >= 0.9)
+//					s *= 4;
+//				else if (s >= 0.8)
+//					s *= 2;
+//				else if (s >= 0.5)
+//					s *= 1.5;
+//				else if (s >= 0.1)
+//					s *= 0.5;
+//				else
+//					s *= 0.25;
+//			}
+//		}
 
 		for (int child = 0; child < n; ++child) {
 			int parent;
@@ -1596,8 +1595,8 @@ struct ClusteringAlgorithm {
 
 		double max_frequency = frequency[0];
 		for (int parent = 0; parent < n; ++parent) {
-			priority_of_cluster[parent] += 2 * frequency[parent]
-					/ max_frequency;
+			double term_weight = frequency[parent] / max_frequency;
+			priority_of_cluster[parent] += 2 * term_weight * term_weight;
 
 			pq.insert(parent);
 		}
@@ -1642,7 +1641,7 @@ struct ClusteringAlgorithm {
 			__cout(numOfChildren)
 			__cout(priority_of_cluster[parent])
 
-			if (!numOfChildren){
+			if (!numOfChildren) {
 //				cout << "leaf node detected, with priority = " << priority_of_cluster[parent] << endl;
 				continue;
 			}
@@ -1736,23 +1735,65 @@ struct ClusteringAlgorithm {
 	}
 };
 
-vector<int> hyponymStructure(Matrix &scores, const vector<int> &frequency) {
+vector<int> lexiconStructure(Matrix &scores, const vector<int> &frequency) {
 	ClusteringAlgorithm cluster(scores, frequency);
 	cluster.run();
 	assert(cluster.sanctity_check());
 	return cluster.heads;
 }
 
-vector<int> hyponymStructureCN(const vector<String> &keywords,
+vector<int> lexiconStructureCN(const vector<String> &keywords,
 		const vector<int> &frequency) {
 //	cout << "keywords = " << keywords << endl;
 //	cout << "frequency = " << frequency << endl;
-	auto scores = PairwiseVector::hyponymCN()(keywords);
-	return hyponymStructure(scores, frequency);
+	auto scores = PairwiseVector::lexiconCN()(keywords);
+	return lexiconStructure(scores, frequency);
 }
 
-vector<int> hyponymStructureEN(const vector<String> &keywords,
+vector<int> lexiconStructureEN(const vector<String> &keywords,
 		const vector<int> &frequency) {
-	auto scores = PairwiseVector::hyponymEN()(keywords);
-	return hyponymStructure(scores, frequency);
+	auto scores = PairwiseVector::lexiconEN()(keywords);
+	return lexiconStructure(scores, frequency);
+}
+
+double PairwiseVector::probability2score(const Vector &probability) {
+	static const int k = 5;
+	static double interval[][2] = { { 0, 0.01 },
+
+	{ 0.02, 0.2 },
+
+	{ 1, 2 },
+
+	{ 2, 3 },
+
+	{ 3.5, 4 } };
+
+	static auto probability2score = [](double p, double a, double b) {
+		return (b - a) * k / (k - 1) * p + (k * a - b) / (k - 1);
+	};
+
+	int argmax;
+	probability.maxCoeff(&argmax);
+	auto pair = interval[argmax];
+	return probability2score(probability(argmax), pair[0], pair[1]);
+}
+
+const String& PairwiseVector::lexicon_label(const Vector &y_pred) {
+
+	static String labels[] = { u"hypernym",u"unrelated", u"related",u"synonym", u"hyponym"};
+
+int argmax;
+y_pred.maxCoeff(&argmax);
+return labels[argmax];
+}
+
+sentencepiece::SentencePieceProcessor &en_tokenizer() {
+
+	static sentencepiece::SentencePieceProcessor processor;
+
+	static const auto status = processor.Load(
+			modelsDirectory() + "en/bert/albert_base/30k-clean.model");
+
+	return processor;
+
 }

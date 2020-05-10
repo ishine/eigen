@@ -340,7 +340,6 @@ Matrix BilinearMatrixAttention::operator ()(const Matrix &_matrix_1,
 	return final += _bias;
 }
 
-
 vector<int> BiaffineDependencyParser::_mst_decode(const Matrix &head_tag,
 		const Matrix &child_tag, Matrix &attended_arcs,
 		vector<int> &predicted_head_tags) {
@@ -367,14 +366,13 @@ vector<int> BiaffineDependencyParser::_mst_decode(const Matrix &head_tag,
 	auto pairwise_head_logits = tag_bilinear(head_tag_representation,
 			child_tag_representation);
 
-	print_tensor(pairwise_head_logits,
-			"pairwise_head_logits, before transpose");
+	print_tensor(pairwise_head_logits);
 
 	pairwise_head_logits = transpose<2, 0, 1>(
 			log_softmax(pairwise_head_logits));
 //	pairwise_head_logits = transpose_201(log_softmax(pairwise_head_logits));
 
-	print_tensor(pairwise_head_logits, "pairwise_head_logits, after transpose");
+	print_tensor(pairwise_head_logits);
 
 	print_shape(attended_arcs);
 	log_softmax(attended_arcs).transposeInPlace();

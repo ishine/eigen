@@ -73,6 +73,3 @@ struct SyntaxParser {
 	static SyntaxParser& instance();
 	static SyntaxParser& instantiate();
 };
-
-vector<int> hyponymStructureCN(const vector<String> &keywords, const vector<int> &frequency);
-vector<int> hyponymStructureEN(const vector<String> &keywords, const vector<int> &frequency);

@@ -92,14 +92,13 @@ vector<VectorI> string2ids(const vector<String> &s,
 
 //forward declaration to prevent runtime linking error.
 extern string workingDirectory;
-extern int cpu_count;
 
 #ifdef _DEBUG
 #define print_shape(matrix) {std::cout << #matrix << ".shape = (" << matrix.rows() << ", " << matrix.cols() << ")" << std::endl;}
-void print_tensor(const Tensor &matrix, const char *name = "tensor");
+#define print_tensor(matrix) {std::cout << #matrix << ".shape = (" << matrix.size() << ", " << matrix[0].rows() << ", " << matrix[0].cols() << ")" << std::endl;}
 #else
 #define print_shape(matrix)
-#define print_tensor
+#define print_tensor(matrix)
 #endif
 
 

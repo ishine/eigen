@@ -30,9 +30,30 @@ void JNICALL Java_com_util_Native_initializeH5Model(JNIEnv *env, jobject obj,
 
 	CWSTagger::instance();
 	POSTagger::instance();
-	SyntaxParser::instance();
+//	SyntaxParser::instance();
 	ClassifierChar::keyword_cn_classifier();
 	ClassifierWord::keyword_en_classifier();
+}
+
+jintArray JNICALL Java_com_util_Native_token2idEN(JNIEnv *env, jobject _,
+		jstring text) {
+	static const string comma(1, ',');
+	std::vector<std::string> pieces;
+	en_tokenizer().Encode((string) CString(env, text), &pieces);
+
+	std::vector<int> ids;
+	for (auto &s : pieces) {
+		if (s.size() > 1 && s.back() == ',') {
+			s.pop_back();
+			ids << en_tokenizer().PieceToId(s);
+			ids << en_tokenizer().PieceToId(comma);
+		}
+		else{
+			ids << en_tokenizer().PieceToId(s);
+		}
+	}
+
+	return Object(env, ids);
 }
 
 jint JNICALL Java_com_util_Native_sum8args(JNIEnv *env, jobject obj, jint rcx,
@@ -106,233 +127,221 @@ jobjectArray JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
 //inputs: String x, String y;
 //ouputs: double ;
 
-jstring JNICALL Java_com_util_Native_hyponymCN(JNIEnv *env, jobject _,
-		jstring jhypernym, jstring jhyponym) {
+jstring JNICALL Java_com_util_Native_lexiconCN(JNIEnv *env, jobject _,
+		jstring jhypernym, jstring jlexicon) {
 //	__cout(__PRETTY_FUNCTION__)
-	String hypernym = JString(env, jhypernym);
-	String hyponym = JString(env, jhyponym);
-	auto probability = PairwiseVector::hyponymCN()(hypernym, hyponym);
-	if (probability >= 0.9)
-		return Object(env, u"hyponym");
-	if (probability >= 0.8)
-		return Object(env, u"synonym");
-	if (probability >= 0.5)
-		return Object(env, u"related");
-	if (probability >= 0.1)
-		return Object(env, u"unrelated");
-	return Object(env, u"hypernym");
+	return Object(env,
+			PairwiseVector::lexicon_label(
+					PairwiseVector::lexiconCN()(JString(env, jhypernym),
+							JString(env, jlexicon))));
 }
 
-jstring JNICALL Java_com_util_Native_hyponymEN(JNIEnv *env, jobject _,
-jstring jhypernym, jstring jhyponym) {
+jstring JNICALL Java_com_util_Native_lexiconEN(JNIEnv *env, jobject _,
+		jstring jhypernym, jstring jlexicon) {
 //	__cout(__PRETTY_FUNCTION__)
-			String hypernym = JString(env, jhypernym);
-			String hyponym = JString(env, jhyponym);
-			auto probability = PairwiseVector::hyponymEN()(hypernym, hyponym);
-			if (probability >= 0.9)
-			return Object(env, u"hyponym");
-			if (probability >= 0.8)
-			return Object(env, u"synonym");
-			if (probability >= 0.5)
-			return Object(env, u"related");
-			if (probability >= 0.1)
-			return Object(env, u"unrelated");
-			return Object(env, u"hypernym");
-		}
+	return Object(env,
+			PairwiseVector::lexicon_label(
+					PairwiseVector::lexiconEN()(JString(env, jhypernym),
+							JString(env, jlexicon))));
+}
 
-		jobjectArray JNICALL Java_com_util_Native_hyponymCNs(JNIEnv *env, jobject _,jobjectArray jtext) {
+jobjectArray JNICALL Java_com_util_Native_lexiconCNs(JNIEnv *env, jobject _,
+		jobjectArray jtext) {
 //	__cout(__PRETTY_FUNCTION__)
-			return Object(env, PairwiseVector::hyponymCN()(JArray<String>(env, jtext)));
-		}
+	return Object(env, PairwiseVector::lexiconCN()(JArray<String>(env, jtext)));
+}
 
-		jobjectArray JNICALL Java_com_util_Native_hyponymENs(JNIEnv *env, jobject _,jobjectArray jtext) {
+jobjectArray JNICALL Java_com_util_Native_lexiconENs(JNIEnv *env, jobject _,
+		jobjectArray jtext) {
 //	__cout(__PRETTY_FUNCTION__)
-			return Object(env, PairwiseVector::hyponymEN()(JArray<String>(env, jtext)));
-		}
+	return Object(env, PairwiseVector::lexiconEN()(JArray<String>(env, jtext)));
+}
 
 //inputs: String [] keywords;
 //ouputs: int [] heads;
 
-		jintArray JNICALL Java_com_util_Native_hyponymStructureCN(JNIEnv *env, jobject _, jobjectArray keywords, jintArray frequency) {
-			__cout(__PRETTY_FUNCTION__);
-			JArray<int> jArray(env, frequency);
-			jArray = hyponymStructureCN(JArray<String>(env, keywords), jArray);
-			return frequency;
-		}
+jintArray JNICALL Java_com_util_Native_lexiconStructureCN(JNIEnv *env,
+		jobject _, jobjectArray keywords, jintArray frequency) {
+	__cout(__PRETTY_FUNCTION__);
+	JArray<int> jArray(env, frequency);
+	jArray = lexiconStructureCN(JArray<String>(env, keywords), jArray);
+	return frequency;
+}
 
-		jintArray JNICALL Java_com_util_Native_hyponymStructureEN(JNIEnv *env, jobject _, jobjectArray seg, jintArray frequency) {
-			__cout(__PRETTY_FUNCTION__)
-			return Object(env, hyponymStructureEN(JArray<String>(env, seg), JArray<int>(env, frequency)));
-		}
+jintArray JNICALL Java_com_util_Native_lexiconStructureEN(JNIEnv *env,
+		jobject _, jobjectArray seg, jintArray frequency) {
+	__cout(__PRETTY_FUNCTION__)
+	return Object(env,
+			lexiconStructureEN(JArray<String>(env, seg),
+					JArray<int>(env, frequency)));
+}
 
-		//inputs: String [] text;
+//inputs: String [] text;
 //ouputs: String [][] segment;
 
-		jintArray JNICALL Java_com_util_Native_depCN(JNIEnv *env, jobject _, jobjectArray seg, jobjectArray pos, jobjectArray dep) {
-			__cout(__PRETTY_FUNCTION__)
-			vector<String> depCPP;
-			auto ret = Object(env,
+jintArray JNICALL Java_com_util_Native_depCN(JNIEnv *env, jobject _,
+		jobjectArray seg, jobjectArray pos, jobjectArray dep) {
+	__cout(__PRETTY_FUNCTION__)
+	vector<String> depCPP;
+	auto ret = Object(env,
 			SyntaxParser::instance().predict(JArray<String>(env, seg),
 					JArray<String>(env, pos), depCPP));
 
-			JArray<String> depJava(env, dep);
-			for (int i = 0, size = depCPP.size(); i < size; ++i) {
-				depJava[i] = depCPP[i];
-			}
-
-			return ret;
-		}
+	JArray<String> depJava(env, dep);
+	depJava = depCPP;
+	return ret;
+}
 
 //inputs: String [] text;
 //ouputs: String [][] segment;
 
-		jobjectArray JNICALL Java_com_util_Native_posCN(JNIEnv *env, jobject _,
+jobjectArray JNICALL Java_com_util_Native_posCN(JNIEnv *env, jobject _,
 		jobjectArray text) {
 //	__cout(__PRETTY_FUNCTION__)
-			return Object(env, POSTagger::instance().predict(JArray<String>(env, text)));
-		}
+	return Object(env, POSTagger::instance().predict(JArray<String>(env, text)));
+}
 
 //inputs: String [] text;
 //ouputs: String [][] segment;
 
-		jobjectArray JNICALL Java_com_util_Native_segmentCNs(JNIEnv *env, jobject _,
+jobjectArray JNICALL Java_com_util_Native_segmentCNs(JNIEnv *env, jobject _,
 		jobjectArray text) {
-			__cout(__PRETTY_FUNCTION__)
-			return Object(env, CWSTagger::instance().predict(JArray<String>(env, text)));
-		}
+	__cout(__PRETTY_FUNCTION__)
+	return Object(env, CWSTagger::instance().predict(JArray<String>(env, text)));
+}
 //inputs: String [][] text;
 //ouputs: String [][][] segment;
-		jobjectArray JNICALL Java_com_util_Native_segmentCNss(JNIEnv *env, jobject _,
+jobjectArray JNICALL Java_com_util_Native_segmentCNss(JNIEnv *env, jobject _,
 		jobjectArray text) {
 //	__cout(__PRETTY_FUNCTION__)
-			return Object(env,
+	return Object(env,
 			CWSTagger::instance().predict(JArray<vector<String>>(env, text)));
-		}
+}
 
-		void JNICALL Java_com_util_Native_reinitializeCWSTagger(JNIEnv *env,
+void JNICALL Java_com_util_Native_reinitializeCWSTagger(JNIEnv *env,
 		jobject obj) {
-			__cout(__PRETTY_FUNCTION__)
-			CWSTagger::instantiate();
-		}
+	__cout(__PRETTY_FUNCTION__)
+	CWSTagger::instantiate();
+}
 
-		void JNICALL Java_com_util_Native_reinitializeLexiconCN(JNIEnv *env,
+void JNICALL Java_com_util_Native_reinitializeLexiconCN(JNIEnv *env,
 		jobject obj) {
-			__cout(__PRETTY_FUNCTION__)
-			PairwiseVector::instantiateHyponymCN();
-		}
+	__cout(__PRETTY_FUNCTION__)
+	PairwiseVector::instantiateHyponymCN();
+}
 
-		void JNICALL Java_com_util_Native_reinitializeLexiconEN(JNIEnv *env,
+void JNICALL Java_com_util_Native_reinitializeLexiconEN(JNIEnv *env,
 		jobject obj) {
-			__cout(__PRETTY_FUNCTION__)
-			PairwiseVector::instantiateHyponymEN();
-		}
+	__cout(__PRETTY_FUNCTION__)
+	PairwiseVector::instantiateHyponymEN();
+}
 
-		void JNICALL Java_com_util_Native_reinitializeKeywordCN(JNIEnv *env,
+void JNICALL Java_com_util_Native_reinitializeKeywordCN(JNIEnv *env,
 		jobject obj) {
-			__cout(__PRETTY_FUNCTION__)
-			ClassifierChar::instantiate_keyword_cn_classifier();
-		}
+	__cout(__PRETTY_FUNCTION__)
+	ClassifierChar::instantiate_keyword_cn_classifier();
+}
 
-		void JNICALL Java_com_util_Native_reinitializeKeywordEN(JNIEnv *env,
+void JNICALL Java_com_util_Native_reinitializeKeywordEN(JNIEnv *env,
 		jobject obj) {
-			__cout(__PRETTY_FUNCTION__)
-			ClassifierWord::instantiate_keyword_en_classifier();
-		}
+	__cout(__PRETTY_FUNCTION__)
+	ClassifierWord::instantiate_keyword_en_classifier();
+}
 
-		jint JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
+jint JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
 		jstring str) {
 //	__cout(__PRETTY_FUNCTION__)
-			String s = JString(env, str);
-			int index;
-			return ClassifierChar::keyword_cn_classifier().predict(s, index);
-		}
+	String s = JString(env, str);
+	int index;
+	return ClassifierChar::keyword_cn_classifier().predict(s, index);
+}
 
-		jdouble JNICALL Java_com_util_Native_keywordCNDouble(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_keywordCNDouble(JNIEnv *env, jobject obj,
 		jstring str) {
 //	__cout(__PRETTY_FUNCTION__)
-			String s = JString(env, str);
-			return ClassifierChar::keyword_cn_classifier().predict_debug(s)[1];
-		}
+	String s = JString(env, str);
+	return ClassifierChar::keyword_cn_classifier().predict_debug(s)[1];
+}
 
-		jdouble JNICALL Java_com_util_Native_keywordENDouble(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_keywordENDouble(JNIEnv *env, jobject obj,
 		jstring str) {
 //	__cout(__PRETTY_FUNCTION__)
-			String s = JString(env, str);
-			return ClassifierWord::keyword_en_classifier().predict_debug(s)[1];
-		}
+	String s = JString(env, str);
+	return ClassifierWord::keyword_en_classifier().predict_debug(s)[1];
+}
 
-		jintArray JNICALL Java_com_util_Native_keywordCNs(JNIEnv *env, jobject _,
+jintArray JNICALL Java_com_util_Native_keywordCNs(JNIEnv *env, jobject _,
 		jobjectArray str) {
 //	__cout(__PRETTY_FUNCTION__)
-			vector<String> ss = JArray<String>(env, str);
-			vector<int> index;
-			return Object(env,
+	vector<String> ss = JArray<String>(env, str);
+	vector<int> index;
+	return Object(env,
 			ClassifierChar::keyword_cn_classifier().predict(ss, index));
-		}
+}
 
-		jint JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
+jint JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
 		jstring str) {
 //	__cout(__PRETTY_FUNCTION__)
-			String s = JString(env, str);
-			int index;
-			return ClassifierWord::keyword_en_classifier().predict(s, index);
-		}
+	String s = JString(env, str);
+	int index;
+	return ClassifierWord::keyword_en_classifier().predict(s, index);
+}
 
-		jintArray JNICALL Java_com_util_Native_keywordENs(JNIEnv *env, jobject _,
+jintArray JNICALL Java_com_util_Native_keywordENs(JNIEnv *env, jobject _,
 		jobjectArray str) {
 //	__cout(__PRETTY_FUNCTION__)
-			vector<String> ss = JArray<String>(env, str);
-			vector<int> index;
-			return Object(env,
+	vector<String> ss = JArray<String>(env, str);
+	vector<int> index;
+	return Object(env,
 			ClassifierWord::keyword_en_classifier().predict(ss, index));
-		}
+}
 
-		jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
 		jstring x, jstring y) {
-			__cout(__PRETTY_FUNCTION__)
-			String s1 = JString(env, x);
-			String s2 = JString(env, y);
+	__cout(__PRETTY_FUNCTION__)
+	String s1 = JString(env, x);
+	String s2 = JString(env, y);
 
-			cout << "s1 = " << s1 << endl;
-			cout << "s2 = " << s2 << endl;
+	cout << "s1 = " << s1 << endl;
+	cout << "s2 = " << s2 << endl;
 
-			return Pairwise::paraphrase()(s1, s2);
-		}
+	return Pairwise::paraphrase()(s1, s2);
+}
 
-		jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
+jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
 		jstring _service, jstring _text, jintArray _code) {
 //	__cout(__PRETTY_FUNCTION__)
-			string service = CString(env, _service);
-			String text = JString(env, _text);
-			JArray<int> code(env, _code);
+	string service = CString(env, _service);
+	String text = JString(env, _text);
+	JArray<int> code(env, _code);
 
-			{
-				JArray<byte> code(env, 0);
-			}
-			{
-				JArray<bool> code(env, 0);
-			}
-			{
-				JArray<short> code(env, 0);
-			}
-			{
-				JArray<long> code(env, 0);
-			}
-			{
-				JArray<float> code(env, 0);
-			}
-			{
-				JArray<double> code(env, 0);
-			}
-			{
-				JArray<String> code(env, (jobjectArray) 0);
-			}
+	{
+		JArray<byte> code(env, 0);
+	}
+	{
+		JArray<bool> code(env, 0);
+	}
+	{
+		JArray<short> code(env, 0);
+	}
+	{
+		JArray<long> code(env, 0);
+	}
+	{
+		JArray<float> code(env, 0);
+	}
+	{
+		JArray<double> code(env, 0);
+	}
+	{
+		JArray<String> code(env, (jobjectArray) 0);
+	}
 //	cout << "code from java = " << code << endl;
 
-			VectorI arr = code;
+	VectorI arr = code;
 //	cout << "converted to C++ = " << arr << endl;
 
-			NERTaggerDict::predict(service, text, arr);
-			return Object(env, arr);
-		}
-	}
+	NERTaggerDict::predict(service, text, arr);
+	return Object(env, arr);
+}
+}

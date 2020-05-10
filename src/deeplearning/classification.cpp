@@ -190,7 +190,7 @@ vector<int>& ClassifierChar::predict(const vector<String> &predict_text,
 //	__cout(__PRETTY_FUNCTION__)
 	auto size = predict_text.size();
 	argmax.resize(size);
-#pragma omp parallel for num_threads(cpu_count)
+#pragma omp parallel for
 	for (size_t i = 0; i < size; ++i) {
 		predict(predict_text[i], argmax[i]);
 	}
@@ -208,7 +208,8 @@ vector<int>& ClassifierWord::predict(const vector<String> &predict_text,
 		vector<int> &argmax) {
 	auto size = predict_text.size();
 	argmax.resize(size);
-#pragma omp parallel for num_threads(cpu_count)
+//#pragma omp parallel for num_threads(cpu_count)
+#pragma omp parallel for
 	for (size_t i = 0; i < size; ++i) {
 		predict(predict_text[i], argmax[i]);
 	}
