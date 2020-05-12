@@ -260,6 +260,11 @@ String Text::toString() {
 	return tmp;
 }
 
+vector<String> Text::readlines() {
+	vector<String> v;
+	*this >> v;
+	return v;
+}
 Text& Text::operator >>(vector<String> &v) {
 	String line;
 	if (v.size()) {
@@ -310,10 +315,14 @@ Text& Text::operator >>(String &v) {
 	return *this;
 }
 
-Text& Text::operator >>(dict<String, int> &word2id) {
+dict<String, int> Text::read_vocab(int index) {
+	dict<String, int> word2id;
+	return read_vocab(word2id, index);
+}
+
+dict<String, int>& Text::read_vocab(dict<String, int> &word2id, int index) {
 	word2id.clear();
 	String s;
-	size_t index = 0;
 	for (String &s : *this) {
 		strip(s);
 		assert(!s.empty());
@@ -325,7 +334,37 @@ Text& Text::operator >>(dict<String, int> &word2id) {
 	}
 	cout << "word2id.size() = " << word2id.size() << endl;
 	cout << "index = " << index << endl;
-	assert(word2id.size() == index);
+	return word2id;
+}
+
+dict<char16_t, int> Text::read_char_vocab() {
+	dict<char16_t, int> word2id;
+	*this >> word2id;
+	return word2id;
+}
+
+Text& Text::operator >>(dict<String, int> &word2id) {
+	this->read_vocab(word2id, 2);
+	return *this;
+}
+
+Text& Text::operator >>(dict<char16_t, int> &word2id) {
+	word2id.clear();
+	String s;
+	size_t index = 2;
+	for (String &s : *this) {
+		strip(s);
+		assert(s.size() == 1);
+		char16_t ch = s[0];
+//		cout << s << " = " << index << endl;
+//		cout << "s.size() = " << s.size() << endl;
+		assert(word2id.count(ch) == 0);
+
+		word2id[ch] = index++;
+	}
+	cout << "word2id.size() = " << word2id.size() << endl;
+	cout << "index = " << index << endl;
+	assert(word2id.size() == index - 2);
 	return *this;
 }
 
@@ -404,9 +443,12 @@ int strlen(const String &value) {
 
 #include <sstream>
 String toString(int d) {
-	std::basic_ostringstream<char16_t> sstream;
-	sstream << d;
-	return sstream.str();
+	return toString(std::to_string(d));
+}
+
+String toString(const string &c_str) {
+	String s(c_str.begin(), c_str.end());
+	return s;
 }
 }
 
@@ -553,7 +595,7 @@ char16_t tolower(char16_t ch) {
 		return ch;
 	}
 }
-
+//∑∫∪∩√∈∏
 char16_t toupper(char16_t ch) {
 	switch (ch) {
 //English small letters:
@@ -694,4 +736,55 @@ char16_t toupper(char16_t ch) {
 	default:
 		return ch;
 	}
+}
+
+double pi_test(int n) {
+	double sum = 0.0;
+//#pragma omp parallel for num_threads(cpu_count()) reduction(+:sum)
+
+	for (int i = 0; i < n; i++) {
+		double factor;
+		if (i % 2 == 0)
+			factor = 1.0;
+		else
+			factor = -1.0;
+		sum += factor / (2 * i + 1);
+	}
+
+	return 4.0 * sum;
+}
+
+Timer::Timer() {
+	start = clock();
+}
+
+void Timer::report(const char *message) {
+	auto end = clock();
+	cout << message << " cost " << (end - start) / CLOCKS_PER_SEC << " seconds"
+			<< endl;
+	start = end;
+}
+
+#include <random>
+void test_priority_dict(){
+	priority_dict<String> pq;
+	pq.insert(u"this");
+	pq.insert(u"that");
+	pq.insert(u"abc");
+	pq.insert(u"def");
+	pq.insert(u"ghi");
+	pq.insert(u"jkl");
+	pq.insert(u"mno");
+	pq.insert(u"pqr");
+	pq.insert(u"stu");
+	pq.insert(u"vwx");
+	pq.insert(u"yz");
+	std::default_random_engine e;
+	while (!pq.empty()) {
+		auto element = pq.map.begin()->first;
+		cout << "removing " << element << endl;
+		pq.erase(pq.map.begin()->first);
+		pq.insert(std::toString(e()));
+	}
+
 }

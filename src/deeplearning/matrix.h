@@ -6,30 +6,54 @@ Vector& max(const Matrix &x, Vector &m, vector<int> &argmax);
 
 Vector min(const Matrix &x);
 Vector max(const Matrix &x);
+int max(const vector<int>&x, int&index);
 
+Tensor& exp(Tensor &x);
 Matrix& exp(Matrix &x);
 Vector& exp(Vector &x);
+vector<Vector>& exp(vector<Vector> &x);
 
+Tensor& hard_sigmoid(Tensor &x);
 Matrix& hard_sigmoid(Matrix &x);
 Vector& hard_sigmoid(Vector &x);
+vector<Vector>& hard_sigmoid(vector<Vector> &x);
 
+Tensor& sigmoid(Tensor &x);
 Matrix& sigmoid(Matrix &x);
 Vector& sigmoid(Vector &x);
+vector<Vector>& sigmoid(vector<Vector> &x);
 
+Tensor& tanh(Tensor &x);
 Matrix& tanh(Matrix &x);
 Vector& tanh(Vector &x);
+vector<Vector>& tanh(vector<Vector> &x);
 
+//\text{ELU}(x) = \max\left(0,x\right) + \min\left(0, \alpha * \left(\exp\left(x\right) - 1\right)\right)
+//https://www.codecogs.com/eqnedit.php
+Tensor& elu(Tensor &x);
+Matrix& elu(Matrix &x);
+Vector& elu(Vector &x);
+vector<Vector>& elu(vector<Vector> &x);
+
+Tensor& relu(Tensor &x);
 Matrix& relu(Matrix &x);
 Vector& relu(Vector &x);
+vector<Vector>& relu(vector<Vector> &x);
 
 Matrix& gelu(Matrix &x);
 Vector& gelu(Vector &x);
 Tensor& gelu(Tensor &x);
 vector<Vector>& gelu(vector<Vector> &x);
 
+double logsumexp(Vector &x);
+
+Matrix& log_softmax(Matrix &x);
+Vector& log_softmax(Vector &x);
+Tensor& log_softmax(Tensor &x);
+vector<Vector>& log_softmax(vector<Vector> &x);
+
 Matrix& softmax(Matrix &x);
 Vector& softmax(Vector &x);
-
 Tensor& softmax(Tensor &x);
 vector<Vector>& softmax(vector<Vector> &x);
 
@@ -43,7 +67,7 @@ vector<Vector>& extract(const Tensor &x, int index);
 vector<Vector>& extract(const Tensor &x, int index, vector<Vector> &out);
 
 enum class Activator : int {
-	linear, softmax, l2_normalize, relu, gelu, hard_sigmoid, sigmoid, tanh
+	linear, softmax, l2_normalize, relu, gelu, hard_sigmoid, sigmoid, tanh, elu,
 };
 
 struct Activation {
@@ -66,6 +90,9 @@ struct Activation {
 			return sigmoid(x);
 		case Activator::tanh:
 			return tanh(x);
+		case Activator::elu:
+			return elu(x);
+
 		default:
 			return x;
 		}
@@ -149,6 +176,7 @@ Tensor& operator +=(Tensor &x, const Tensor &y);
 vector<Vector>& operator +=(vector<Vector> &x, double y);
 vector<double>& operator +=(vector<double> &x, double y);
 Tensor& operator +=(Tensor &x, const Vector &y);
+Tensor& operator +=(Tensor &x, const Matrix &y);
 vector<Vector>& operator +=(vector<Vector> &x, const Vector &y);
 vector<Vector>& operator +=(vector<Vector> &x, const vector<Vector> &y);
 
@@ -244,3 +272,34 @@ Matrix& addt(Matrix &x, const Vector &y);
 Matrix& subt(Matrix &x, const Vector &y);
 Matrix& divt(Matrix &x, const Vector &y);
 Matrix& mult(Matrix &x, const Vector &y);
+
+//precondition: x, y are of the same shape!
+Matrix dot(const Tensor &x, const Tensor &y);
+//Tensor& dot(const Tensor &x, const Tensor &y, Tensor &z, int z_dimension);
+
+Matrix broadcast(const Vector &x, int rows);
+
+Matrix broadcast(const Eigen::Block<Matrix, 1, -1, 1> &x, int rows);
+
+Matrix broadcast(const Eigen::Block<const Matrix, 1, -1, 1> &x, int rows);
+
+template<int, int, int> Tensor transpose(const Tensor &x);
+
+template<>
+Tensor transpose<0, 2, 1>(const Tensor &x);
+
+template<>
+Tensor transpose<1, 0, 2>(const Tensor &x);
+
+template<>
+Tensor transpose<1, 2, 0>(const Tensor &x);
+
+template<>
+Tensor transpose<2, 0, 1>(const Tensor &x);
+
+template<>
+Tensor transpose<2, 1, 0>(const Tensor &x);
+
+Tensor ndarray(int x_shape, int y_shape, int z_shape);
+Matrix ndarray(int x_shape, int y_shape);
+Vector ndarray(int x_shape);

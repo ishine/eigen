@@ -21,6 +21,17 @@ Vector& min(const Matrix &x, Vector &min, vector<int> &argmin) {
 	return aggregate(x, min, argmin, &Matrix::ConstRowXpr::minCoeff);
 }
 
+int max(const vector<int>&x, int&index) {
+	int max = std::numeric_limits<int>::min();
+	for (int i = 0, size = x.size(); i < size; ++i) {
+		if (x[i] > max) {
+			max = x[i];
+			index = i;
+		}
+	}
+	return max;
+}
+
 Vector max(const Matrix &x) {
 	Vector y;
 	vector<int> argmax;
@@ -44,12 +55,22 @@ Vector min(const Matrix &x) {
 //	return 0.2 * x + 0.5;
 //}
 //
-//double relu(double x) {
-//	if (x > 0) {
-//		return x;
-//	}
-//	return 0;
-//}
+
+double elu(double x, double alpha) {
+	if (x >= 0)
+		return x;
+	return alpha * (exp(x) - 1);
+}
+
+double elu(double x) {
+	if (x >= 0)
+		return x;
+	return exp(x) - 1;
+}
+
+double relu(double x) {
+	return x < 0 ? 0 : x;
+}
 
 double inverse(double x) {
 	return 1 / x;
@@ -102,7 +123,15 @@ Matrix& sigmoid(Matrix &x) {
 	return function(x, sigmoid);
 }
 
+Tensor& sigmoid(Tensor &x) {
+	return function(x, sigmoid);
+}
+
 Vector& sigmoid(Vector &x) {
+	return function(x, sigmoid);
+}
+
+vector<Vector>& sigmoid(vector<Vector> &x) {
 	return function(x, sigmoid);
 }
 
@@ -110,7 +139,15 @@ Matrix& hard_sigmoid(Matrix &x) {
 	return function(x, hard_sigmoid);
 }
 
+Tensor& hard_sigmoid(Tensor &x) {
+	return function(x, hard_sigmoid);
+}
+
 Vector& hard_sigmoid(Vector &x) {
+	return function(x, hard_sigmoid);
+}
+
+vector<Vector>& hard_sigmoid(vector<Vector> &x) {
 	return function(x, hard_sigmoid);
 }
 
@@ -118,8 +155,20 @@ Matrix& tanh(Matrix &x) {
 	return function(x, std::tanh);
 }
 
+Tensor& tanh(Tensor &x) {
+	return function(x, std::tanh);
+}
+
 Vector& tanh(Vector &x) {
 	return function(x, std::tanh);
+}
+
+vector<Vector>& tanh(vector<Vector> &x) {
+	return function(x, std::tanh);
+}
+
+Tensor& exp(Tensor &x) {
+	return function(x, std::exp);
 }
 
 Matrix& exp(Matrix &x) {
@@ -130,13 +179,46 @@ Vector& exp(Vector &x) {
 	return function(x, std::exp);
 }
 
+vector<Vector>& exp(vector<Vector> &x) {
+	return function(x, std::exp);
+}
+
 Matrix& relu(Matrix &x) {
+	return function(x, relu);
+//	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
+}
+
+Tensor& relu(Tensor &x) {
 	return function(x, relu);
 //	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
 }
 
 Vector& relu(Vector &x) {
 	return function(x, relu);
+//	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
+}
+
+vector<Vector>& relu(vector<Vector> &x) {
+	return function(x, relu);
+//	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
+}
+
+Matrix& elu(Matrix &x) {
+	return function(x, elu);
+//	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
+}
+
+Tensor& elu(Tensor &x) {
+	return function(x, elu);
+}
+
+Vector& elu(Vector &x) {
+	return function(x, elu);
+//	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
+}
+
+vector<Vector>& elu(vector<Vector> &x) {
+	return function(x, elu);
 //	return x.cwiseProduct((x.array() > 0.0).matrix().cast<double>());
 }
 
@@ -154,6 +236,64 @@ Vector& gelu(Vector &x) {
 
 Tensor& gelu(Tensor &x) {
 	return function(x, gelu);
+}
+
+//Matrix& log_softmax(Matrix &x) {
+//	__cout(__PRETTY_FUNCTION__)
+////	__cout(x);
+//	print_shape(x);
+//
+//	for (int i = 0, size = x.rows(); i < size; ++i) {
+//		cout << "processing " << i << endl;
+//		auto row = x.row(i);
+//		double lambda = row.maxCoeff();
+//
+//		cout << "lambda " << lambda << endl;
+//		row.array() -= lambda;
+//
+//		cout << "row.array().exp().sum() = " << row.array().exp().sum() << endl;
+//		row.array() -= log(row.array().exp().sum());
+//	}
+//
+//	return x;
+//}
+
+Matrix& log_softmax(Matrix &x) {
+	__cout(__PRETTY_FUNCTION__)
+//	__cout(x);
+//	print_shape(x);
+
+	for (int i = 0, size = x.rows(); i < size; ++i) {
+//		cout << "processing " << i << endl;
+		Vector row = x.row(i);
+
+		row -= row.maxCoeff();
+		row -= log(exp(row).sum());
+
+		x.row(i) = row;
+	}
+
+	return x;
+}
+
+Tensor& log_softmax(Tensor &x) {
+	__cout(__PRETTY_FUNCTION__)
+	for (int i = 0, size = x.size(); i < size; ++i) {
+		log_softmax(x[i]);
+	}
+	return x;
+}
+
+double logsumexp(Vector &x) {
+	double lambda = x.maxCoeff();
+	x -= lambda;
+	return lambda + log(exp(x).sum());
+}
+
+Vector& log_softmax(Vector &x) {
+	double lambda = x.maxCoeff();
+	x -= lambda;
+	return x - log(exp(x).sum());
 }
 
 Matrix& softmax(Matrix &x) {
@@ -341,6 +481,14 @@ Tensor& operator +=(Tensor &x, const Vector &y) {
 		for (int j = 0; j < rows; ++j) {
 			x[k].row(j).array() += y_array;
 		}
+	}
+	return x;
+}
+
+Tensor& operator +=(Tensor &x, const Matrix &y) {
+	int batch_size = x.size();
+	for (int k = 0; k < batch_size; ++k) {
+		x[k] += y;
 	}
 	return x;
 }
@@ -637,4 +785,111 @@ Matrix& div(Matrix &x, const Vector &y) {
 Matrix& add(Matrix &x, const Vector &y) {
 	x.rowwise() += y;
 	return x;
+}
+
+Matrix dot(const Tensor &x, const Tensor &y) {
+	Matrix z;
+	int n = x.size();
+	int m = x[0].rows();
+	z.resize(n, m);
+
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < m; ++j) {
+			z(i, j) = x[i].row(j) * y[i].row(j).transpose();
+		}
+
+	return z;
+}
+
+Matrix broadcast(const Vector &x, int rows) {
+	Matrix ret;
+	ret.resize(rows, x.cols());
+	for (int i = 0; i < rows; ++i) {
+		ret.row(i) = x;
+	}
+	return ret;
+}
+
+Matrix broadcast(const Eigen::Block<Matrix, 1, -1, 1> &x, int rows) {
+	Matrix ret;
+	ret.resize(rows, x.cols());
+	for (int i = 0; i < rows; ++i) {
+		ret.row(i) = x;
+	}
+	return ret;
+}
+
+Matrix broadcast(const Eigen::Block<const Matrix, 1, -1, 1> &x, int rows) {
+	Matrix ret;
+	ret.resize(rows, x.cols());
+	for (int i = 0; i < rows; ++i) {
+		ret.row(i) = x;
+	}
+	return ret;
+}
+
+template<>
+Tensor transpose<0, 2, 1>(const Tensor &x) {
+	int n = x.size();
+	Tensor y(n);
+	for (int i = 0; i < n; ++i)
+		y[i] = x[i].transpose();
+	return y;
+}
+
+template<>
+Tensor transpose<2, 0, 1>(const Tensor &x) {
+	__cout(__PRETTY_FUNCTION__)
+	int n = x.size();
+	int m = x[0].rows();
+	int z_dimension = x[0].cols();
+
+//	__cout(n)
+//	__cout(m)
+//	__cout(z_dimension)
+	Tensor y = ndarray(z_dimension, n, m);
+	for (int z = 0; z < z_dimension; ++z) {
+		for (int i = 0; i < n; ++i) {
+			for (int j = 0; j < m; ++j) {
+				y[z](i, j) = x[i](j, z);
+			}
+		}
+	}
+	return y;
+}
+
+template<>
+Tensor transpose<2, 1, 0>(const Tensor &x) {
+	int n = x.size();
+	int m = x[0].rows();
+	int z_dimension = x[0].cols();
+	Tensor y = ndarray(z_dimension, m, n);
+	for (int z = 0; z < z_dimension; ++z) {
+		for (int i = 0; i < n; ++i) {
+			for (int j = 0; j < m; ++j) {
+				y[z](j, i) = x[i](j, z);
+			}
+		}
+	}
+	return y;
+}
+
+Tensor ndarray(int x_shape, int y_shape, int z_shape) {
+	Tensor t(x_shape);
+	for (int i = 0; i < x_shape; ++i) {
+		t[i].resize(y_shape, z_shape);
+	}
+	return t;
+}
+
+Matrix ndarray(int x_shape, int y_shape) {
+	Matrix t;
+	t.resize(x_shape, y_shape);
+	return t;
+}
+
+Vector ndarray(int x_shape) {
+	Vector t;
+	t.resize(x_shape);
+	return t;
 }

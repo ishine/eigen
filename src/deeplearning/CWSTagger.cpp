@@ -1,10 +1,13 @@
 #include "CWSTagger.h"
+#include "utility.h"
+#include "../std/utility.h"
 
-String convertToSegment(const String &predict_text, const VectorI &argmax) {
-	String arr;
+vector<String> convertToSegment(const String &predict_text,
+		const VectorI &argmax) {
+	vector<String> arr;
 	String sstr;
 
-	assert((size_t )argmax.size() == predict_text.size());
+	assert((size_t ) argmax.size() == predict_text.size());
 //	size_t j = 0;
 	for (Eigen::Index i = 0; i < argmax.size(); ++i) {
 //		if (argmax[i] < 0)
@@ -13,28 +16,28 @@ String convertToSegment(const String &predict_text, const VectorI &argmax) {
 		if (!iswspace(predict_text[i]))
 			sstr += predict_text[i];
 
-		if (argmax[i] & 1 && sstr.size()) {
-			if (arr.size()) {
-				sstr = u" " + sstr;
-			}
-			arr += sstr;
+		if ((argmax[i] & 1) && sstr.size()) {
+//			if (arr.size()) {
+//				sstr = u" " + sstr;
+//			}
+			arr << sstr;
 			sstr.clear();
 		}
 	}
 
 	if (sstr.size())
-		arr += sstr;
+		arr << sstr;
 	return arr;
 }
 
-String CWSTaggerLSTM::predict(const String &predict_text) {
+vector<String> CWSTaggerLSTM::predict(const String &predict_text) {
 	VectorI seg = string2id(predict_text, this->word2id);
 //	cout << "seg = " << seg << endl;
 	return convertToSegment(predict_text, this->predict(seg));
 }
 
 VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 //	cout << "repertoire_code = " << repertoire_code << endl;
 
@@ -62,7 +65,7 @@ VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
 
 vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 		const String &predict_text, vector<vector<vector<double>>> &result) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -99,23 +102,23 @@ vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 
 CWSTaggerLSTM::CWSTaggerLSTM(const string &h5FilePath,
 		const string &vocabFilePath) :
-		CWSTaggerLSTM((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+		CWSTaggerLSTM((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath) {
 }
 
-CWSTaggerLSTM::CWSTaggerLSTM(HDF5Reader &dis, const string &vocabFilePath) :
+CWSTaggerLSTM::CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath) :
 		embedding(Embedding(dis)),
 //		repertoire_embedding(Embedding(dis)),
 		con1D0(Conv1D(dis)), con1D1(Conv1D(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D2(
 				Conv1D(dis)), wCRF(CRF(dis)) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Text(vocabFilePath) >> word2id;
 }
 
 CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
-	static string modelFile = cnModelsDirectory() + "cws/model-cnn.h5";
-	static string vocab = cnModelsDirectory() + "cws/vocab.txt";
+	static string modelFile = modelsDirectory() + "cn/cws/model-cnn.h5";
+	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
 
 	static CWSTaggerLSTM instance(modelFile, vocab);
 	if (reinitialize) {
@@ -124,33 +127,53 @@ CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
 	return instance;
 }
 
-String CWSTagger::predict(const String &predict_text) {
+vector<String> CWSTagger::predict(const String &predict_text) {
 	VectorI seg = string2id(predict_text, this->word2id);
 //	cout << "seg = " << seg << endl;
 	return convertToSegment(predict_text, this->predict(seg));
 }
 
+vector<vector<String>> CWSTagger::predict(const vector<String> &predict_text) {
+	int length = predict_text.size();
+	vector<vector<String>> texts(length);
+//#pragma omp parallel for num_threads(cpu_count)
+	for (int i = 0; i < length; ++i) {
+		if (!predict_text[i]) {
+			continue;
+		}
+		texts[i] = this->predict(predict_text[i]);
+	}
+	return texts;
+}
+
+vector<vector<vector<String>>> CWSTagger::predict(
+		const vector<vector<String>> &predict_text) {
+	int length = predict_text.size();
+	vector<vector<vector<String>>> texts(length);
+//#pragma omp parallel for num_threads(cpu_count)
+#pragma omp parallel for
+	for (int i = 0; i < length; ++i) {
+		if (!predict_text[i]) {
+			continue;
+		}
+		texts[i] = this->predict(predict_text[i]);
+	}
+	return texts;
+}
+
 VectorI& CWSTagger::predict(VectorI &predict_text) {
-//	cout << "in " << __PRETTY_FUNCTION__ << endl;
+//	__cout(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
-//	cout << "repertoire_code = " << repertoire_code << endl;
 
 	Matrix lEmbedding;
 	embedding(predict_text, lEmbedding);
 
-//	Matrix lRepertoire;
-//	repertoire_embedding(repertoire_code, lRepertoire);
-//	lEmbedding += lRepertoire;
-
-	Matrix lLSTM;
-	lstm.call_return_sequences(lEmbedding, lLSTM);
-
-	return wCRF(lLSTM, predict_text);
+	return wCRF(con1D(lEmbedding), predict_text);
 }
 
 vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 		vector<vector<vector<double>>> &result) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
+	__cout(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -159,8 +182,7 @@ vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 //	repertoire_embedding(repertoire_code, lRepertoire);
 //	result.push_back(convert2vector(lRepertoire)); // i = 1
 
-	Matrix lLSTM;
-	lstm.call_return_sequences(x, lLSTM);
+	Matrix lLSTM = con1D(x);
 	result.push_back(convert2vector(lLSTM)); // i = 3
 
 	Matrix label;
@@ -171,25 +193,32 @@ vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 }
 
 CWSTagger::CWSTagger(const string &h5FilePath, const string &vocabFilePath) :
-		CWSTagger((HDF5Reader&) (const HDF5Reader&) HDF5Reader(h5FilePath),
+		CWSTagger((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath) {
 }
 
-CWSTagger::CWSTagger(HDF5Reader &dis, const string &vocabFilePath) :
-		embedding(Embedding(dis)),
-//		repertoire_embedding(Embedding(dis)),
-		lstm(LSTM(dis)), wCRF(CRF(dis)) {
-	cout << "in " << __PRETTY_FUNCTION__ << endl;
-	Text(vocabFilePath) >> word2id;
+CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
+		word2id(Text(vocabFilePath).read_char_vocab()), embedding(dis), con1D(
+				dis), wCRF(dis) {
+	__cout(__PRETTY_FUNCTION__)
 }
 
-CWSTagger& CWSTagger::instance(bool reinitialize) {
-	static string modelFile = cnModelsDirectory() + "cws/model.h5";
-	static string vocab = cnModelsDirectory() + "cws/vocab.txt";
-
+CWSTagger& CWSTagger::instance() {
+//	__cout(__PRETTY_FUNCTION__)
+	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
+	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
 	static CWSTagger instance(modelFile, vocab);
-	if (reinitialize) {
-		instance = CWSTagger(modelFile, vocab);
-	}
+
+	return instance;
+}
+
+CWSTagger& CWSTagger::instantiate() {
+	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
+	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
+
+	auto &instance = CWSTagger::instance();
+
+	instance = CWSTagger(modelFile, vocab);
+
 	return instance;
 }

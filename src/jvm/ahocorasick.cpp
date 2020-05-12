@@ -7,7 +7,7 @@
 #include "../ahocorasick/public.h"
 template<>
 struct FindClass<Emit> {
-	static const string name;
+	static const char *name;
 	using jobject = jstring;
 	using jarray = jobjectArray;
 	static jobject* (JNIEnv::*GetArrayElements)(jarray array, jboolean *isCopy);
@@ -15,7 +15,7 @@ struct FindClass<Emit> {
 			jint mode);
 };
 
-const string FindClass<Emit>::name = "org/ahocorasick/trie/Emit";
+const char *FindClass<Emit>::name = "org/ahocorasick/trie/Emit";
 
 jobject Object(JNIEnv *env, const Emit &s) {
 	auto jclass = env->FindClass("org/ahocorasick/trie/Emit");

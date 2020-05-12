@@ -1,6 +1,7 @@
 #pragma once
-#include "utility.h"
 #include "matrix.h"
+#include<vector>
+using std::vector;
 
 struct CRF {
 	Vector bias;
@@ -16,7 +17,7 @@ struct CRF {
 	Matrix& viterbi_one_hot(const Matrix &X, Matrix &oneHot);
 
 	VectorI& operator ()(const Matrix &X, VectorI &best_paths) const;
-	CRF(HDF5Reader &dis);
+	CRF(KerasReader &dis);
 };
 
 struct Conv1D {
@@ -24,7 +25,7 @@ struct Conv1D {
 	Vector bias;
 	Activation activate = { Activator::relu };
 
-	Conv1D(HDF5Reader &dis, bool bias = true);
+	Conv1D(KerasReader &dis, bool bias = true);
 
 	static int initial_offset(int xshape, int yshape, int wshape, int sshape);
 
@@ -38,9 +39,7 @@ struct Conv1DSame {
 	Vector bias;
 	Activation activate = { Activator::relu };
 
-	Conv1DSame(HDF5Reader &dis);
-
-	static int initial_offset(int xshape, int wshape);
+	Conv1DSame(KerasReader &dis);
 
 //	#stride=(1,1)
 	Matrix& operator()(const Matrix &x, Matrix &y) const;
@@ -52,27 +51,29 @@ struct DenseLayer {
 	 *
 	 */
 
-	Matrix wDense;
-	Vector bDense;
+	Matrix weight;
+	Vector bias;
 	Activation activation = { Activator::tanh };
 
 	Vector& operator()(const Vector &x, Vector &ret) const;
 	Vector& operator()(Vector &x) const;
 
-	Matrix& operator()(Matrix &x, Matrix &wDense) const;
+	Matrix& operator()(const Matrix &x, Matrix &wDense) const;
 	Matrix& operator()(Matrix &x) const;
 	Tensor& operator()(Tensor &x) const;
 	vector<Vector>& operator()(vector<Vector> &x) const;
 
-	DenseLayer(HDF5Reader &dis, bool use_bias = true, Activator activator =
-			Activator::tanh);
-	void init(HDF5Reader &dis, bool use_bias = true);
+	DenseLayer(KerasReader &dis, Activator activator = Activator::tanh);
+	void init(KerasReader &dis);
+	DenseLayer(TorchReader &dis, Activator activator = Activator::tanh);
+
 };
 
 struct Embedding {
 	Matrix wEmbedding;
 
-	Matrix& operator()(VectorI &word, Matrix &wordEmbedding, size_t max_length) const;
+	Matrix& operator()(VectorI &word, Matrix &wordEmbedding,
+			size_t max_length) const;
 
 	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding) const;
 
@@ -83,46 +84,39 @@ struct Embedding {
 	Tensor operator()(const vector<VectorI> &word) const;
 	Matrix operator()(const VectorI &word) const;
 
-	void initialize(HDF5Reader &dis);
+	void initialize(KerasReader &dis);
+	void initialize(TorchReader &dis);
 
-	Embedding(HDF5Reader &dis);
+	Embedding(KerasReader &dis);
+	Embedding(TorchReader &dis);
 };
 
 struct RNN {
 	typedef ::object<RNN> object;
 
-	Activation sigmoid = { Activator::hard_sigmoid };
-	Activation tanh = { Activator::tanh };
+//	Activation recurrent_activation = { Activator::hard_sigmoid };
+//	since tensorflow 1.15, recurrent_activation=sigmoid
+	Activation recurrent_activation = { Activator::sigmoid };
+	Activation activation = { Activator::tanh };
 
 	virtual ~RNN() {
 	}
 
-	virtual Vector& call(const Matrix &x, Vector &ret) const {
-		return ret;
-	}
+	virtual Vector& call(const Matrix &x, Vector &ret) const = 0;
 
-	virtual Vector& call(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr) const {
-		return ret;
-	}
+//	Vector& call(const Matrix &x, Vector &ret,
+//			vector<vector<double>> &arr) const;
+//
+	virtual Vector& call_reverse(const Matrix &x, Vector &ret) const = 0;
 
-	virtual Vector& call_reverse(const Matrix &x, Vector &ret) const {
-		return ret;
-	}
+//	virtual Vector& call_reverse(const Matrix &x, Vector &ret,
+//			vector<vector<double>> &arr) const = 0;
 
-	virtual Vector& call_reverse(const Matrix &x, Vector &ret,
-			vector<vector<double>> &arr) const {
-		return ret;
-	}
-
-	virtual Matrix& call_return_sequences(const Matrix &x, Matrix &ret) const {
-		return ret;
-	}
+	virtual Matrix& call_return_sequences(const Matrix &x,
+			Matrix &ret) const = 0;
 
 	virtual Matrix& call_return_sequences_reverse(const Matrix &x,
-			Matrix &ret) const {
-		return ret;
-	}
+			Matrix &ret) const = 0;
 
 	virtual vector<vector<vector<double>>>& weight(
 			vector<vector<vector<double>>> &arr) {
@@ -153,11 +147,11 @@ struct Bidirectional {
 
 struct BidirectionalGRU: Bidirectional {
 
-	BidirectionalGRU(HDF5Reader &dis, merge_mode mode);
+	BidirectionalGRU(KerasReader &dis, merge_mode mode);
 };
 
 struct BidirectionalLSTM: Bidirectional {
-	BidirectionalLSTM(HDF5Reader &dis, merge_mode mode);
+	BidirectionalLSTM(KerasReader &dis, merge_mode mode);
 };
 
 /**
@@ -177,22 +171,23 @@ struct GRU: RNN {
 	Matrix Whh;
 	Vector bh;
 
-	Vector& call(const Matrix &x, Vector &h);
-	Vector& call_reverse(const Matrix &x, Vector &h);
-	Vector& call(const Matrix &x, Vector &h, vector<vector<double>> &arr);
+	Vector& call(const Matrix &x, Vector &h) const;
+	Vector& call_reverse(const Matrix &x, Vector &h) const;
+	Vector& call(const Matrix &x, Vector &h, vector<vector<double>> &arr) const;
 	Vector& call_reverse(const Matrix &x, Vector &h,
-			vector<vector<double>> &arr);
+			vector<vector<double>> &arr) const;
 
-	Matrix& call_return_sequences(const Matrix &x, Matrix &ret);
-	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &ret);
+	Matrix& call_return_sequences(const Matrix &x, Matrix &ret) const;
+	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &ret) const;
 
-	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h);
+	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x,
+			Vector &h) const;
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
-			vector<vector<double>> &arr);
+			vector<vector<double>> &arr) const;
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
-	GRU(HDF5Reader &dis);
+	GRU(KerasReader &dis);
 };
 
 struct LSTM: RNN {
@@ -218,12 +213,24 @@ struct LSTM: RNN {
 
 	LSTM(Matrix Wxi, Matrix Wxf, Matrix Wxc, Matrix Wxo, Matrix Whi, Matrix Whf,
 			Matrix Whc, Matrix Who, Vector bi, Vector bf, Vector bc, Vector bo);
-	Vector& call(const Matrix &x, Vector &h);
+	Vector& call(const Matrix &x, Vector &h) const;
 	Vector& activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
-			Vector &c);
+			Vector &c) const;
 
-	LSTM(HDF5Reader &dis);
-	Matrix& call_return_sequences(const Matrix &x, Matrix &arr);
-	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr);
-	Vector& call_reverse(const Matrix &x, Vector &h);
+	LSTM(KerasReader &dis);
+	Matrix& call_return_sequences(const Matrix &x, Matrix &arr) const;
+	Matrix& call_return_sequences_reverse(const Matrix &x, Matrix &arr) const;
+	Vector& call_reverse(const Matrix &x, Vector &h) const;
 };
+
+struct Bilinear {
+	Bilinear(TorchReader &dis, Activation activation = { Activator::linear });
+	Bilinear(KerasReader &dis, Activation activation = { Activator::linear });
+	Tensor weight;
+	Vector bias;
+	Activation activation;
+	Tensor operator ()(const Tensor &x, const Tensor &y);
+	Vector operator ()(const Vector &x, const Vector &y);
+	Matrix operator ()(const Matrix &x, const Matrix &y);
+};
+

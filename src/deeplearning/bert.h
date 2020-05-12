@@ -1,4 +1,8 @@
 #pragma once
+#include "../std/utility.h"
+#include<vector>
+using std::vector;
+
 #include "keras.h"
 
 template<typename _Ty>
@@ -20,7 +24,7 @@ struct FeedForward {
 
 	Matrix W1, W2;
 	Vector b1, b2;
-
+	Activation activation = { Activator::relu };
 	Vector& operator()(const Vector &x, Vector &ret);
 	Vector operator()(const Vector &x);
 
@@ -29,7 +33,7 @@ struct FeedForward {
 
 	Tensor operator()(const Tensor &x);
 	vector<Vector> operator()(const vector<Vector> &x);
-	FeedForward(HDF5Reader &dis, bool bias = true);
+	FeedForward(KerasReader &dis, bool bias = true);
 	FeedForward();
 };
 
@@ -46,7 +50,7 @@ struct CrossAttentionMask {
 };
 
 struct LayerNormalization {
-	LayerNormalization(HDF5Reader &dis);
+	LayerNormalization(KerasReader &dis);
 	LayerNormalization();
 	const static double epsilon;
 	Vector gamma, beta;
@@ -66,7 +70,7 @@ struct MidIndex {
 };
 
 struct MultiHeadAttention {
-	MultiHeadAttention(HDF5Reader &dis, int num_attention_heads);
+	MultiHeadAttention(KerasReader &dis, int num_attention_heads);
 	MultiHeadAttention();
 
 	Tensor operator()(const Tensor &sequence, const Tensor &attention_matrix,
@@ -111,7 +115,7 @@ struct MultiHeadAttention {
 };
 
 struct PositionEmbedding {
-	PositionEmbedding(HDF5Reader &dis, int num_attention_heads);
+	PositionEmbedding(KerasReader &dis, int num_attention_heads);
 
 	Matrix embeddings;
 	int num_attention_heads;
@@ -139,10 +143,7 @@ struct SegmentInput {
 };
 
 struct BertEmbedding {
-	BertEmbedding(HDF5Reader &dis, int num_attention_heads,
-			bool factorization_on_word_embedding_only);
-
-	bool factorization_on_word_embedding_only;
+	BertEmbedding(KerasReader &dis, int num_attention_heads);
 
 	Embedding wordEmbedding;
 	Embedding segmentEmbedding;
@@ -151,9 +152,8 @@ struct BertEmbedding {
 	DenseLayer embeddingMapping;
 	int embed_dim, hidden_size;
 
-	Tensor operator ()(vector<VectorI> &inputToken,
-			const vector<int> &inputMid, const vector<VectorI> &inputSegment,
-			vector<Vector> &mask);
+	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
+			const vector<VectorI> &inputSegment, vector<Vector> &mask);
 
 	Matrix operator ()(VectorI &inputToken, int inputMid,
 			const VectorI &inputSegment);
@@ -161,13 +161,33 @@ struct BertEmbedding {
 	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
+};
 
-	bool factorization(bool word_embedding_only = true);
+struct NonSegmentedBertEmbedding {
+	NonSegmentedBertEmbedding(KerasReader &dis, int num_attention_heads);
+
+	Embedding wordEmbedding;
+	PositionEmbedding positionEmbedding;
+	LayerNormalization layerNormalization;
+	DenseLayer embeddingMapping;
+	int embed_dim, hidden_size;
+
+	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
+			const vector<VectorI> &inputSegment, vector<Vector> &mask);
+
+	Matrix operator ()(VectorI &inputToken, int inputMid,
+			const VectorI &inputSegment);
+
+	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
+
+	Matrix operator ()(const VectorI &inputToken);
+
+	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
 
 struct Encoder {
-	Encoder(HDF5Reader &dis, int num_attention_heads);
 	Encoder();
+	Encoder(KerasReader &dis, int num_attention_heads);
 	::MultiHeadAttention MultiHeadAttention;
 	LayerNormalization MultiHeadAttentionNorm;
 	::FeedForward FeedForward;
@@ -200,11 +220,38 @@ struct Encoder {
 			vector<Vector> &y);
 };
 
-struct Transformer {
-	Transformer(HDF5Reader &dis, bool cross_layer_parameter_sharing,
-			int num_hidden_layers, int num_attention_heads);
+struct AlbertTransformer {
+	AlbertTransformer(KerasReader &dis, int num_hidden_layers,
+			int num_attention_heads);
 	int num_hidden_layers;
-	object<Encoder> encoder;
+	Encoder encoder;
+
+	Tensor& operator ()(Tensor &input_layer,
+			const vector<MatrixI> &attention_matrix, RevertMask &fn,
+			const vector<Vector> &mask);
+
+	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
+
+	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
+			const vector<Vector> &mask);
+
+	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
+			vector<Vector> &y);
+
+	Vector& operator ()(Matrix &input_layer, Vector &y);
+
+	vector<Vector>& operator ()(Tensor &input_layer,
+			const vector<MatrixI> &attention_matrix, RevertMask &fn,
+			const vector<Vector> &mask, vector<Vector> &y);
+
+};
+
+struct BertTransformer {
+	BertTransformer(KerasReader &dis, int num_hidden_layers,
+			int num_attention_heads);
+	int num_hidden_layers;
+	vector<Encoder> encoder;
+
 	Encoder& operator [](int i);
 
 	Tensor& operator ()(Tensor &input_layer,
@@ -227,78 +274,47 @@ struct Transformer {
 
 };
 
-vector<String> whitespace_tokenize(String &text);
+struct FullTokenizer {
+	//Runs end-to-end tokenziation."""
 
-struct BasicTokenizer {
-//    """Runs basic tokenization (punctuation splitting, lower casing, etc.)."""
+	FullTokenizer(const string &vocab_file, bool do_lower_case = true);
+	//    """Runs WordPiece tokenziation."""
 
-	BasicTokenizer(bool do_lower_case = true);
-//        """Constructs a BasicTokenizer.
-//        Args:
+	dict<String, int> vocab;
+	String unk_token;
+	size_t max_input_chars_per_word;
 	bool do_lower_case;
 
-	vector<String> tokenize(String &text);
+	dict<String, int> unknownSet;
 
-	String& _run_strip_accents(String &text);
+	vector<String> basic_tokenize(const String &text);
 
 	vector<String> _run_split_on_punc(String &text);
-
-	String _tokenize_chinese_chars(const String &text);
 
 	bool _is_punctuation(word cp);
 
 	bool _is_chinese_char(word cp);
 
 	String& _clean_text(String &text);
+
+	vector<String> wordpiece_tokenize(String &text);
+
+	vector<String> tokenize(const String &text);
+
+	vector<String> tokenize(const String &text, const String &_text);
+
+	VectorI convert_tokens_to_ids(const vector<String> &items);
+
+	static FullTokenizer& instance_cn();
+	static FullTokenizer& instance_en();
 };
 
-struct WordpieceTokenizer {
-//    """Runs WordPiece tokenziation."""
-	dict<String, int> vocab;
-	String unk_token;
-	size_t max_input_chars_per_word;
-	dict<String, int> unknownSet;
-	WordpieceTokenizer(const string &vocab_file);
-
-	static dict<String, int> load_vocab(const string &vocab_file);
-
-	WordpieceTokenizer(dict<String, int> vocab, String unk_token = u"[UNK]",
-	size_t max_input_chars_per_word = 200);
-
-	vector<String> tokenize(String &text);
-//    vector<String> unknown_words(){
-//        cout << "unknown characters:" << endl;
-//        items = [*unknownSet.items()];
-//        items.sort(key=lambda xy: xy[1], reverse=true);
-//        for (key, repetition in items){
-//            printf("%s = %s\n", key, repetition);
-////#             print('%s = %s' % (key, repetition), file='report.txt')
-//        }
-//        return [key for key, _ in items];
-//    }
-};
-
-struct FullTokenizer: BasicTokenizer, WordpieceTokenizer {
-	//Runs end-to-end tokenziation."""
-
-	FullTokenizer(const string &vocab_file, bool do_lower_case = true);
-
-	vector<String> tokenize(String &text);
-
-	VectorI convert_tokens_to_ids(vector<String> &items);
-
-	static FullTokenizer &instance_cn();
-	static FullTokenizer &instance_en();
-};
-
-struct Paraphrase {
-	Paraphrase(HDF5Reader &dis, const string &vocab, int num_attention_heads,
-			bool factorization_on_word_embedding_only = true,
-			bool cross_layer_parameter_sharing = true,
-			bool symmetric_positional_embedding = true, int num_hidden_layers =
-					12);
+struct Pairwise {
+	Pairwise(KerasReader &dis, const string &vocab, int num_attention_heads,
+			bool symmetric_position_embedding = true,
+			int num_hidden_layers = 12);
 	FullTokenizer tokenizer;
-	bool symmetric_positional_embedding;
+	bool symmetric_position_embedding;
 
 	MidIndex midIndex;
 	SegmentInput segmentInput;
@@ -306,15 +322,47 @@ struct Paraphrase {
 //	::RevertMask RevertMask;
 	BertEmbedding bertEmbedding;
 
-	Transformer transformer;
+	AlbertTransformer transformer;
 	DenseLayer poolerDense;
 	DenseLayer similarityDense;
 
 	vector<double> operator ()(vector<VectorI> &input_ids);
 	double operator ()(VectorI &input_ids);
-
+	double operator ()(const vector<String> &s);
 	double operator ()(String &x, String &y);
 	double operator ()(const char16_t *x, const char16_t *y);
-	static Paraphrase& instance();
+	static Pairwise& paraphrase();
+	static Pairwise& lexicon();
 };
 
+struct PairwiseVector {
+	PairwiseVector(KerasReader &dis, const string &vocab,
+			int num_attention_heads, int num_hidden_layers = 12);
+	dict<String, int> word2id;
+	NonSegmentedBertEmbedding bertEmbedding;
+
+	AlbertTransformer transformer;
+	Bilinear bilinear;
+//	DenseLayer poolerDense;
+//	DenseLayer similarityDense;
+
+	static double probability2score(const Vector &y_pred);
+	Matrix operator ()(const vector<VectorI> &input_ids);
+	Vector operator ()(const VectorI &input_ids);
+	Vector operator ()(const VectorI &input_ids, const VectorI &input_ids1);
+	Matrix operator ()(const vector<String> &s);
+	Vector operator ()(const String &x, const String &y);
+	Vector operator ()(const char16_t *x, const char16_t *y);
+	static PairwiseVector& lexiconEN();
+	static PairwiseVector& lexiconCN();
+	static PairwiseVector& instantiateHyponymCN();
+	static PairwiseVector& instantiateHyponymEN();
+
+	static const String& lexicon_label(const Vector &y_pred);
+};
+
+vector<int> lexiconStructureCN(const vector<String> &keywords, const vector<int> &frequency);
+vector<int> lexiconStructureEN(const vector<String> &keywords, const vector<int> &frequency);
+
+#include "../sentencepiece/sentencepiece_processor.h"
+sentencepiece::SentencePieceProcessor &en_tokenizer();

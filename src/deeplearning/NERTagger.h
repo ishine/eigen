@@ -4,7 +4,7 @@
 struct NERTagger {
 	typedef ::object<NERTagger> object;
 
-	dict<String, int> word2id;
+	dict<char16_t, int> word2id;
 	Embedding embedding, repertoire_embedding;
 
 	BidirectionalLSTM lstm;
@@ -18,7 +18,7 @@ struct NERTagger {
 	vector<vector<vector<double>>>& _predict(const String &predict_text,
 			VectorI&repertoire_code, vector<vector<vector<double>>> &arr);
 
-	NERTagger(HDF5Reader &dis);
+	NERTagger(KerasReader &dis);
 };
 
 struct NERTaggerDict {

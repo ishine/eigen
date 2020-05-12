@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "java.h"
+#include <iostream>
 
 extern "C" {
 
@@ -47,20 +48,24 @@ jintArray SetIntArrayRegion(JNIEnv *env, jsize size, const jint *array) {
 }
 
 jintArray Object(JNIEnv *env, const vector<int> &s) {
-	jsize size = s.size();
+//	__cout(__PRETTY_FUNCTION__)
+//	cout << "s = " << s << endl;
+//	jsize size = s.size();
 
-	if (sizeof(jint) == sizeof(int))
-		return SetIntArrayRegion(env, size, (const jint*) s.data());
+	static_assert (sizeof(jint) == sizeof(int), "jint and int must have same sizes");
+//	if (sizeof(jint) == sizeof(int))
+	return SetIntArrayRegion(env, s.size(), (const jint*) s.data());
 
-	vector<jint> v(s.begin(), s.end());
+//	vector<jint> v(s.begin(), s.end());
 
-	return SetIntArrayRegion(env, size, (const jint*) v.data());
+//	return SetIntArrayRegion(env, size, (const jint*) v.data());
 
 }
 
 jintArray Object(JNIEnv *env, const VectorI &s) {
 	jsize size = s.size();
 
+	assert(sizeof(jint) == sizeof(int));
 	if (sizeof(jint) == sizeof(int))
 		return SetIntArrayRegion(env, size, (const jint*) s.data());
 
@@ -69,6 +74,20 @@ jintArray Object(JNIEnv *env, const VectorI &s) {
 
 	return SetIntArrayRegion(env, size, (const jint*) v.data());
 
+}
+
+jobjectArray Object(JNIEnv *env, const Matrix &A) {
+	int n = A.rows();
+	int m = A.cols();
+	vector<vector<double>> matrix(n);
+
+	for (int i = 0; i < n; ++i) {
+		matrix[i].resize(m);
+		for (int j = 0; j < m; ++j) {
+			matrix[i][j] = A(i, j);
+		}
+	}
+	return Object(env, matrix);
 }
 
 jfloatArray Object(JNIEnv *env, const vector<float> &s) {
@@ -95,91 +114,24 @@ jdoubleArray Object(JNIEnv *env, const vector<double> &s) {
 	return obj;
 }
 
-const string FindClass<bool>::name = "Z";
-FindClass<bool>::jobject* (JNIEnv::*FindClass<bool>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetBooleanArrayElements;
-void (JNIEnv::*FindClass<bool>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseBooleanArrayElements;
-
-const string FindClass<byte>::name = "B";
-FindClass<byte>::jobject* (JNIEnv::*FindClass<byte>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetByteArrayElements;
-void (JNIEnv::*FindClass<byte>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseByteArrayElements;
-
-const string FindClass<short>::name = "S";
-FindClass<short>::jobject* (JNIEnv::*FindClass<short>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetShortArrayElements;
-void (JNIEnv::*FindClass<short>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseShortArrayElements;
-
-const string FindClass<int>::name = "I";
-FindClass<int>::jobject* (JNIEnv::*FindClass<int>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetIntArrayElements;
-void (JNIEnv::*FindClass<int>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseIntArrayElements;
-
-const string FindClass<long>::name = "J";
-FindClass<long>::jobject* (JNIEnv::*FindClass<long>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetLongArrayElements;
-void (JNIEnv::*FindClass<long>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseLongArrayElements;
-
-const string FindClass<float>::name = "F";
-FindClass<float>::jobject* (JNIEnv::*FindClass<float>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetFloatArrayElements;
-void (JNIEnv::*FindClass<float>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseFloatArrayElements;
-
-const string FindClass<double>::name = "D";
-FindClass<double>::jobject* (JNIEnv::*FindClass<double>::GetArrayElements)(
-		jarray array, jboolean *isCopy) = &JNIEnv::GetDoubleArrayElements;
-void (JNIEnv::*FindClass<double>::ReleaseArrayElements)(jarray array,
-		jobject *elems, jint mode) = &JNIEnv::ReleaseDoubleArrayElements;
-
-const string FindClass<String>::name = "java/lang/String";
-
-JArray<String>::JArray(JNIEnv *env, jobjectArray arr) :
-		env(env), arr(arr) {
-}
-
-JArray<String>::reference::reference(JNIEnv *env, jobjectArray arr, jsize index) :
-		env(env), arr(arr), index(index) {
-}
-
-JArray<String>::reference::operator jobject() {
-	return env->GetObjectArrayElement(arr, index);
-}
-
-JArray<String>::reference& JArray<String>::reference::operator =(
-		const String &value) {
-	jobject val = Object(env, value);
-
-	env->SetObjectArrayElement(arr, index, val);
-	return *this;
-}
-
-jobject JArray<String>::operator [](size_t i) const {
-	return env->GetObjectArrayElement(arr, i);
-}
-
-JArray<String>::reference JArray<String>::operator [](size_t i) {
-	return reference(env, arr, i);
-}
-
-bool JArray<String>::operator !() const {
-	return !length();
-}
-
-jsize JArray<String>::length() const {
-	return env->GetArrayLength(arr);
-}
+const char *FindClass<bool>::name = "Z";
+const char *FindClass<byte>::name = "B";
+const char *FindClass<char16_t>::name = "C";
+const char *FindClass<short>::name = "S";
+const char *FindClass<int>::name = "I";
+const char *FindClass<long>::name = "J";
+const char *FindClass<float>::name = "F";
+const char *FindClass<double>::name = "D";
+const char *FindClass<String>::name = "java/lang/String";
+const char *FindClass<string>::name = "java/lang/String";
+//const char *FindClass<vector<String>>::name = "[Ljava/lang/String;";
+//const string FindClass<vector<vector<String>>>::name = "[[Ljava/lang/String;";
 
 std::ostream& operator <<(std::ostream &cout, const JArray<int> &v) {
 	cout << '[';
 	if (!v) {
 		cout << v[0];
-		for (jsize i = 1; i < v.length(); ++i) {
+		for (jsize i = 1; i < v.length; ++i) {
 			cout << ", " << v[i];
 		}
 	}
@@ -221,3 +173,5 @@ void print_primitive_type_size() {
 	cout << "sizeof(qword) = " << sizeof(qword) << endl;
 	cout << "sizeof(void*) = " << sizeof(void*) << endl;
 }
+
+//https://www.cnblogs.com/nicholas_f/archive/2010/11/30/1892124.html
