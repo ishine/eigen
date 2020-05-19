@@ -34,6 +34,7 @@ struct FeedForward {
 	Tensor operator()(const Tensor &x);
 	vector<Vector> operator()(const vector<Vector> &x);
 	FeedForward(KerasReader &dis, bool bias = true);
+	FeedForward(KerasReader &dis, Activation activation);
 	FeedForward();
 };
 
@@ -181,13 +182,15 @@ struct NonSegmentedBertEmbedding {
 	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
 
 	Matrix operator ()(const VectorI &inputToken);
+	Matrix operator ()(const vector<int> &inputToken);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
 
 struct Encoder {
 	Encoder();
-	Encoder(KerasReader &dis, int num_attention_heads);
+	Encoder(KerasReader &dis, int num_attention_heads, Activation hidden_act);
+
 	::MultiHeadAttention MultiHeadAttention;
 	LayerNormalization MultiHeadAttentionNorm;
 	::FeedForward FeedForward;
@@ -222,7 +225,7 @@ struct Encoder {
 
 struct AlbertTransformer {
 	AlbertTransformer(KerasReader &dis, int num_hidden_layers,
-			int num_attention_heads);
+			int num_attention_heads, Activation hidden_act);
 	int num_hidden_layers;
 	Encoder encoder;
 
@@ -248,7 +251,8 @@ struct AlbertTransformer {
 
 struct BertTransformer {
 	BertTransformer(KerasReader &dis, int num_hidden_layers,
-			int num_attention_heads);
+			int num_attention_heads,
+			Activation hidden_act = { Activator::gelu });
 	int num_hidden_layers;
 	vector<Encoder> encoder;
 
@@ -336,33 +340,68 @@ struct Pairwise {
 };
 
 struct PairwiseVector {
-	PairwiseVector(KerasReader &dis, const string &vocab,
-			int num_attention_heads, int num_hidden_layers = 12);
-	dict<String, int> word2id;
+	PairwiseVector(KerasReader &dis, Activation hidden_act, int num_attention_heads,
+			int num_hidden_layers = 12);
 	NonSegmentedBertEmbedding bertEmbedding;
 
 	AlbertTransformer transformer;
 	Bilinear bilinear;
-//	DenseLayer poolerDense;
-//	DenseLayer similarityDense;
 
 	static double probability2score(const Vector &y_pred);
+	static Vector& symmetric_transform(Vector &y_pred);
 	Matrix operator ()(const vector<VectorI> &input_ids);
+	Matrix operator ()(const vector<vector<int>> &input_ids);
+	Vector operator ()(const vector<int> &input_ids);
 	Vector operator ()(const VectorI &input_ids);
 	Vector operator ()(const VectorI &input_ids, const VectorI &input_ids1);
-	Matrix operator ()(const vector<String> &s);
-	Vector operator ()(const String &x, const String &y);
-	Vector operator ()(const char16_t *x, const char16_t *y);
-	static PairwiseVector& lexiconEN();
-	static PairwiseVector& lexiconCN();
-	static PairwiseVector& instantiateHyponymCN();
-	static PairwiseVector& instantiateHyponymEN();
+	Vector operator ()(const vector<int> &input_ids,
+			const vector<int> &input_ids1);
+
+	Matrix operator ()(const vector<Vector> &s);
 
 	static const String& lexicon_label(const Vector &y_pred);
 };
 
-vector<int> lexiconStructureCN(const vector<String> &keywords, const vector<int> &frequency);
-vector<int> lexiconStructureEN(const vector<String> &keywords, const vector<int> &frequency);
+struct PairwiseVectorChar: PairwiseVector {
+	PairwiseVectorChar(KerasReader &dis, const string &vocab,
+			int num_attention_heads, int num_hidden_layers = 12);
+	dict<String, int> word2id;
+
+	using PairwiseVector::operator ();
+	Matrix operator ()(const vector<String> &s);
+	Vector operator ()(const String &x, const String &y);
+	Vector operator ()(const String &x);
+	Vector operator ()(const char16_t *x, const char16_t *y);
+	static PairwiseVectorChar& lexicon();
+	static PairwiseVectorChar& instantiateHyponym();
+};
 
 #include "../sentencepiece/sentencepiece_processor.h"
-sentencepiece::SentencePieceProcessor &en_tokenizer();
+
+struct PairwiseVectorSP: PairwiseVector {
+	PairwiseVectorSP(KerasReader &dis, const string &path,
+			int num_attention_heads, int num_hidden_layers = 12);
+	sentencepiece::SentencePieceProcessor sp;
+	using PairwiseVector::operator ();
+
+	Matrix operator ()(const vector<string> &s);
+	Vector operator ()(const string &x, const string &y);
+	Vector operator ()(const string &x);
+	Vector operator ()(const char *x, const char *y);
+
+	static PairwiseVectorSP& lexicon();
+
+	static PairwiseVectorSP& instantiateHyponym();
+};
+
+vector<int> lexiconStructure(const vector<String> &keywords,
+		const vector<int> &frequency);
+
+vector<int> lexiconStructureCN(const vector<vector<double>> &embedding,
+		const vector<int> &frequency);
+
+vector<int> lexiconStructure(const vector<string> &keywords,
+		const vector<int> &frequency);
+
+#include "../sentencepiece/sentencepiece_processor.h"
+sentencepiece::SentencePieceProcessor& en_tokenizer();

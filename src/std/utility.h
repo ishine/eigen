@@ -10,10 +10,10 @@ using std::vector;
 #include <iterator>
 #include <regex>
 
-typedef unsigned long long qword;
-typedef unsigned char byte;
-typedef unsigned short word;
-typedef unsigned int dword;
+using qword = unsigned long long;
+using byte = unsigned char;
+using word = unsigned short;
+using dword = unsigned int;
 static_assert(sizeof(void *) == 8, "only 64-bit code generation is supported!");
 static_assert(sizeof(byte) == 1, "sizeof(byte) must be 1");
 static_assert(sizeof(word) == 2, "sizeof(word) must be 2");
@@ -23,8 +23,8 @@ static_assert(sizeof(qword) == 8, "sizeof(qword) must be 8");
 template<typename _Ty, int b = 2>
 struct color_ptr {
 	static const qword MASK = (1 << b) - 1;
-	typedef color_ptr _Myt;
-	typedef _Ty value_type;
+	using _Myt = color_ptr;
+	using value_type = _Ty;
 	friend std::ostream& operator <<(std::ostream &cout, const _Myt &p) {
 		if (!p)
 			cout << "nullptr";
@@ -100,8 +100,8 @@ struct color_ptr {
 
 template<typename _Ty>
 struct object: color_ptr<_Ty> {
-	typedef object _Myt;
-	typedef _Ty element_type;
+	using _Myt = object;
+	using element_type = _Ty;
 //	size_t hashCode() const {
 //		return ::hashCode(reptr());
 //	}
@@ -195,7 +195,7 @@ using dict = std::unordered_map<KEY, VALUE>;
 #include <string>
 using std::string;
 
-typedef std::u16string String;
+using String = std::u16string;
 
 #include <iostream>
 using std::cout;
@@ -446,8 +446,10 @@ bool contains(const vector<T> &elementData, const T &o) {
 
 const double oo = std::numeric_limits<double>::infinity();
 
+#define __log(symbol) {std::cout << #symbol << " = \n" << symbol << std::endl;}
+
 #ifdef _DEBUG
-#define __cout(symbol) {std::cout << #symbol << " = \n" << symbol << std::endl;}
+#define __cout(symbol) __log(symbol)
 #else
 #define __cout(symbol)
 #endif

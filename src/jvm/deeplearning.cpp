@@ -4,9 +4,11 @@
 #include <cstring>
 
 #include "../std/utility.h"
+#include "../std/lagacy.h"
+
 #include "../deeplearning/bert.h"
 #include "../deeplearning/NERTagger.h"
-#include "../deeplearning/lagacy.h"
+
 #include "../deeplearning/classification.h"
 #include "../deeplearning/CWSTagger.h"
 #include "../deeplearning/POSTagger.h"
@@ -24,15 +26,13 @@ void JNICALL Java_com_util_Native_initializeH5Model(JNIEnv *env, jobject obj,
 	default:
 		workingDirectory += '/';
 	}
-	cout << "initialize workingDirectory = " << workingDirectory << endl;
 
-//	test_eigen();
+	if (workingDirectory[0] == '~') {
+		workingDirectory = getenv("HOME") + workingDirectory.substr(1);
+	}
 
-	CWSTagger::instance();
-	POSTagger::instance();
-//	SyntaxParser::instance();
-	ClassifierChar::keyword_cn_classifier();
-	ClassifierWord::keyword_en_classifier();
+	cout << "after initializing workingDirectory = " << workingDirectory
+			<< endl;
 }
 
 jintArray JNICALL Java_com_util_Native_token2idEN(JNIEnv *env, jobject _,
@@ -47,8 +47,7 @@ jintArray JNICALL Java_com_util_Native_token2idEN(JNIEnv *env, jobject _,
 			s.pop_back();
 			ids << en_tokenizer().PieceToId(s);
 			ids << en_tokenizer().PieceToId(comma);
-		}
-		else{
+		} else {
 			ids << en_tokenizer().PieceToId(s);
 		}
 	}
@@ -132,29 +131,38 @@ jstring JNICALL Java_com_util_Native_lexiconCN(JNIEnv *env, jobject _,
 //	__cout(__PRETTY_FUNCTION__)
 	return Object(env,
 			PairwiseVector::lexicon_label(
-					PairwiseVector::lexiconCN()(JString(env, jhypernym),
+					PairwiseVectorChar::lexicon()(JString(env, jhypernym),
 							JString(env, jlexicon))));
 }
 
 jstring JNICALL Java_com_util_Native_lexiconEN(JNIEnv *env, jobject _,
 		jstring jhypernym, jstring jlexicon) {
-//	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__)
 	return Object(env,
 			PairwiseVector::lexicon_label(
-					PairwiseVector::lexiconEN()(JString(env, jhypernym),
-							JString(env, jlexicon))));
+					PairwiseVectorSP::lexicon()(CString(env, jhypernym),
+							CString(env, jlexicon))));
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconCNs(JNIEnv *env, jobject _,
-		jobjectArray jtext) {
-//	__cout(__PRETTY_FUNCTION__)
-	return Object(env, PairwiseVector::lexiconCN()(JArray<String>(env, jtext)));
+jobjectArray JNICALL Java_com_util_Native_lexiconMutualScoreWithEmbedding(
+		JNIEnv *env, jobject _, jint lang, jobjectArray jdoubleArrayArray) {
+	__cout(__PRETTY_FUNCTION__)
+	auto &model =
+			lang ? (PairwiseVector&) PairwiseVectorChar::lexicon() : (PairwiseVector&) PairwiseVectorSP::lexicon();
+	return Object(env, model(JArray<Vector>(env, jdoubleArrayArray)));
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconENs(JNIEnv *env, jobject _,
-		jobjectArray jtext) {
+jobjectArray JNICALL Java_com_util_Native_lexiconMutualScoreCNs(JNIEnv *env,
+		jobject _, jobjectArray jtext) {
+	__cout(__PRETTY_FUNCTION__)
+	return Object(env,
+			PairwiseVectorChar::lexicon()(JArray<String>(env, jtext)));
+}
+
+jobjectArray JNICALL Java_com_util_Native_lexiconMutualScoreENs(JNIEnv *env,
+		jobject _, jobjectArray jtext) {
 //	__cout(__PRETTY_FUNCTION__)
-	return Object(env, PairwiseVector::lexiconEN()(JArray<String>(env, jtext)));
+	return Object(env, PairwiseVectorSP::lexicon()(JArray<string>(env, jtext)));
 }
 
 //inputs: String [] keywords;
@@ -164,15 +172,64 @@ jintArray JNICALL Java_com_util_Native_lexiconStructureCN(JNIEnv *env,
 		jobject _, jobjectArray keywords, jintArray frequency) {
 	__cout(__PRETTY_FUNCTION__);
 	JArray<int> jArray(env, frequency);
-	jArray = lexiconStructureCN(JArray<String>(env, keywords), jArray);
+	jArray = lexiconStructure(JArray<String>(env, keywords), jArray);
 	return frequency;
+}
+
+jintArray JNICALL Java_com_util_Native_lexiconStructureWithEmbeddingCN(
+		JNIEnv *env, jobject _, jobjectArray jEmbedding, jintArray frequency) {
+	__cout(__PRETTY_FUNCTION__);
+	JArray<int> jArray(env, frequency);
+	JArray<vector<double>> jDoubleDoubleArray(env, jEmbedding);
+	vector<vector<double>> cDoubleDoubleVector = jDoubleDoubleArray;
+//	vector<vector<double>> cDoubleDoubleVector;
+	jArray = lexiconStructureCN(cDoubleDoubleVector, jArray);
+	return frequency;
+}
+
+jobjectArray JNICALL Java_com_util_Native_lexiconEmbeddingCN(JNIEnv *env,
+		jobject _, jobjectArray keywords) {
+	__cout(__PRETTY_FUNCTION__);
+	vector<String> text = JArray<String>(env, keywords);
+	int size = text.size();
+	auto &model = PairwiseVectorChar::lexicon();
+	vector<vector<double>> matrix(size);
+
+#pragma omp parallel for
+	for (int i = 0; i < size; ++i) {
+		Vector embedding = model(text[i]);
+		auto begin = embedding.data();
+		matrix[i].assign(begin, begin + embedding.size());
+	}
+
+	return Object(env, matrix);
+}
+
+jobjectArray JNICALL Java_com_util_Native_lexiconEmbeddingEN(JNIEnv *env,
+		jobject _, jobjectArray keywords) {
+	__cout(__PRETTY_FUNCTION__);
+	vector<string> text = JArray<string>(env, keywords);
+//	__log(text)
+
+	int size = text.size();
+	auto &model = PairwiseVectorSP::lexicon();
+	vector<vector<double>> matrix(size);
+
+#pragma omp parallel for
+	for (int i = 0; i < size; ++i) {
+		Vector embedding = model(text[i]);
+		auto begin = embedding.data();
+		matrix[i].assign(begin, begin + embedding.size());
+	}
+
+	return Object(env, matrix);
 }
 
 jintArray JNICALL Java_com_util_Native_lexiconStructureEN(JNIEnv *env,
 		jobject _, jobjectArray seg, jintArray frequency) {
 	__cout(__PRETTY_FUNCTION__)
 	return Object(env,
-			lexiconStructureEN(JArray<String>(env, seg),
+			lexiconStructure(JArray<string>(env, seg),
 					JArray<int>(env, frequency)));
 }
 
@@ -227,13 +284,13 @@ void JNICALL Java_com_util_Native_reinitializeCWSTagger(JNIEnv *env,
 void JNICALL Java_com_util_Native_reinitializeLexiconCN(JNIEnv *env,
 		jobject obj) {
 	__cout(__PRETTY_FUNCTION__)
-	PairwiseVector::instantiateHyponymCN();
+	PairwiseVectorChar::instantiateHyponym();
 }
 
 void JNICALL Java_com_util_Native_reinitializeLexiconEN(JNIEnv *env,
 		jobject obj) {
 	__cout(__PRETTY_FUNCTION__)
-	PairwiseVector::instantiateHyponymEN();
+	PairwiseVectorSP::instantiateHyponym();
 }
 
 void JNICALL Java_com_util_Native_reinitializeKeywordCN(JNIEnv *env,

@@ -195,12 +195,13 @@ vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 CWSTagger::CWSTagger(const string &h5FilePath, const string &vocabFilePath) :
 		CWSTagger((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath) {
+	__log(__PRETTY_FUNCTION__)
 }
 
 CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 		word2id(Text(vocabFilePath).read_char_vocab()), embedding(dis), con1D(
 				dis), wCRF(dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__)
 }
 
 CWSTagger& CWSTagger::instance() {

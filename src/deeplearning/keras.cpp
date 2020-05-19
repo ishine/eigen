@@ -214,6 +214,18 @@ Matrix& Embedding::operator()(const VectorI &words,
 	return wordEmbedding;
 }
 
+Matrix& Embedding::operator()(const vector<int> &words,
+		Matrix &wordEmbedding) const {
+	int length = words.size();
+
+	wordEmbedding.resize(length, wEmbedding.cols());
+
+	for (int j = 0; j < length; ++j) {
+		wordEmbedding.row(j) = wEmbedding.row(words[j]);
+	}
+	return wordEmbedding;
+}
+
 Tensor Embedding::operator()(const vector<VectorI> &words) const {
 	Tensor wordEmbedding;
 	operator ()(words, wordEmbedding);
@@ -221,6 +233,11 @@ Tensor Embedding::operator()(const vector<VectorI> &words) const {
 }
 
 Matrix Embedding::operator()(const VectorI &words) const {
+	Matrix wordEmbedding;
+	return operator ()(words, wordEmbedding);
+}
+
+Matrix Embedding::operator()(const vector<int> &words) const {
 	Matrix wordEmbedding;
 	return operator ()(words, wordEmbedding);
 }

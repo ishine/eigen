@@ -155,6 +155,53 @@ DenseBase<Derived>::operator<<(const DenseBase<OtherDerived>& other)
   return CommaInitializer<Derived>(*static_cast<Derived *>(this), other);
 }
 
+template<typename XprType>
+struct CommaAssignment {
+
+	template<typename OtherDerived>
+	EIGEN_DEVICE_FUNC
+	inline CommaAssignment(const XprType &xpr, DenseBase<OtherDerived> &other) :
+			m_xpr(xpr), m_row(0), m_col(other.cols()), m_currentBlockRows(
+					other.rows()) {
+		other = m_xpr.block(0, 0, other.rows(), other.cols());
+	}
+
+	/* selects a matrix expression from the source matrix */
+	template<typename OtherDerived>
+	EIGEN_DEVICE_FUNC
+	CommaAssignment& operator,(DenseBase<OtherDerived> &other) {
+		if (m_col == m_xpr.cols()
+				&& (other.cols() != 0 || other.rows() != m_currentBlockRows)) {
+			m_row += m_currentBlockRows;
+			m_col = 0;
+			m_currentBlockRows = other.rows();
+			eigen_assert(
+					m_row + m_currentBlockRows <= m_xpr.rows()
+							&& "Too many rows passed to comma initializer (operator<<)");
+		}
+		eigen_assert(
+				(m_col + other.cols() <= m_xpr.cols())
+						&& "Too many coefficients passed to comma initializer (operator<<)");
+		eigen_assert(m_currentBlockRows == other.rows());
+		other = m_xpr.template block<OtherDerived::RowsAtCompileTime,
+				OtherDerived::ColsAtCompileTime>(m_row, m_col, other.rows(),
+				other.cols());
+		m_col += other.cols();
+		return *this;
+	}
+
+	const XprType &m_xpr;           // source expression
+	Index m_row;              // current row id
+	Index m_col;              // current col id
+	Index m_currentBlockRows; // current block height
+};
+
+template<typename Derived, typename OtherDerived>
+CommaAssignment<Derived> operator>>(const DenseBase<Derived> &self,
+		DenseBase<OtherDerived> &other) {
+	return CommaAssignment<Derived>(*static_cast<const Derived*>(&self), other);
+}
+
 } // end namespace Eigen
 
 #endif // EIGEN_COMMAINITIALIZER_H

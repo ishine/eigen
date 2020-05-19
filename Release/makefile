@@ -6,6 +6,8 @@ GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp -mavx -mfma
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 
+SHELL =cmd.exe#this macro is necessary to run $(shell ...) and there should be not spaces left behind!
+
 c_src = $(wildcard ../src/*/*.c)
 #$(info $(c_src))
 
