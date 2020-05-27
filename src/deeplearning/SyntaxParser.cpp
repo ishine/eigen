@@ -108,7 +108,7 @@ SyntaxParser::SyntaxParser(const string &modelFolder) :
 		model(
 				(TorchReader&) (const TorchReader&) TorchReader(
 						modelFolder + "model.h5")) {
-	__cout(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__)
 }
 
 BiaffineDependencyParser::BiaffineDependencyParser(TorchReader &dis) :

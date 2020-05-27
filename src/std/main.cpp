@@ -5,10 +5,12 @@ using namespace std;
 
 #include <stdio.h>
 
+#include "../std/lagacy.h"
+
 #include "../deeplearning/utility.h"
 #include "../deeplearning/classification.h"
 #include "../deeplearning/bert.h"
-#include "../deeplearning/lagacy.h"
+
 #include "../deeplearning/CWSTagger.h"
 #include "../deeplearning/SyntaxParser.h"
 #include "../ahocorasick/public.h"
@@ -30,7 +32,7 @@ int main(int argc, char **argv) {
 	auto &keyword_cn = ClassifierChar::keyword_cn_classifier();
 	auto &keyword_en = ClassifierWord::keyword_en_classifier();
 	auto &paraphrase = Pairwise::paraphrase();
-	auto &lexicon = PairwiseVector::lexiconCN();
+	auto &lexicon = PairwiseVectorChar::lexicon();
 
 	cout << "lexicon = " << lexicon(u"Gui", u"服务器") << endl;
 	auto &cwsTagger = CWSTagger::instance();
@@ -71,7 +73,7 @@ int main(int argc, char **argv) {
 			9, 8, 8, 8 };
 
 	Timer timer;
-	cout << lexiconStructureCN(keywords, frequency);
+	cout << lexiconStructure(keywords, frequency);
 
 	timer.report("lexiconStructureCN(keywords)");
 

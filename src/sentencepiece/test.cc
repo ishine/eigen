@@ -1,4 +1,3 @@
-//#define _GLIBCXX_USE_C99_STDINT_TR1
 #include "sentencepiece_processor.h"
 #include "../std/utility.h"
 #include "../deeplearning/utility.h"

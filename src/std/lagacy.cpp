@@ -1,5 +1,5 @@
 #include "lagacy.h"
-
+#include <math.h>
 const double PI = std::atan(1.0) * 4;
 
 const double sqrt_PI = sqrt(2 / PI);

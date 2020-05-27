@@ -1,5 +1,7 @@
 #include "classification.h"
 #include "bert.h"
+#include "../std/lagacy.h"
+
 Vector Classifier::predict(const String &predict_text) {
 	auto text = predict_text;
 	return predict(text);
@@ -258,7 +260,7 @@ ClassifierChar::ClassifierChar(const string &binaryFilePath,
 		ClassifierChar(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath) {
-	__cout(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__)
 }
 
 ClassifierWord::ClassifierWord(const string &binaryFilePath,
@@ -266,10 +268,8 @@ ClassifierWord::ClassifierWord(const string &binaryFilePath,
 		ClassifierWord(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath, tokenizer) {
-	__cout(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__)
 }
-
-#include "lagacy.h"
 
 Classifier::Classifier(KerasReader &dis) :
 		embedding(Embedding(dis)), con1D0(dis), con1D1(dis), con1D2(dis), lstm(

@@ -1,6 +1,6 @@
 #include <math.h>
 #include "matrix.h"
-#include "lagacy.h"
+#include "../std/lagacy.h"
 
 Vector& aggregate(const Matrix &x, Vector &v, vector<int> &arg,
 		double (Matrix::ConstRowXpr::*aggregate)(int*) const) {

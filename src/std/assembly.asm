@@ -20,7 +20,7 @@ half:
 .double 0.5
 
 .section .text
-.global relu, hard_sigmoid, gcd_long, gcd_qword, gcd_int, gcd_dword, stosd
+.global relu, hard_sigmoid, gcd_long, gcd_qword, gcd_int, gcd_dword, stosd, movsq
 
 .global sum8args, CalcSum_, CalcDist_
 
@@ -88,6 +88,14 @@ stosd:
 	mov eax, esi
 	mov rcx, rdx
 	rep stosd
+	ret
+
+movsq:
+//	mov rdi, rdi
+//	mov rsi, rsi
+	mov rcx, rdx
+	rep movsq
+	mov rax, rdi
 	ret
 
 sum8args:
@@ -199,6 +207,27 @@ stosd:
 .endif
 	ret
 
+movsq:
+.ifdef _DEBUG
+	mov rdi, rcx
+	mov rsi, rdx
+	mov rcx, r8
+	rep movsq
+	mov rax, rdi
+.else
+	push rdi
+	push rsi
+
+	mov rdi, rcx
+	mov rsi, rdx
+	mov rcx, r8
+	rep movsq
+	mov rax, rdi
+
+	pop rsi
+	pop rdi
+.endif
+	ret
 
 sum8args:
 	mov rax, rcx

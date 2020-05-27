@@ -47,19 +47,22 @@ jintArray SetIntArrayRegion(JNIEnv *env, jsize size, const jint *array) {
 	return obj;
 }
 
+jlongArray SetLongArrayRegion(JNIEnv *env, jsize size, const jlong *array) {
+	jlongArray obj = env->NewLongArray(size);
+
+	env->SetLongArrayRegion(obj, 0, size, array);
+
+	return obj;
+}
+
 jintArray Object(JNIEnv *env, const vector<int> &s) {
-//	__cout(__PRETTY_FUNCTION__)
-//	cout << "s = " << s << endl;
-//	jsize size = s.size();
-
 	static_assert (sizeof(jint) == sizeof(int), "jint and int must have same sizes");
-//	if (sizeof(jint) == sizeof(int))
 	return SetIntArrayRegion(env, s.size(), (const jint*) s.data());
+}
 
-//	vector<jint> v(s.begin(), s.end());
-
-//	return SetIntArrayRegion(env, size, (const jint*) v.data());
-
+jlongArray Object(JNIEnv *env, const vector<long long> &s) {
+	static_assert (sizeof(jlong) == sizeof(long long), "jlong and long long must have the same sizes");
+	return SetLongArrayRegion(env, s.size(), (const jlong*) s.data());
 }
 
 jintArray Object(JNIEnv *env, const VectorI &s) {
@@ -119,13 +122,12 @@ const char *FindClass<byte>::name = "B";
 const char *FindClass<char16_t>::name = "C";
 const char *FindClass<short>::name = "S";
 const char *FindClass<int>::name = "I";
-const char *FindClass<long>::name = "J";
+const char *FindClass<long long>::name = "J";
 const char *FindClass<float>::name = "F";
 const char *FindClass<double>::name = "D";
 const char *FindClass<String>::name = "java/lang/String";
 const char *FindClass<string>::name = "java/lang/String";
-//const char *FindClass<vector<String>>::name = "[Ljava/lang/String;";
-//const string FindClass<vector<vector<String>>>::name = "[[Ljava/lang/String;";
+const char *FindClass<Vector>::name = "[D";
 
 std::ostream& operator <<(std::ostream &cout, const JArray<int> &v) {
 	cout << '[';

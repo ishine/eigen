@@ -2,7 +2,7 @@
 #include "keras.h"
 
 struct NERTagger {
-	typedef ::object<NERTagger> object;
+	using object = ::object<NERTagger> ;
 
 	dict<char16_t, int> word2id;
 	Embedding embedding, repertoire_embedding;

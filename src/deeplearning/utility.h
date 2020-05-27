@@ -8,13 +8,13 @@
 
 using floatx = double;
 
-typedef Eigen::Matrix<double, 1, -1, 1> Vector;
-typedef Eigen::Matrix<double, -1, -1, 1> Matrix;
-typedef vector<Matrix> Tensor;
+using Vector = Eigen::Matrix<double, 1, -1, 1>;
+using Matrix = Eigen::Matrix<double, -1, -1, 1>;
+using Tensor = vector<Matrix>;
 
-typedef Eigen::Matrix<int, 1, -1, 1> VectorI;
-typedef Eigen::Matrix<int, -1, -1, 1> MatrixI;
-typedef vector<MatrixI> TensorI;
+using VectorI = Eigen::Matrix<int, 1, -1, 1>;
+using MatrixI = Eigen::Matrix<int, -1, -1, 1>;
+using TensorI = vector<MatrixI>;
 #include "../hdf5/H5Cpp.h"
 //https://portal.hdfgroup.org/display/support/HDF5+1.10.5
 struct KerasReader {
