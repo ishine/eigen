@@ -54,8 +54,9 @@ clean:
 	-rd /s /q src
 
 install: $(artifact) 
-	@echo "install $(artifact) to destination ${MINGW_HOME}\bin"
-	xcopy $(artifact) "${MINGW_HOME}\bin" /Y
+	@echo "install $(artifact) to destination ..\\..\\jetty\\src\\main\\resources\\lib\\static\\Windows\\amd64"	
+	xcopy $(artifact) ..\..\jetty\src\main\resources\lib\static\Windows\amd64 /Y
+	xcopy $(artifact) ..\..\jetty\target\classes\lib\static\Windows\amd64 /Y
 
 test: $(target).exe
 	./$(target).exe ../../

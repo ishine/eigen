@@ -76,7 +76,6 @@ struct Embedding {
 			size_t max_length) const;
 
 	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding) const;
-	Matrix& operator()(const vector<int> &word, Matrix &wordEmbedding) const;
 
 	Matrix& operator()(const VectorI &word, Matrix &wordEmbedding,
 			Matrix &wEmbedding) const;
@@ -84,7 +83,6 @@ struct Embedding {
 	Tensor& operator()(const vector<VectorI> &word, Tensor &y) const;
 	Tensor operator()(const vector<VectorI> &word) const;
 	Matrix operator()(const VectorI &word) const;
-	Matrix operator()(const vector<int> &word) const;
 
 	void initialize(KerasReader &dis);
 	void initialize(TorchReader &dis);

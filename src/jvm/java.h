@@ -338,10 +338,6 @@ struct JArray<int> {
 		return vector<int>(ptr, ptr + length);
 	}
 
-	operator VectorI() const {
-		return Eigen::Map<VectorI>((int*) ptr, length);
-	}
-
 	jint operator [](size_t i) const {
 		return ptr[i];
 	}

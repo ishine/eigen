@@ -6,7 +6,7 @@ Vector& max(const Matrix &x, Vector &m, vector<int> &argmax);
 
 Vector min(const Matrix &x);
 Vector max(const Matrix &x);
-int max(const vector<int>&x, int&index);
+int max(const vector<int> &x, int &index);
 
 Tensor& exp(Tensor &x);
 Matrix& exp(Matrix &x);
@@ -101,8 +101,8 @@ struct Activation {
 
 MatrixI& operator !=(MatrixI &x, int y);
 MatrixI& operator ==(MatrixI &x, int y);
-vector<VectorI>& operator !=(vector<VectorI> &x, int y);
-vector<VectorI>& operator ==(vector<VectorI> &x, int y);
+MatrixI& operator !=(MatrixI &x, int y);
+MatrixI& operator ==(MatrixI &x, int y);
 VectorI& operator !=(VectorI &x, int y);
 VectorI& operator ==(VectorI &x, int y);
 
@@ -182,7 +182,9 @@ vector<Vector>& operator +=(vector<Vector> &x, const vector<Vector> &y);
 
 MatrixI& operator -(int x, MatrixI &y);
 MatrixI& operator -=(MatrixI &x, int y);
+VectorI& operator -=(VectorI &x, int y);
 Tensor& operator -=(Tensor &x, const vector<Vector> &y);
+MatrixI& operator -=(MatrixI &x, const MatrixI &y);
 
 Tensor& operator -=(Tensor &x, const Tensor &y);
 vector<Vector>& operator -=(vector<Vector> &x, const vector<double> &y);
@@ -191,14 +193,17 @@ MatrixI& operator -=(MatrixI &x, int y);
 Vector& operator -=(Vector &x, double y);
 Vector& operator -(Vector &x, double y);
 
-vector<VectorI>& operator -=(vector<VectorI> &x, int y);
+MatrixI& operator -=(MatrixI &x, int y);
 
-vector<Vector> operator *(double x, const vector<VectorI> &y);
+//vector<Vector> operator *(double x, const MatrixI &y);
 //Matrix &operator *(double x, const MatrixI &y);
 Tensor& operator *=(Tensor &x, const Vector &y);
 Tensor& operator *=(Tensor &x, const Matrix &y);
 vector<Vector>& operator *=(vector<Vector> &x, const Matrix &y);
-vector<VectorI>& operator *=(vector<VectorI> &x, int y);
+MatrixI& operator *=(MatrixI &x, int y);
+VectorI& operator *=(VectorI &x, int y);
+Matrix operator *(const MatrixI &x, double y);
+Vector operator *(const VectorI &x, double y);
 
 Tensor& operator /=(Tensor &x, const Tensor &y);
 Tensor& operator /=(Tensor &x, const vector<Vector> &y);
@@ -232,6 +237,11 @@ Matrix broadcast(const Eigen::Block<Matrix, 1, -1, 1> &x, int rows);
 
 Matrix broadcast(const Eigen::Block<const Matrix, 1, -1, 1> &x, int rows);
 
+MatrixI& transpose(MatrixI &x);
+const MatrixI& transpose(const MatrixI &x);
+
+MatrixI outer_product(const VectorI &x, const VectorI &y);
+
 template<int, int, int> Tensor transpose(const Tensor &x);
 
 template<>
@@ -252,3 +262,6 @@ Tensor transpose<2, 1, 0>(const Tensor &x);
 Tensor ndarray(int x_shape, int y_shape, int z_shape);
 Matrix ndarray(int x_shape, int y_shape);
 Vector ndarray(int x_shape);
+
+MatrixI Zero(int m, int n);
+MatrixI Identity(int m, int n);

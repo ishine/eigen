@@ -7,9 +7,8 @@ Vector Classifier::predict(const String &predict_text) {
 	return predict(text);
 }
 
-Vector ClassifierWord::predict(const String &predict_text) {
-	auto text = predict_text;
-	return predict(text);
+Vector ClassifierWord::predict(String &predict_text) {
+	return predict(Text::unicode2utf(tolower(predict_text)));
 }
 
 Vector Classifier::predict(String &predict_text) {
@@ -91,11 +90,11 @@ Vector ClassifierChar::predict_debug(const String &predict_text) {
 	return dense_pred(lGRU);
 }
 
-Vector ClassifierWord::predict(String &predict_text) {
+Vector ClassifierWord::predict(const string &predict_text) {
 //	cout << "predict: " << predict_text << endl;
 	Matrix embedding;
 
-	this->embedding(string2id(tokenizer->tokenize(predict_text), word2id),
+	this->embedding(string2id(tokenizer->EncodeAsPieces(predict_text), word2id),
 			embedding);
 
 	Matrix lCNN;
@@ -105,41 +104,34 @@ Vector ClassifierWord::predict(String &predict_text) {
 	return dense_pred(gru(lCNN, lGRU));
 }
 
-Vector ClassifierWord::predict_debug(const String &predict_text) {
-	cout << "predict: " << predict_text << endl;
+Vector ClassifierWord::predict_debug(String &predict_text) {
+	return predict_debug(Text::unicode2utf(tolower(predict_text)));
+}
+
+Vector ClassifierWord::predict_debug(const string &predict_text) {
+//	cout << "predict: " << predict_text << endl;
 	Matrix embedding;
-	auto tokens = tokenizer->tokenize(predict_text);
-	cout << "tokens = " << tokens << endl;
+	auto tokens = tokenizer->EncodeAsPieces(predict_text);
+//	cout << "tokens = " << tokens << endl;
 	auto ids = string2id(tokens, word2id);
-	cout << "ids = " << ids << endl;
+//	cout << "ids = " << ids << endl;
 
 	this->embedding(ids, embedding);
 
-	cout << "embedding.shape = (" << embedding.rows() << " * "
-			<< embedding.cols() << ")" << endl;
-
-	cout << "embedding = " << embedding << endl;
+//	print_shape(embedding)
+//	__cout(embedding);
 
 	Matrix lCNN;
 	lCNN = con1D0(embedding, lCNN);
 
-	cout << "lCNN.shape = (" << lCNN.rows() << " * " << lCNN.cols() << ")"
-			<< endl;
-	cout << "lCNN = " << lCNN << endl;
+//	print_shape(lCNN)
+//	__cout(lCNN);
 
 	lCNN = con1D1(lCNN, embedding);
-	cout << "lCNN.shape = (" << lCNN.rows() << " * " << lCNN.cols() << ")"
-			<< endl;
-	cout << "lCNN = " << lCNN << endl;
 
 	Vector lGRU;
 	gru(lCNN, lGRU);
 
-	cout << "lGRU.shape = (" << lGRU.rows() << " * " << lGRU.cols() << ")"
-			<< endl;
-	cout << "lGRU = " << lGRU << endl;
-
-//	printf("lGRU.shape = (%lld * %lld)\n", lGRU.rows(), lGRU.cols());
 	return dense_pred(lGRU);
 }
 
@@ -201,12 +193,29 @@ vector<int>& ClassifierChar::predict(const vector<String> &predict_text,
 	return argmax;
 }
 
-int ClassifierWord::predict(const String &predict_text, int &argmax) {
+int ClassifierWord::predict(const string &predict_text, int &argmax) {
 	predict(predict_text).maxCoeff(&argmax);
 	return argmax;
 }
 
-vector<int>& ClassifierWord::predict(const vector<String> &predict_text,
+int ClassifierWord::predict(String &predict_text, int &argmax) {
+	return predict(Text::unicode2utf(tolower(predict_text)), argmax);
+}
+
+vector<int>& ClassifierWord::predict(vector<String> &predict_text,
+		vector<int> &argmax) {
+	auto size = predict_text.size();
+	argmax.resize(size);
+//#pragma omp parallel for num_threads(cpu_count)
+#pragma omp parallel for
+	for (size_t i = 0; i < size; ++i) {
+		predict(predict_text[i], argmax[i]);
+	}
+	return argmax;
+
+}
+
+vector<int>& ClassifierWord::predict(const vector<string> &predict_text,
 		vector<int> &argmax) {
 	auto size = predict_text.size();
 	argmax.resize(size);
@@ -264,10 +273,10 @@ ClassifierChar::ClassifierChar(const string &binaryFilePath,
 }
 
 ClassifierWord::ClassifierWord(const string &binaryFilePath,
-		const string &vocabFilePath, FullTokenizer *tokenizer) :
+		const string &vocabFilePath) :
 		ClassifierWord(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
-				vocabFilePath, tokenizer) {
+				vocabFilePath) {
 	__log(__PRETTY_FUNCTION__)
 }
 
@@ -280,7 +289,7 @@ Classifier::Classifier(KerasReader &dis) :
 }
 
 Classifier::Classifier(KerasReader &dis, const string &vocab) :
-		word2id(Text(vocab).read_char_vocab()), embedding(Embedding(dis)), con1D0(
+		word2id(Text(vocab).read_vocab_char()), embedding(Embedding(dis)), con1D0(
 				dis), con1D1(dis), con1D2(dis), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
@@ -289,17 +298,16 @@ Classifier::Classifier(KerasReader &dis, const string &vocab) :
 }
 
 ClassifierChar::ClassifierChar(KerasReader &dis, const string &vocab) :
-		word2id(Text(vocab).read_char_vocab()), embedding(dis), con1D0(dis), con1D1(
+		word2id(Text(vocab).read_vocab_char()), embedding(dis), con1D0(dis), con1D1(
 				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax) {
 	__cout(__PRETTY_FUNCTION__)
 }
 
-ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab,
-		FullTokenizer *tokenizer) :
-		word2id(Text(vocab).read_vocab()), embedding(dis), con1D0(dis), con1D1(
+ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab) :
+		word2id(Text(vocab).read_vocab_cstr()), embedding(dis), con1D0(dis), con1D1(
 				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
-				Activator::softmax), tokenizer(tokenizer) {
+				Activator::softmax), tokenizer(&en_tokenizer()) {
 	__cout(__PRETTY_FUNCTION__)
 }
 
@@ -319,36 +327,25 @@ Classifier& Classifier::phatic_classifier() {
 	return service;
 }
 
-ClassifierChar& ClassifierChar::keyword_cn_classifier() {
-//	__cout(__PRETTY_FUNCTION__)
-	static ClassifierChar service(modelsDirectory() + "cn/keyword/model.h5",
-			modelsDirectory() + "cn/keyword/vocab.txt");
+string ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
+string ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
+
+ClassifierChar& ClassifierChar::instance() {
+	__cout(__PRETTY_FUNCTION__)
+	static ClassifierChar service(model_path, vocab_path);
 
 	return service;
 }
 
-void ClassifierChar::instantiate_keyword_cn_classifier() {
-//	__cout(__PRETTY_FUNCTION__)
-	keyword_cn_classifier() = ClassifierChar(
-			modelsDirectory() + "cn/keyword/model.h5",
-			modelsDirectory() + "cn/keyword/vocab.txt");
-}
-
-ClassifierWord& ClassifierWord::keyword_en_classifier() {
-//	__cout(__PRETTY_FUNCTION__)
-	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5",
-			modelsDirectory() + "en/keyword/vocab.txt",
-			&FullTokenizer::instance_en());
+ClassifierWord& ClassifierWord::instance() {
+	__cout(__PRETTY_FUNCTION__)
+	static ClassifierWord service(model_path, vocab_path);
 
 	return service;
 }
 
-void ClassifierWord::instantiate_keyword_en_classifier() {
-//	__cout(__PRETTY_FUNCTION__)
-	keyword_en_classifier() = ClassifierWord(
-			modelsDirectory() + "en/keyword/model.h5",
-			modelsDirectory() + "en/keyword/vocab.txt",
-			&FullTokenizer::instance_en());
-}
+string ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
+string ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
+
 //reading .h5 with HDF5++
 //https://portal.hdfgroup.org/display/support/HDF5%201.10.5

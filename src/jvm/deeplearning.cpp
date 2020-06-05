@@ -16,7 +16,7 @@
 
 #include "java.h"
 extern "C" {
-void JNICALL Java_com_util_Native_initializeH5Model(JNIEnv *env, jobject obj,
+void JNICALL Java_org_dll_Native_initializeH5Model(JNIEnv *env, jobject obj,
 		jstring pwd) {
 	workingDirectory = CString(env, pwd);
 	switch (workingDirectory.back()) {
@@ -35,7 +35,16 @@ void JNICALL Java_com_util_Native_initializeH5Model(JNIEnv *env, jobject obj,
 			<< endl;
 }
 
-jintArray JNICALL Java_com_util_Native_token2idEN(JNIEnv *env, jobject _,
+jintArray JNICALL Java_org_dll_Native_tokens2idsEN(JNIEnv *env, jobject _,
+		jobjectArray text) {
+	__cout(__PRETTY_FUNCTION__)
+	vector<string> ctext = JArray<string>(env, text);
+//	__log(ctext)
+	return Object(env, en_tokenizer().PieceToId(ctext));
+
+}
+
+jintArray JNICALL Java_org_dll_Native_token2idEN(JNIEnv *env, jobject _,
 		jstring text) {
 	static const string comma(1, ',');
 	std::vector<std::string> pieces;
@@ -55,38 +64,48 @@ jintArray JNICALL Java_com_util_Native_token2idEN(JNIEnv *env, jobject _,
 	return Object(env, ids);
 }
 
-jint JNICALL Java_com_util_Native_sum8args(JNIEnv *env, jobject obj, jint rcx,
+jobjectArray JNICALL Java_org_dll_Native_tokenizeEN(JNIEnv *env, jobject _,
+		jstring text) {
+	__cout(__PRETTY_FUNCTION__)
+	vector<string> pieces;
+	en_tokenizer().Encode((string) CString(env, text), &pieces);
+
+//	__log(pieces)
+	return Object(env, pieces);
+}
+
+jint JNICALL Java_org_dll_Native_sum8args(JNIEnv *env, jobject obj, jint rcx,
 		jint rdx, jint r8, jint r9, jint fifthArg, jint sixthArg,
 		jint seventhArg, jint eighthArg) {
 	return sum8args(rcx, rdx, r8, r9, fifthArg, sixthArg, seventhArg, eighthArg);
 }
 
-jdouble JNICALL Java_com_util_Native_relu(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_org_dll_Native_relu(JNIEnv *env, jobject obj,
 		jdouble rcx) {
 	return relu(rcx);
 }
 
-jint JNICALL Java_com_util_Native_gcdint(JNIEnv *env, jobject obj, jint rcx,
+jint JNICALL Java_org_dll_Native_gcdint(JNIEnv *env, jobject obj, jint rcx,
 		jint rdx) {
 	return gcd_int(rcx, rdx);
 }
 
-jlong JNICALL Java_com_util_Native_gcdlong(JNIEnv *env, jobject obj, jlong rcx,
+jlong JNICALL Java_org_dll_Native_gcdlong(JNIEnv *env, jobject obj, jlong rcx,
 		jlong rdx) {
 	return gcd_long(rcx, rdx);
 }
 
-jint JNICALL Java_com_util_Native_gcdinttemplate(JNIEnv *env, jobject obj,
+jint JNICALL Java_org_dll_Native_gcdinttemplate(JNIEnv *env, jobject obj,
 		jint rcx, jint rdx) {
 	return gcd(rcx, rdx);
 }
 
-jlong JNICALL Java_com_util_Native_gcdlongtemplate(JNIEnv *env, jobject obj,
+jlong JNICALL Java_org_dll_Native_gcdlongtemplate(JNIEnv *env, jobject obj,
 		jlong rcx, jlong rdx) {
 	return gcd(rcx, rdx);
 }
 
-jobjectArray JNICALL Java_com_util_Native_NER(JNIEnv *env, jobject obj,
+jobjectArray JNICALL Java_org_dll_Native_NER(JNIEnv *env, jobject obj,
 		jstring _service, jstring _text, jintArray _code) {
 	__cout(__PRETTY_FUNCTION__)
 	string service = CString(env, _service);
@@ -102,21 +121,21 @@ jobjectArray JNICALL Java_com_util_Native_NER(JNIEnv *env, jobject obj,
 	return Object(env, debug);
 }
 
-jdouble JNICALL Java_com_util_Native_qatype(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_org_dll_Native_qatype(JNIEnv *env, jobject obj,
 		jstring str) {
 	__cout(__PRETTY_FUNCTION__)
 	String s = JString(env, str);
 	return Classifier::qatype_classifier().predict(s)[1];
 }
 
-jdouble JNICALL Java_com_util_Native_phatic(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_org_dll_Native_phatic(JNIEnv *env, jobject obj,
 		jstring str) {
 	__cout(__PRETTY_FUNCTION__)
 	String s = JString(env, str);
 	return Classifier::phatic_classifier().predict(s)[1];
 }
 
-jobjectArray JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
+jobjectArray JNICALL Java_org_dll_Native_segmentCN(JNIEnv *env, jobject obj,
 		jstring text) {
 //	__cout(__PRETTY_FUNCTION__)
 	String s = JString(env, text);
@@ -124,109 +143,100 @@ jobjectArray JNICALL Java_com_util_Native_segmentCN(JNIEnv *env, jobject obj,
 }
 
 //inputs: String x, String y;
-//ouputs: double ;
+//ouputs: String ;
 
-jstring JNICALL Java_com_util_Native_lexiconCN(JNIEnv *env, jobject _,
-		jstring jhypernym, jstring jlexicon) {
-//	__cout(__PRETTY_FUNCTION__)
-	return Object(env,
-			PairwiseVector::lexicon_label(
-					PairwiseVectorChar::lexicon()(JString(env, jhypernym),
-							JString(env, jlexicon))));
-}
-
-jstring JNICALL Java_com_util_Native_lexiconEN(JNIEnv *env, jobject _,
-		jstring jhypernym, jstring jlexicon) {
+jdouble JNICALL Java_org_dll_Native_relevance(JNIEnv *env, jobject _, jint lang,
+		jstring jx, jstring jy) {
 	__cout(__PRETTY_FUNCTION__)
-	return Object(env,
-			PairwiseVector::lexicon_label(
-					PairwiseVectorSP::lexicon()(CString(env, jhypernym),
-							CString(env, jlexicon))));
+	String text = JString(env, jx);
+	String derivant = JString(env, jy);
+
+	__cout(text)
+	__cout(derivant)
+	Vector probability =
+			lang ? PairwiseVectorChar::instance()(text, derivant) : PairwiseVectorSP::instance()(
+							text, derivant);
+
+	return probability(0);
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconMutualScoreWithEmbedding(
+jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreWithEmbedding(
 		JNIEnv *env, jobject _, jint lang, jobjectArray jdoubleArrayArray) {
 	__cout(__PRETTY_FUNCTION__)
 	auto &model =
-			lang ? (PairwiseVector&) PairwiseVectorChar::lexicon() : (PairwiseVector&) PairwiseVectorSP::lexicon();
+			lang ? (PairwiseVector&) PairwiseVectorChar::instance() : (PairwiseVector&) PairwiseVectorSP::instance();
 	return Object(env, model(JArray<Vector>(env, jdoubleArrayArray)));
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconMutualScoreCNs(JNIEnv *env,
+jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreCNs(JNIEnv *env,
 		jobject _, jobjectArray jtext) {
 	__cout(__PRETTY_FUNCTION__)
 	return Object(env,
-			PairwiseVectorChar::lexicon()(JArray<String>(env, jtext)));
+			PairwiseVectorChar::instance()(JArray<String>(env, jtext)));
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconMutualScoreENs(JNIEnv *env,
+jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreENs(JNIEnv *env,
 		jobject _, jobjectArray jtext) {
 //	__cout(__PRETTY_FUNCTION__)
-	return Object(env, PairwiseVectorSP::lexicon()(JArray<string>(env, jtext)));
+	return Object(env, PairwiseVectorSP::instance()(JArray<string>(env, jtext)));
 }
 
 //inputs: String [] keywords;
 //ouputs: int [] heads;
 
-jintArray JNICALL Java_com_util_Native_lexiconStructureCN(JNIEnv *env,
-		jobject _, jobjectArray keywords, jintArray frequency) {
+jintArray JNICALL Java_org_dll_Native_lexiconStructureCN(JNIEnv *env, jobject _,
+		jobjectArray keywords, jintArray frequency) {
 	__cout(__PRETTY_FUNCTION__);
 	JArray<int> jArray(env, frequency);
 	jArray = lexiconStructure(JArray<String>(env, keywords), jArray);
 	return frequency;
 }
 
-jintArray JNICALL Java_com_util_Native_lexiconStructureWithEmbeddingCN(
-		JNIEnv *env, jobject _, jobjectArray jEmbedding, jintArray frequency) {
+jintArray JNICALL Java_org_dll_Native_lexiconStructureWithEmbedding(JNIEnv *env,
+		jobject _, jint lang, jobjectArray jEmbedding,
+		jobjectArray jHierarchicalMatrix, jintArray frequency) {
 	__cout(__PRETTY_FUNCTION__);
 	JArray<int> jArray(env, frequency);
 	JArray<vector<double>> jDoubleDoubleArray(env, jEmbedding);
 	vector<vector<double>> cDoubleDoubleVector = jDoubleDoubleArray;
-//	vector<vector<double>> cDoubleDoubleVector;
-	jArray = lexiconStructureCN(cDoubleDoubleVector, jArray);
+	vector<vector<double>> cHierarchicalMatrix = JArray<vector<double>>(env,
+			jHierarchicalMatrix);
+
+	jArray = lexiconStructure(lang, cDoubleDoubleVector, cHierarchicalMatrix,
+			jArray);
 	return frequency;
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconEmbeddingCN(JNIEnv *env,
-		jobject _, jobjectArray keywords) {
-	__cout(__PRETTY_FUNCTION__);
+jobjectArray JNICALL Java_org_dll_Native_lexiconEmbedding(JNIEnv *env,
+		jobject _, jint lang, jobjectArray keywords) {
 	vector<String> text = JArray<String>(env, keywords);
 	int size = text.size();
-	auto &model = PairwiseVectorChar::lexicon();
 	vector<vector<double>> matrix(size);
-
+	if (lang) {
+		auto &model = PairwiseVectorChar::instance();
 #pragma omp parallel for
-	for (int i = 0; i < size; ++i) {
-		Vector embedding = model(text[i]);
-		auto begin = embedding.data();
-		matrix[i].assign(begin, begin + embedding.size());
-	}
+		for (int i = 0; i < size; ++i) {
+			Vector embedding = model(text[i]);
+			auto begin = embedding.data();
+			matrix[i].assign(begin, begin + embedding.size());
+		}
 
+	} else {
+		__cout(__PRETTY_FUNCTION__);
+		auto &model = PairwiseVectorSP::instance();
+#pragma omp parallel for
+		for (int i = 0; i < size; ++i) {
+			Vector embedding = model(text[i]);
+			auto begin = embedding.data();
+			matrix[i].assign(begin, begin + embedding.size());
+		}
+
+	}
 	return Object(env, matrix);
 }
 
-jobjectArray JNICALL Java_com_util_Native_lexiconEmbeddingEN(JNIEnv *env,
-		jobject _, jobjectArray keywords) {
-	__cout(__PRETTY_FUNCTION__);
-	vector<string> text = JArray<string>(env, keywords);
-//	__log(text)
-
-	int size = text.size();
-	auto &model = PairwiseVectorSP::lexicon();
-	vector<vector<double>> matrix(size);
-
-#pragma omp parallel for
-	for (int i = 0; i < size; ++i) {
-		Vector embedding = model(text[i]);
-		auto begin = embedding.data();
-		matrix[i].assign(begin, begin + embedding.size());
-	}
-
-	return Object(env, matrix);
-}
-
-jintArray JNICALL Java_com_util_Native_lexiconStructureEN(JNIEnv *env,
-		jobject _, jobjectArray seg, jintArray frequency) {
+jintArray JNICALL Java_org_dll_Native_lexiconStructureEN(JNIEnv *env, jobject _,
+		jobjectArray seg, jintArray frequency) {
 	__cout(__PRETTY_FUNCTION__)
 	return Object(env,
 			lexiconStructure(JArray<string>(env, seg),
@@ -236,7 +246,7 @@ jintArray JNICALL Java_com_util_Native_lexiconStructureEN(JNIEnv *env,
 //inputs: String [] text;
 //ouputs: String [][] segment;
 
-jintArray JNICALL Java_com_util_Native_depCN(JNIEnv *env, jobject _,
+jintArray JNICALL Java_org_dll_Native_depCN(JNIEnv *env, jobject _,
 		jobjectArray seg, jobjectArray pos, jobjectArray dep) {
 	__cout(__PRETTY_FUNCTION__)
 	vector<String> depCPP;
@@ -252,7 +262,7 @@ jintArray JNICALL Java_com_util_Native_depCN(JNIEnv *env, jobject _,
 //inputs: String [] text;
 //ouputs: String [][] segment;
 
-jobjectArray JNICALL Java_com_util_Native_posCN(JNIEnv *env, jobject _,
+jobjectArray JNICALL Java_org_dll_Native_posCN(JNIEnv *env, jobject _,
 		jobjectArray text) {
 //	__cout(__PRETTY_FUNCTION__)
 	return Object(env, POSTagger::instance().predict(JArray<String>(env, text)));
@@ -261,99 +271,108 @@ jobjectArray JNICALL Java_com_util_Native_posCN(JNIEnv *env, jobject _,
 //inputs: String [] text;
 //ouputs: String [][] segment;
 
-jobjectArray JNICALL Java_com_util_Native_segmentCNs(JNIEnv *env, jobject _,
+jobjectArray JNICALL Java_org_dll_Native_segmentCNs(JNIEnv *env, jobject _,
 		jobjectArray text) {
 	__cout(__PRETTY_FUNCTION__)
 	return Object(env, CWSTagger::instance().predict(JArray<String>(env, text)));
 }
 //inputs: String [][] text;
 //ouputs: String [][][] segment;
-jobjectArray JNICALL Java_com_util_Native_segmentCNss(JNIEnv *env, jobject _,
+jobjectArray JNICALL Java_org_dll_Native_segmentCNss(JNIEnv *env, jobject _,
 		jobjectArray text) {
 //	__cout(__PRETTY_FUNCTION__)
 	return Object(env,
 			CWSTagger::instance().predict(JArray<vector<String>>(env, text)));
 }
 
-void JNICALL Java_com_util_Native_reinitializeCWSTagger(JNIEnv *env,
-		jobject obj) {
+void JNICALL Java_org_dll_Native_initializeCWSTagger(JNIEnv *env, jobject obj,
+		jstring modelPath, jstring vocabPath) {
 	__cout(__PRETTY_FUNCTION__)
-	CWSTagger::instantiate();
+	CWSTagger::model_path = CString(env, modelPath);
+	CWSTagger::vocab_path = CString(env, vocabPath);
+	CWSTagger::instance();
 }
 
-void JNICALL Java_com_util_Native_reinitializeLexiconCN(JNIEnv *env,
-		jobject obj) {
+void JNICALL Java_org_dll_Native_initializeLexiconCN(JNIEnv *env, jobject obj,
+		jstring configPath, jstring modelPath, jstring vocabPath) {
 	__cout(__PRETTY_FUNCTION__)
-	PairwiseVectorChar::instantiateHyponym();
+	PairwiseVectorChar::config_path = CString(env, configPath);
+	PairwiseVectorChar::model_path = CString(env, modelPath);
+	PairwiseVectorChar::vocab_path = CString(env, vocabPath);
+	PairwiseVectorChar::instance();
 }
 
-void JNICALL Java_com_util_Native_reinitializeLexiconEN(JNIEnv *env,
-		jobject obj) {
+void JNICALL Java_org_dll_Native_initializeLexiconEN(JNIEnv *env, jobject obj,
+		jstring configPath, jstring modelPath, jstring vocabPath) {
 	__cout(__PRETTY_FUNCTION__)
-	PairwiseVectorSP::instantiateHyponym();
+	PairwiseVectorSP::config_path = CString(env, configPath);
+	PairwiseVectorSP::model_path = CString(env, modelPath);
+//	PairwiseVectorSP::vocab_model_path = CString(env, vocabModelPath);
+	en_vocab_path = CString(env, vocabPath);
+	PairwiseVectorSP::instance();
 }
 
-void JNICALL Java_com_util_Native_reinitializeKeywordCN(JNIEnv *env,
-		jobject obj) {
+void JNICALL Java_org_dll_Native_initializeKeywordCN(JNIEnv *env, jobject obj,
+		jstring modelPath, jstring vocabPath) {
 	__cout(__PRETTY_FUNCTION__)
-	ClassifierChar::instantiate_keyword_cn_classifier();
+	ClassifierChar::model_path = CString(env, modelPath);
+	ClassifierChar::vocab_path = CString(env, vocabPath);
+
+	ClassifierChar::instance();
 }
 
-void JNICALL Java_com_util_Native_reinitializeKeywordEN(JNIEnv *env,
-		jobject obj) {
+void JNICALL Java_org_dll_Native_initializeKeywordEN(JNIEnv *env, jobject obj,
+		jstring modelPath, jstring vocabPath) {
 	__cout(__PRETTY_FUNCTION__)
-	ClassifierWord::instantiate_keyword_en_classifier();
+	ClassifierWord::model_path = CString(env, modelPath);
+	ClassifierWord::vocab_path = CString(env, vocabPath);
+
+	ClassifierWord::instance();
 }
 
-jint JNICALL Java_com_util_Native_keywordCN(JNIEnv *env, jobject obj,
+jint JNICALL Java_org_dll_Native_keyword(JNIEnv *env, jobject obj, jint lang,
 		jstring str) {
-//	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__)
 	String s = JString(env, str);
 	int index;
-	return ClassifierChar::keyword_cn_classifier().predict(s, index);
+	if (lang)
+		return ClassifierChar::instance().predict(s, index);
+	else
+		return ClassifierWord::instance().predict(s, index);
 }
 
-jdouble JNICALL Java_com_util_Native_keywordCNDouble(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_org_dll_Native_keywordCNDouble(JNIEnv *env, jobject obj,
 		jstring str) {
-//	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__)
 	String s = JString(env, str);
-	return ClassifierChar::keyword_cn_classifier().predict_debug(s)[1];
+	return ClassifierChar::instance().predict_debug(s)[1];
 }
 
-jdouble JNICALL Java_com_util_Native_keywordENDouble(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_org_dll_Native_keywordENDouble(JNIEnv *env, jobject _,
 		jstring str) {
-//	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__)
 	String s = JString(env, str);
-	return ClassifierWord::keyword_en_classifier().predict_debug(s)[1];
+	return ClassifierWord::instance().predict_debug(s)[1];
 }
 
-jintArray JNICALL Java_com_util_Native_keywordCNs(JNIEnv *env, jobject _,
+jintArray JNICALL Java_org_dll_Native_keywordCNs(JNIEnv *env, jobject _,
 		jobjectArray str) {
-//	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__)
 	vector<String> ss = JArray<String>(env, str);
 	vector<int> index;
-	return Object(env,
-			ClassifierChar::keyword_cn_classifier().predict(ss, index));
+	return Object(env, ClassifierChar::instance().predict(ss, index));
 }
 
-jint JNICALL Java_com_util_Native_keywordEN(JNIEnv *env, jobject obj,
-		jstring str) {
-//	__cout(__PRETTY_FUNCTION__)
-	String s = JString(env, str);
-	int index;
-	return ClassifierWord::keyword_en_classifier().predict(s, index);
-}
-
-jintArray JNICALL Java_com_util_Native_keywordENs(JNIEnv *env, jobject _,
+jintArray JNICALL Java_org_dll_Native_keywordENs(JNIEnv *env, jobject _,
 		jobjectArray str) {
-//	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__)
 	vector<String> ss = JArray<String>(env, str);
+
 	vector<int> index;
-	return Object(env,
-			ClassifierWord::keyword_en_classifier().predict(ss, index));
+	return Object(env, ClassifierWord::instance().predict(ss, index));
 }
 
-jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
+jdouble JNICALL Java_org_dll_Native_similarity(JNIEnv *env, jobject obj,
 		jstring x, jstring y) {
 	__cout(__PRETTY_FUNCTION__)
 	String s1 = JString(env, x);
@@ -365,7 +384,7 @@ jdouble JNICALL Java_com_util_Native_similarity(JNIEnv *env, jobject obj,
 	return Pairwise::paraphrase()(s1, s2);
 }
 
-jintArray JNICALL Java_com_util_Native_ner(JNIEnv *env, jobject obj,
+jintArray JNICALL Java_org_dll_Native_ner(JNIEnv *env, jobject obj,
 		jstring _service, jstring _text, jintArray _code) {
 //	__cout(__PRETTY_FUNCTION__)
 	string service = CString(env, _service);

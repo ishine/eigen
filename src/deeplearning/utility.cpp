@@ -5,7 +5,7 @@
 
 using namespace std;
 
-string workingDirectory = "../";
+string workingDirectory = "../jetty/src/main/resources/";
 
 string& modelsDirectory() {
 	static string modelsDirectory = workingDirectory + "models/";
@@ -188,12 +188,11 @@ vector<double> convert2vector(const Vector &m) {
 
 const int UNK = 1;
 VectorI string2id(const String &s, const ::dict<char16_t, int> &dict) {
-	VectorI v;
-	v.resize(s.size());
+	VectorI v(s.size());
 
 	for (size_t i = 0; i < s.size(); ++i) {
 		auto iter = dict.find(s[i]);
-		v(i) = iter == dict.end() ? UNK : iter->second;
+		v[i] = iter == dict.end() ? UNK : iter->second;
 	}
 	return v;
 }
@@ -209,21 +208,29 @@ vector<VectorI> string2id(const vector<String> &s,
 }
 
 VectorI string2id(const vector<String> &s, const ::dict<String, int> &dict) {
-	VectorI v;
-	v.resize(s.size());
+	VectorI v(s.size());
 
 	for (size_t i = 0; i < s.size(); ++i) {
 		auto iter = dict.find(s[i]);
-		v(i) = iter == dict.end() ? UNK : iter->second;
+		v[i] = iter == dict.end() ? UNK : iter->second;
+	}
+	return v;
+}
+
+VectorI string2id(const vector<string> &s, const ::dict<string, int> &dict) {
+	VectorI v(s.size());
+
+	for (size_t i = 0; i < s.size(); ++i) {
+		auto iter = dict.find(s[i]);
+		v[i] = iter == dict.end() ? UNK : iter->second;
 	}
 	return v;
 }
 
 vector<VectorI> string2ids(const vector<String> &s,
 		const unordered_map<char16_t, int> &dict) {
-	vector<VectorI> v;
 	int batch_size = s.size();
-	v.reserve(batch_size);
+	vector<VectorI> v(batch_size);
 
 	for (int k = 0; k < batch_size; ++k) {
 		v[k] = string2id(s[k], dict);

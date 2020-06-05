@@ -29,16 +29,16 @@ jobject Object(JNIEnv *env, const Emit &s) {
 }
 
 extern "C" {
-void JNICALL Java_com_util_Native_initializeAhocorasickDictionary(JNIEnv *env,
+void JNICALL Java_org_dll_Native_initializeAhocorasickDictionary(JNIEnv *env,
 		jobject obj, jstring pwd) {
 	ahocorasick::initialize(CString(env, pwd));
 }
 
-void JNICALL Java_com_util_Native_ahocorasickTest(JNIEnv *env, jobject obj) {
+void JNICALL Java_org_dll_Native_ahocorasickTest(JNIEnv *env, jobject obj) {
 	ahocorasick::test();
 }
 
-jobjectArray JNICALL Java_com_util_Native_parseText(JNIEnv *env, jobject obj,
+jobjectArray JNICALL Java_org_dll_Native_parseText(JNIEnv *env, jobject obj,
 		jstring jText) {
 	auto start = clock();
 	JString text(env, jText);

@@ -46,15 +46,17 @@ char Text::get_bits(char ch, int start, int size, char _ch, int _size) {
 string Text::unicode2utf(const String &wstr) {
 	string s;
 //	s.clear();
+	char str[7];
 	for (word wc : wstr) {
-		s += unicode2utf(wc);
+		s += unicode2utf(wc, str);
 	}
 	return s;
 }
 
 void Text::test_utf_unicode_conversion() {
+	char str[7];
 	for (word wc = 1; wc > 0; ++wc) {
-		auto cstr = unicode2utf(wc);
+		auto cstr = unicode2utf(wc, str);
 		auto _wc = utf2unicode(cstr);
 		assert(_wc == wc);
 		if (_wc != wc) {
@@ -123,9 +125,10 @@ const char* Text::unicode2utf(word wc, char *pText) {
 //	https://blog.csdn.net/qq_38279908/article/details/89329740
 //	https://www.cnblogs.com/cfas/p/7931787.html
 //	return std::wstring_convert<std::codecvt_utf8<wchar_t> >().to_bytes(wstr);
-	if (!pText) {
-		pText = str;
-	}
+//	static char str[7];
+//	if (!pText) {
+//		pText = str;
+//	}
 
 	char *uchar = (char*) &wc;
 
@@ -238,9 +241,10 @@ Text::iterator Text::end() {
 	return iterator(this, true);
 }
 
-char Text::str[7];
+//char Text::str[7];
 
 Text& Text::operator >>(int &unicode) {
+	char str[7];
 	if (file.get(str[0])) {
 		int length = get_utf8_char_len(str[0]);
 		file.read(str + 1, length - 1);
@@ -315,8 +319,33 @@ Text& Text::operator >>(String &v) {
 	return *this;
 }
 
+Text& Text::operator >>(string &v) {
+	v.clear();
+	char str[7];
+	while (file.get(str[0])) {
+		int length = get_utf8_char_len(str[0]);
+		file.read(str + 1, length - 1);
+		str[length] = 0;
+
+		if (str[0] == '\r' || str[0] == '\n') {
+			if (v.size())
+				break;
+			else
+				continue;
+		}
+		v += str;
+	}
+	return *this;
+}
+
 dict<String, int> Text::read_vocab(int index) {
 	dict<String, int> word2id;
+	return read_vocab(word2id, index);
+}
+
+dict<string, int> Text::read_vocab_cstr(int index) {
+	dict<string, int> word2id;
+//	__log(__PRETTY_FUNCTION__)
 	return read_vocab(word2id, index);
 }
 
@@ -337,7 +366,24 @@ dict<String, int>& Text::read_vocab(dict<String, int> &word2id, int index) {
 	return word2id;
 }
 
-dict<char16_t, int> Text::read_char_vocab() {
+dict<string, int>& Text::read_vocab(dict<string, int> &word2id, int index) {
+	__log(__PRETTY_FUNCTION__)
+	word2id.clear();
+	string s;
+	while (*this >> s) {
+		strip(s);
+		assert(!s.empty());
+
+		assert(word2id.count(s) == 0);
+
+		word2id[s] = index++;
+	}
+	cout << "word2id.size() = " << word2id.size() << endl;
+	cout << "index = " << index << endl;
+	return word2id;
+}
+
+dict<char16_t, int> Text::read_vocab_char() {
 	dict<char16_t, int> word2id;
 	*this >> word2id;
 	return word2id;
@@ -766,7 +812,7 @@ void Timer::report(const char *message) {
 }
 
 #include <random>
-void test_priority_dict(){
+void test_priority_dict() {
 	priority_dict<String> pq;
 	pq.insert(u"this");
 	pq.insert(u"that");
@@ -787,4 +833,14 @@ void test_priority_dict(){
 		pq.insert(std::toString(e()));
 	}
 
+}
+
+String& tolower(String &s) {
+	if (s.empty()) {
+		return s;
+	}
+	for (auto &ch : s) {
+		ch = tolower(ch);
+	}
+	return s;
 }

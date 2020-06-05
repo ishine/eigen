@@ -8,16 +8,16 @@
 
 extern "C" {
 
-void JNICALL Java_com_util_Native_displayHelloWorld(JNIEnv *env, jobject obj) {
+void JNICALL Java_org_dll_Native_displayHelloWorld(JNIEnv *env, jobject obj) {
 	cout << "Hello world!" << endl;
 }
 
-int JNICALL Java_com_util_Native_main(JNIEnv *env, jobject obj) {
+int JNICALL Java_org_dll_Native_main(JNIEnv *env, jobject obj) {
 	int main(int argc, char **argv);
 	return main(0, 0);
 }
 
-jstring JNICALL Java_com_util_Native_reverse(JNIEnv *env, jobject obj,
+jstring JNICALL Java_org_dll_Native_reverse(JNIEnv *env, jobject obj,
 		jstring str) {
 	String s = JString(env, str);
 	size_t length = s.size();
@@ -63,20 +63,6 @@ jintArray Object(JNIEnv *env, const vector<int> &s) {
 jlongArray Object(JNIEnv *env, const vector<long long> &s) {
 	static_assert (sizeof(jlong) == sizeof(long long), "jlong and long long must have the same sizes");
 	return SetLongArrayRegion(env, s.size(), (const jlong*) s.data());
-}
-
-jintArray Object(JNIEnv *env, const VectorI &s) {
-	jsize size = s.size();
-
-	assert(sizeof(jint) == sizeof(int));
-	if (sizeof(jint) == sizeof(int))
-		return SetIntArrayRegion(env, size, (const jint*) s.data());
-
-	auto begin = s.data();
-	vector<jint> v(begin, begin + s.size());
-
-	return SetIntArrayRegion(env, size, (const jint*) v.data());
-
 }
 
 jobjectArray Object(JNIEnv *env, const Matrix &A) {

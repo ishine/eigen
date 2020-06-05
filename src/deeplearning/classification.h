@@ -49,37 +49,43 @@ struct ClassifierChar {
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
-	static ClassifierChar& keyword_cn_classifier();
-	static void instantiate_keyword_cn_classifier();
-
+	static ClassifierChar& instance();
+	static string model_path, vocab_path;
 };
 
 struct ClassifierWord {
-	dict<String, int> word2id;
+	dict<string, int> word2id;
 	Embedding embedding;
 	Conv1DSame con1D0, con1D1;
 	BidirectionalGRU gru;
 	DenseLayer dense_pred;
-	FullTokenizer *tokenizer;
+	sentencepiece::SentencePieceProcessor *tokenizer;
 
-	Vector predict(const String &predict_text);
+	Vector predict(const string &predict_text);
+	Vector predict(string &predict_text);
 	Vector predict(String &predict_text);
-	Vector predict_debug(const String &predict_text);
-	int predict(const String &predict_text, int &argmax);
-	vector<int>& predict(const vector<String> &predict_text,
+
+	Vector predict_debug(const string &predict_text);
+	Vector predict_debug(String &predict_text);
+
+	int predict(const string &predict_text, int &argmax);
+	int predict(String &predict_text, int &argmax);
+
+	vector<int>& predict(const vector<string> &predict_text,
 			vector<int> &argmax);
 
-	vector<vector<double>>& predict(String &predict_text,
+	vector<int>& predict(vector<String> &predict_text,
+			vector<int> &argmax);
+
+	vector<vector<double>>& predict(string &predict_text,
 			vector<vector<double>> &arr);
 
-	ClassifierWord(const string &binaryFilePath, const string &vocabFilePath,
-			FullTokenizer *tokenizer);
-	ClassifierWord(KerasReader &dis, const string &vocab,
-			FullTokenizer *tokenizer);
+	ClassifierWord(const string &binaryFilePath, const string &vocabFilePath);
+	ClassifierWord(KerasReader &dis, const string &vocab);
 
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
-	static ClassifierWord& keyword_en_classifier();
-	static void instantiate_keyword_en_classifier();
+	static ClassifierWord& instance();
+	static string model_path, vocab_path;
 };
 

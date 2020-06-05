@@ -56,8 +56,15 @@ clean:
 	javac $<
 
 install: $(artifact) LD_LIBRARY_PATH.class
-	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
-	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
+#	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
+#	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
+	
+	-mkdir -p ../../jetty/src/main/resources/lib/static/Linux/amd64
+	@echo "install $(artifact) to destination ../../jetty/src/main/resources/lib/static/Linux/amd64"	
+	cp $(artifact) ../../jetty/src/main/resources/lib/static/Linux/amd64
+	@echo "install $(artifact) to destination ../../research-wordcloud/wordcloud-service/src/main/resources/lib/static/Linux/amd64"
+	cp $(artifact) ../../research-wordcloud/wordcloud-service/src/main/resources/lib/static/Linux/amd64
+	cd ../../research-wordcloud && git pull	&& git add . && git commit -m '$(artifact) modified' && git push
 
 test: $(target)	
 	./$(target) ../../
