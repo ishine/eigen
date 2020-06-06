@@ -23,7 +23,35 @@ int main(int argc, char **argv) {
 
 	if (1 < argc) {
 		workingDirectory = argv[1];
+		workingDirectory += '/';
 		cout << "workingDirectory = " << workingDirectory << endl;
+		modelsDirectory() = workingDirectory + "models/";
+
+		cout << "modelsDirectory = " << modelsDirectory << endl;
+
+		PairwiseVectorChar::model_path = modelsDirectory()
+				+ "cn/lexicon/model.h5";
+		PairwiseVectorChar::config_path = modelsDirectory()
+				+ "cn/lexicon/config.json";
+		PairwiseVectorChar::vocab_path = modelsDirectory()
+				+ "cn/bert/vocab.txt";
+
+		en_vocab_path = modelsDirectory()
+				+ "en/bert/albert_base/30k-clean.model";
+
+		PairwiseVectorSP::config_path = modelsDirectory()
+				+ "en/lexicon/config.json";
+		PairwiseVectorSP::model_path = modelsDirectory()
+				+ "en/lexicon/model.h5";
+
+		ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
+		ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
+
+		ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
+		ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
+
+		CWSTagger::model_path = modelsDirectory() + "cn/cws/model.h5";
+		CWSTagger::vocab_path = modelsDirectory() + "cn/cws/vocab.txt";
 	}
 
 	auto &lexiconSP = PairwiseVectorSP::instance();
