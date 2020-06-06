@@ -1027,6 +1027,8 @@ string PairwiseVectorChar::config_path = modelsDirectory()
 string PairwiseVectorChar::vocab_path = modelsDirectory() + "cn/bert/vocab.txt";
 
 PairwiseVectorSP& PairwiseVectorSP::instance() {
+	__cout(__PRETTY_FUNCTION__);
+
 	static PairwiseVectorSP inst(
 			(KerasReader&) (const KerasReader&) KerasReader(model_path),
 
@@ -1034,7 +1036,6 @@ PairwiseVectorSP& PairwiseVectorSP::instance() {
 
 			&en_tokenizer());
 
-	__cout(__PRETTY_FUNCTION__)
 	return inst;
 }
 

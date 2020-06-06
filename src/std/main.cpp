@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
 
 	if (1 < argc) {
 		workingDirectory = argv[1];
+		cout << "workingDirectory = " << workingDirectory << endl;
 	}
 
 	auto &lexiconSP = PairwiseVectorSP::instance();
