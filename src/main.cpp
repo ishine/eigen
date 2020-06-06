@@ -12,7 +12,7 @@ using namespace std;
 //#include "deeplearning/classification.h"
 //#include "deeplearning/bert.h"
 
-//#include "deeplearning/CWSTagger.h"
+#include "deeplearning/CWSTagger.h"
 //#include "deeplearning/SyntaxParser.h"
 
 int main(int argc, char **argv) {
@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
 //		ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
 //		ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
 //
-//		CWSTagger::model_path = modelsDirectory() + "cn/cws/model.h5";
-//		CWSTagger::vocab_path = modelsDirectory() + "cn/cws/vocab.txt";
+		CWSTagger::model_path = modelsDirectory() + "cn/cws/model.h5";
+		CWSTagger::vocab_path = modelsDirectory() + "cn/cws/vocab.txt";
 	}
 
 //	auto &lexiconSP = PairwiseVectorSP::instance();
