@@ -1,6 +1,6 @@
 #include <math.h>
 #include "matrix.h"
-#include "../std/lagacy.h"
+#include "../../../std/src/std/lagacy.h"
 
 Vector& aggregate(const Matrix &x, Vector &v, vector<int> &arg,
 		double (Matrix::ConstRowXpr::*aggregate)(int*) const) {
@@ -66,10 +66,6 @@ double elu(double x) {
 	if (x >= 0)
 		return x;
 	return exp(x) - 1;
-}
-
-double relu(double x) {
-	return x < 0 ? 0 : x;
 }
 
 double inverse(double x) {

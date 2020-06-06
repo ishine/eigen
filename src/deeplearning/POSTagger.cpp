@@ -1,6 +1,6 @@
 #include "POSTagger.h"
 #include "utility.h"
-#include "../std/utility.h"
+#include "../../../std/src/std/utility.h"
 
 vector<String> POSTagger::convertToPOStags(const VectorI &ids) {
 	int n = ids.size();

@@ -1,7 +1,6 @@
 #include "bert.h"
 #include "matrix.h"
-#include "../std/lagacy.h"
-
+#include "../../../std/src/std/lagacy.h"
 //Matrix revert_mask(const MatrixI &mask, double weight) {
 //	Matrix out = mask * -weight;
 //	if (weight >= 0)
@@ -976,7 +975,7 @@ PairwiseVectorSP::PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
 	__log(__PRETTY_FUNCTION__)
 }
 
-#include "../json/json.h"
+#include "../../../json/src/json/json.h"
 Json::Value readFromStream(const string &json_file);
 
 Pairwise& Pairwise::paraphrase() {

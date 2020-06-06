@@ -26,18 +26,15 @@ obj := $(foreach file,$(obj),$(subst ../,,$(file)))
 
 $(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir $(subst /,\,$(file)))))
 
-$(artifact): $(obj)
-	$(GCC) -shared -o $@ $^
-
+$(artifact): $(obj) src/main.o
+	$(GCC) -shared -o $@ $^ -L../../std/Release -lstd -L../../hdf5/Release -lhdf5 -L../../json/Release -ljson -L../../sentencepiece/Release -lsentencepiece
+# 
 #target must be the first command to execute, so the include directive should follow it!
--include $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
+-include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
 $(target).exe: $(obj)
 	$(GCC) -o $@ $^
 
-src/jvm/%.o: ../src/jvm/%.cpp
-	$(GCC) -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32" $(CMD)	
-	
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
 
@@ -47,13 +44,13 @@ src/%.o: ../src/%.cc
 src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
-src/%.o: ../src/%.asm
-	as -o $@ $<
-
 clean:
 	-rd /s /q src
 
-install: $(artifact) 
+install: $(artifact)
+	@echo "install $(artifact) to destination $(MINGW_HOME)\\bin"	
+	xcopy $(artifact) "$(MINGW_HOME)\\bin" /Y
+	
 	@echo "install $(artifact) to destination ..\\..\\jetty\\src\\main\\resources\\lib\\static\\Windows\\amd64"	
 	xcopy $(artifact) ..\..\jetty\src\main\resources\lib\static\Windows\amd64 /Y
 	xcopy $(artifact) ..\..\jetty\target\classes\lib\static\Windows\amd64 /Y

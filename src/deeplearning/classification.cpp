@@ -1,6 +1,6 @@
 #include "classification.h"
 #include "bert.h"
-#include "../std/lagacy.h"
+#include "../../../std/src/std/lagacy.h"
 
 Vector Classifier::predict(const String &predict_text) {
 	auto text = predict_text;

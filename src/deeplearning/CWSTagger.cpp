@@ -1,6 +1,6 @@
 #include "CWSTagger.h"
 #include "utility.h"
-#include "../std/utility.h"
+#include "../../../std/src/std/utility.h"
 
 vector<String> convertToSegment(const String &predict_text,
 		const VectorI &argmax) {

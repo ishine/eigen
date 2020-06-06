@@ -1,5 +1,6 @@
 #pragma once
-#include "../std/utility.h"
+#include "../../../std/src/std/utility.h"
+
 #include<vector>
 using std::vector;
 
@@ -373,7 +374,7 @@ struct PairwiseVectorChar: PairwiseVector {
 	static string config_path, model_path, vocab_path;
 };
 
-#include "../sentencepiece/sentencepiece_processor.h"
+#include "../../../sentencepiece/src/sentencepiece/sentencepiece_processor.h"
 //#include "../json/json.h"
 
 struct PairwiseVectorSP: PairwiseVector {

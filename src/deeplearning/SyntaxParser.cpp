@@ -1,6 +1,6 @@
 #include "SyntaxParser.h"
 #include "utility.h"
-#include "../std/utility.h"
+#include "../../../std/src/std/utility.h"
 
 vector<String> SyntaxParser::convertToDEPtags(const vector<int> &ids) {
 	int n = ids.size();
