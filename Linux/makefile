@@ -33,7 +33,7 @@ $(artifact): $(obj)
 -include $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
 $(target): $(obj) src/main.o
-	$(GCCEXE) -o $@ $^ -ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
+	$(GCC) -o $@ $^ -ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
 
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
