@@ -85,16 +85,16 @@ int main(int argc, char **argv) {
 	cout << "dep = " << dep << endl;
 	cout << "heads = " << heads << endl;
 }
-//	{
-//		vector<String> seg = { u"你", u"说", u",", u"这", u"比", u"山", u"还", u"高", u"比", u"海", u"还", u"深", u"的", u"情谊", u",", u"我们", u"怎么", u"能", u"忘怀", u"?", u"仿写", u"句子"};
-//	vector<String> pos = {u"PN", u"VT", u"PU", u"DT", u"P", u"NN", u"AD", u"VA", u"P", u"NN", u"AD", u"VA", u"DE", u"NN", u"PU", u"PN", u"AD", u"MD", u"VT", u"PU", u"VT", u"NN"};
-//	vector<String> dep;
-//	auto heads = syntaxParser.predict(seg, pos, dep);
-//	cout << "seg = " << seg << endl;
-//	cout << "pos = " << pos << endl;
-//	cout << "dep = " << dep << endl;
-//	cout << "heads = " << heads << endl;
-//}
+	{
+		vector<String> seg = { u"你", u"说", u",", u"这", u"比", u"山", u"还", u"高", u"比", u"海", u"还", u"深", u"的", u"情谊", u",", u"我们", u"怎么", u"能", u"忘怀", u"?", u"仿写", u"句子"};
+	vector<String> pos = {u"PN", u"VT", u"PU", u"DT", u"P", u"NN", u"AD", u"VA", u"P", u"NN", u"AD", u"VA", u"DE", u"NN", u"PU", u"PN", u"AD", u"MD", u"VT", u"PU", u"VT", u"NN"};
+	vector<String> dep;
+	auto heads = syntaxParser.predict(seg, pos, dep);
+	cout << "seg = " << seg << endl;
+	cout << "pos = " << pos << endl;
+	cout << "dep = " << dep << endl;
+	cout << "heads = " << heads << endl;
+}
 //
 ////	cout << "phatic = " << phatic.predict(u"请问您在哪个城市,请提供您的有效联系方式") << endl;
 //
