@@ -54,8 +54,8 @@ int main(int argc, char **argv) {
 		CWSTagger::vocab_path = modelsDirectory() + "cn/cws/vocab.txt";
 	}
 
-//	auto &lexiconSP = PairwiseVectorSP::instance();
-//	cout << lexiconSP("abd", "deflkj") << endl;
+	auto &lexiconSP = PairwiseVectorSP::instance();
+	cout << lexiconSP("abd", "deflkj") << endl;
 //
 ////	auto &phatic = Classifier::phatic_classifier();
 ////	auto &qatype = Classifier::qatype_classifier();
