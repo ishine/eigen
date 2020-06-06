@@ -66,8 +66,8 @@ $(target):
 	src/deeplearning/utility.o \
 	src/deeplearning/matrix.o \
 	src/deeplearning/CWSTagger.o \
-	src/deeplearning/keras.o \
 	src/deeplearning/classification.o \
+	src/deeplearning/keras.o \
 	src/deeplearning/bert.o \
 	src/deeplearning/SyntaxParser.o \
 	-L../../std/Linux -lstd \
