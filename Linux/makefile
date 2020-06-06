@@ -49,11 +49,12 @@ $(target):
 	src/deeplearning/CWSTagger.o \
 	src/deeplearning/keras.o \
 	src/deeplearning/classification.o \
+	src/deeplearning/bert.o \
 	-ldl -L../../std/Linux -lstd \
 	-L../../hdf5/Linux -lhdf5
 #	src/deeplearning/NERTagger.o 
 #	 
-#	src/deeplearning/bert.o	 
+#		 
 #	src/deeplearning/SyntaxParser.o	 
 #	 
 #		
