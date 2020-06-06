@@ -69,9 +69,9 @@ int main(int argc, char **argv) {
 //
 	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;
 //
-//	cout << "keyword = " << keyword_cn.predict(u"如图所示") << endl;
+	cout << "keyword = " << keyword_cn.predict(u"如图所示") << endl;
 //
-//	cout << "keyword = " << keyword_en.predict("Pairwise Algorithm") << endl;
+	cout << "keyword = " << keyword_en.predict("Pairwise Algorithm") << endl;
 //
 //	auto &syntaxParser = SyntaxParser::instance();
 //
