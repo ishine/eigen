@@ -67,7 +67,7 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	cd ../../research-wordcloud && git pull	&& git add . && git commit -m '$(artifact) modified' && git push
 
 test: $(target)	
-	./$(target) ../../
+	./$(target) ../../jetty/src/main/resources
 	@echo "finish testing $(target)!"
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362
