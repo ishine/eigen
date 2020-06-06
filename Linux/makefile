@@ -2,8 +2,8 @@ target = eigen
 
 artifact = lib$(target).so	
 
-GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
-#GCC = g++ -DNDEBUG -Wall -std=c++11 -fopenmp
+#GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
+GCC = g++ -DNDEBUG -Wall -std=c++11 -fopenmp
 
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
