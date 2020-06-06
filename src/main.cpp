@@ -13,7 +13,7 @@ using namespace std;
 //#include "deeplearning/bert.h"
 
 #include "deeplearning/CWSTagger.h"
-//#include "deeplearning/SyntaxParser.h"
+#include "deeplearning/SyntaxParser.h"
 
 int main(int argc, char **argv) {
 	cout << "argc = " << argc << endl;
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 //
 	cout << "keyword = " << keyword_en.predict("Pairwise Algorithm") << endl;
 //
-//	auto &syntaxParser = SyntaxParser::instance();
+	auto &syntaxParser = SyntaxParser::instance();
 //
 //	{
 //		vector<String> seg = { u"我们", u"研究", u"所有", u"东西", u"。"};
