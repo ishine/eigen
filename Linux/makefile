@@ -30,8 +30,8 @@ obj := src/main.o \
 src/deeplearning/Strassen.o \
 src/deeplearning/NERTagger.o \
 src/deeplearning/POSTagger.o \
-src/deeplearning/utility.o \
 src/deeplearning/matrix.o \
+src/deeplearning/utility.o \
 src/deeplearning/CWSTagger.o \
 src/deeplearning/keras.o \
 src/deeplearning/classification.o \
