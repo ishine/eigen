@@ -65,9 +65,9 @@ int main(int argc, char **argv) {
 //	auto &lexicon = PairwiseVectorChar::instance();
 //
 //	cout << "lexicon = " << lexicon(u"承运", u"挡板") << endl;
-//	auto &cwsTagger = CWSTagger::instance();
+	auto &cwsTagger = CWSTagger::instance();
 //
-//	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;
+	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;
 //
 //	cout << "keyword = " << keyword_cn.predict(u"如图所示") << endl;
 //
