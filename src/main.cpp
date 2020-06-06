@@ -7,7 +7,7 @@ using namespace std;
 
 //#include "../../std/src/std/lagacy.h"
 
-//#include "deeplearning/utility.h"
+#include "deeplearning/utility.h"
 
 //#include "deeplearning/classification.h"
 //#include "deeplearning/bert.h"
@@ -22,9 +22,9 @@ int main(int argc, char **argv) {
 	}
 
 	if (1 < argc) {
-//		workingDirectory = argv[1];
-//		workingDirectory += '/';
-//		cout << "workingDirectory = " << workingDirectory << endl;
+		workingDirectory = argv[1];
+		workingDirectory += '/';
+		cout << "workingDirectory = " << workingDirectory << endl;
 //		modelsDirectory() = workingDirectory + "models/";
 //
 //		cout << "modelsDirectory = " << modelsDirectory() << endl;
