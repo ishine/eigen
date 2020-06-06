@@ -2,8 +2,8 @@ target = eigen
 
 artifact = lib$(target).so	
 
-#GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
-GCC = g++ -DNDEBUG -Wall -std=c++11 -fopenmp
+GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
+#GCC = g++ -DNDEBUG -Wall -std=c++11 -fopenmp
 
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
@@ -33,7 +33,7 @@ $(artifact): $(obj)
 -include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
 $(target): src/main.o $(obj) 
-	$(GCC) -o $@ $^ -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece -ldl 
+	$(GCC) -o $@ $^ -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece -L../../std/Linux -lstd -ldl   
 
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
@@ -45,7 +45,7 @@ src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
 clean:
-	-rm -f $(target) src/*/*.d src/*/*.o *.class *.so
+	-rm -f $(target) src/*.d src/*.o src/*/*.d src/*/*.o *.class *.so
 
 %.class: %.java
 	@echo "compiling $< to $@"
