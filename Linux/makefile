@@ -26,7 +26,7 @@ obj := $(foreach file,$(obj),$(subst ../,,$(file)))
 
 $(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir -p $(file))))
 
-obj := $(call reverse, $(sort $(obj)))
+obj = src/main.o src/deeplearning/POSTagger.o src/deeplearning/NERTagger.o src/deeplearning/CWSTagger.o src/deeplearning/SyntaxParser.o src/deeplearning/Strassen.o src/deeplearning/classification.o src/deeplearning/keras.o src/deeplearning/bert.o src/deeplearning/matrix.o src/deeplearning/utility.o
 
 $(artifact): $(obj)
 	$(GCC) -z noexecstack -shared -o $@ $^ -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
