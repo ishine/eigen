@@ -526,6 +526,7 @@ struct FindClass<string> {
 
 template<typename _Ty>
 const char *FindClass<vector<_Ty>>::name = [](const char *name) -> const char* {
+	return nullptr;
 	string left_bracket = "[";
 	static string array_name;
 	assert(!array_name);
