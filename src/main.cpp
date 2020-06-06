@@ -62,9 +62,9 @@ int main(int argc, char **argv) {
 	auto &keyword_cn = ClassifierChar::instance();
 	auto &keyword_en = ClassifierWord::instance();
 ////	auto &paraphrase = Pairwise::paraphrase();
-//	auto &lexicon = PairwiseVectorChar::instance();
+	auto &lexicon = PairwiseVectorChar::instance();
 //
-//	cout << "lexicon = " << lexicon(u"承运", u"挡板") << endl;
+	cout << "lexicon = " << lexicon(u"承运", u"挡板") << endl;
 	auto &cwsTagger = CWSTagger::instance();
 //
 	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;

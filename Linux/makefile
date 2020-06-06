@@ -55,13 +55,8 @@ $(target):
 	-L../../json/Linux -ljson \
 	-L../../sentencepiece/Linux -lsentencepiece
 #	src/deeplearning/NERTagger.o 
-#	 
-#		 
 #	src/deeplearning/SyntaxParser.o	 
-#	 
-#		
 #	src/deeplearning/POSTagger.o
-#   -L../../sentencepiece/Linux -lsentencepiece
 
 test: $(target)	
 	./$(target) ../../jetty/src/main/resources
