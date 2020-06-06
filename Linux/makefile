@@ -60,6 +60,7 @@ $(target):
 #	-L../../sentencepiece/Linux -lsentencepiece
 	
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -o eigen src/main.o \
+	src/deeplearning/SyntaxParser.o \
 	src/deeplearning/Strassen.o \
 	src/deeplearning/NERTagger.o \
 	src/deeplearning/POSTagger.o \
@@ -69,7 +70,6 @@ $(target):
 	src/deeplearning/classification.o \
 	src/deeplearning/keras.o \
 	src/deeplearning/bert.o \
-	src/deeplearning/SyntaxParser.o \
 	-L../../std/Linux -lstd \
 	-L../../hdf5/Linux -lhdf5 \
 	-L../../json/Linux -ljson \
