@@ -45,7 +45,7 @@ src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
 clean:
-	-rm -f src/*/*.d src/*/*.o *.class *.so
+	-rm -f $(target) src/*/*.d src/*/*.o *.class *.so
 
 %.class: %.java
 	@echo "compiling $< to $@"
