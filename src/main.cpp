@@ -29,12 +29,12 @@ int main(int argc, char **argv) {
 //
 		cout << "modelsDirectory = " << modelsDirectory() << endl;
 //
-//		PairwiseVectorChar::model_path = modelsDirectory()
-//				+ "cn/lexicon/model.h5";
-//		PairwiseVectorChar::config_path = modelsDirectory()
-//				+ "cn/lexicon/config.json";
-//		PairwiseVectorChar::vocab_path = modelsDirectory()
-//				+ "cn/bert/vocab.txt";
+		PairwiseVectorChar::model_path = modelsDirectory()
+				+ "cn/lexicon/model.h5";
+		PairwiseVectorChar::config_path = modelsDirectory()
+				+ "cn/lexicon/config.json";
+		PairwiseVectorChar::vocab_path = modelsDirectory()
+				+ "cn/bert/vocab.txt";
 //
 		en_vocab_path = modelsDirectory()
 				+ "en/bert/albert_base/30k-clean.model";
