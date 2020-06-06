@@ -43,20 +43,21 @@ $(target):
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/keras.o -o src/deeplearning/keras.o ../src/deeplearning/keras.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/classification.o -o src/deeplearning/classification.o ../src/deeplearning/classification.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/main.o -o src/main.o ../src/main.cpp
-	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -o eigen src/main.o src/deeplearning/Strassen.o \
-	src/deeplearning/NERTagger.o \
-	src/deeplearning/POSTagger.o \
-	src/deeplearning/utility.o \
-	src/deeplearning/matrix.o \
-	src/deeplearning/CWSTagger.o \
-	src/deeplearning/keras.o \
-	src/deeplearning/classification.o \
-	src/deeplearning/bert.o \
-	src/deeplearning/SyntaxParser.o \
-	-ldl -L../../std/Linux -lstd \
-	-L../../hdf5/Linux -lhdf5 \
-	-L../../json/Linux -ljson \
-	-L../../sentencepiece/Linux -lsentencepiece
+	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -o eigen src/deeplearning/POSTagger.o src/deeplearning/matrix.o src/deeplearning/NERTagger.o src/deeplearning/CWSTagger.o src/deeplearning/bert.o src/deeplearning/utility.o src/deeplearning/SyntaxParser.o src/deeplearning/Strassen.o src/deeplearning/keras.o src/deeplearning/classification.o src/main.o 	-ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
+#	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -o eigen src/main.o src/deeplearning/Strassen.o \
+#	src/deeplearning/NERTagger.o \
+#	src/deeplearning/POSTagger.o \
+#	src/deeplearning/utility.o \
+#	src/deeplearning/matrix.o \
+#	src/deeplearning/CWSTagger.o \
+#	src/deeplearning/keras.o \
+#	src/deeplearning/classification.o \
+#	src/deeplearning/bert.o \
+#	src/deeplearning/SyntaxParser.o \
+#	-ldl -L../../std/Linux -lstd \
+#	-L../../hdf5/Linux -lhdf5 \
+#	-L../../json/Linux -ljson \
+#	-L../../sentencepiece/Linux -lsentencepiece
 #	 
 #		 
 #	
