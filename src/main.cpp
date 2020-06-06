@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
 		ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
 		ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
 //
-//		ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
-//		ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
+		ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
+		ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
 //
 		CWSTagger::model_path = modelsDirectory() + "cn/cws/model.h5";
 		CWSTagger::vocab_path = modelsDirectory() + "cn/cws/vocab.txt";
@@ -59,8 +59,8 @@ int main(int argc, char **argv) {
 //
 ////	auto &phatic = Classifier::phatic_classifier();
 ////	auto &qatype = Classifier::qatype_classifier();
-//	auto &keyword_cn = ClassifierChar::instance();
-//	auto &keyword_en = ClassifierWord::instance();
+	auto &keyword_cn = ClassifierChar::instance();
+	auto &keyword_en = ClassifierWord::instance();
 ////	auto &paraphrase = Pairwise::paraphrase();
 //	auto &lexicon = PairwiseVectorChar::instance();
 //
