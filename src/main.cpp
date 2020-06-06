@@ -25,9 +25,9 @@ int main(int argc, char **argv) {
 		workingDirectory = argv[1];
 		workingDirectory += '/';
 		cout << "workingDirectory = " << workingDirectory << endl;
-//		modelsDirectory() = workingDirectory + "models/";
+		modelsDirectory() = workingDirectory + "models/";
 //
-//		cout << "modelsDirectory = " << modelsDirectory() << endl;
+		cout << "modelsDirectory = " << modelsDirectory() << endl;
 //
 //		PairwiseVectorChar::model_path = modelsDirectory()
 //				+ "cn/lexicon/model.h5";
