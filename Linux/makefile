@@ -26,6 +26,8 @@ obj := $(foreach file,$(obj),$(subst ../,,$(file)))
 
 $(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir -p $(file))))
 
+obj := $(sort $(obj))
+
 $(artifact): $(obj)
 	$(GCC) -z noexecstack -shared -o $@ $^ -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
 
