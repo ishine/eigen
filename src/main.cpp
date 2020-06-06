@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
 //		PairwiseVectorChar::vocab_path = modelsDirectory()
 //				+ "cn/bert/vocab.txt";
 //
-//		en_vocab_path = modelsDirectory()
-//				+ "en/bert/albert_base/30k-clean.model";
+		en_vocab_path = modelsDirectory()
+				+ "en/bert/albert_base/30k-clean.model";
 //
 		PairwiseVectorSP::config_path = modelsDirectory()
 				+ "en/lexicon/config.json";
