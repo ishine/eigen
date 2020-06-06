@@ -9,7 +9,7 @@ using namespace std;
 
 #include "deeplearning/utility.h"
 
-//#include "deeplearning/classification.h"
+#include "deeplearning/classification.h"
 //#include "deeplearning/bert.h"
 
 #include "deeplearning/CWSTagger.h"
@@ -44,8 +44,8 @@ int main(int argc, char **argv) {
 //		PairwiseVectorSP::model_path = modelsDirectory()
 //				+ "en/lexicon/model.h5";
 //
-//		ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
-//		ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
+		ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
+		ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
 //
 //		ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
 //		ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
