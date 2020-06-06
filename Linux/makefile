@@ -52,7 +52,8 @@ $(target):
 	src/deeplearning/bert.o \
 	-ldl -L../../std/Linux -lstd \
 	-L../../hdf5/Linux -lhdf5 \
-	-L../../json/Linux -ljson
+	-L../../json/Linux -ljson \
+	-L../../sentencepiece/Linux -lsentencepiece
 #	src/deeplearning/NERTagger.o 
 #	 
 #		 
