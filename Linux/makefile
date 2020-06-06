@@ -58,7 +58,7 @@ test: $(target)
 	@echo "finish testing $(target)!"
 
 clean:
-	-rm -f src/*/*.d src/*/*.o *.class *.so
+	-rm -rf src/* src/*/*.d src/*/*.o *.class *.so
 
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362
