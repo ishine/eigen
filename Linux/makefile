@@ -70,10 +70,10 @@ $(target):
 	src/deeplearning/classification.o \
 	src/deeplearning/bert.o \
 	src/deeplearning/SyntaxParser.o \
-	-ldl -L../../std/Linux -lstd \
+	-L../../std/Linux -lstd \
 	-L../../hdf5/Linux -lhdf5 \
 	-L../../json/Linux -ljson \
-	-L../../sentencepiece/Linux -lsentencepiece
+	-L../../sentencepiece/Linux -lsentencepiece -ldl
 #	 
 #		 
 #	
