@@ -25,17 +25,14 @@ obj := $(foreach file,$(obj),$(subst ../,,$(file)))
 $(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir -p $(file))))
 
 $(artifact): $(obj)
-	$(GCC) -z noexecstack -shared -o $@ $^
+	$(GCC) -z noexecstack -shared -o $@ $^ -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
 
 #target must be the first command to execute, so the include directive should follow it!
 -include $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
-$(target): $(obj)
-	$(GCC) -o $@ $^ -ldl
+$(target): $(obj) src/main.o
+	$(GCC) -o $@ $^ -ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
 
-src/jvm/%.o: ../src/jvm/%.cpp
-	$(GCC) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux $(CMD)
-	
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
 	
@@ -45,9 +42,6 @@ src/%.o: ../src/%.cc
 src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
-src/%.o: ../src/%.asm
-	as --defsym linux=1 -o $@ $<
-
 clean:
 	-rm -f src/*/*.d src/*/*.o *.class *.so
 
@@ -56,8 +50,8 @@ clean:
 	javac $<
 
 install: $(artifact) LD_LIBRARY_PATH.class
-#	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
-#	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
+	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
+	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
 	
 	-mkdir -p ../../jetty/src/main/resources/lib/static/Linux/amd64
 	@echo "install $(artifact) to destination ../../jetty/src/main/resources/lib/static/Linux/amd64"	
