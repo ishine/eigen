@@ -45,6 +45,7 @@ $(target):
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/main.o -o src/main.o ../src/main.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -o eigen src/main.o src/deeplearning/Strassen.o \
 	src/deeplearning/NERTagger.o \
+	src/deeplearning/POSTagger.o \
 	src/deeplearning/utility.o \
 	src/deeplearning/matrix.o \
 	src/deeplearning/CWSTagger.o \
@@ -58,7 +59,7 @@ $(target):
 	-L../../sentencepiece/Linux -lsentencepiece
 #	 
 #		 
-#	src/deeplearning/POSTagger.o
+#	
 
 test: $(target)	
 	./$(target) ../../jetty/src/main/resources
