@@ -2,7 +2,9 @@ target = eigen
 
 artifact = lib$(target).so	
 
-GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
+#GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
+GCC = g++ -DNDEBUG -Wall -std=c++11 -fopenmp
+
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 
@@ -31,7 +33,7 @@ $(artifact): $(obj)
 -include $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
 $(target): $(obj) src/main.o
-	$(GCC) -o $@ $^ -ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
+	$(GCCEXE) -o $@ $^ -ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
 
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)

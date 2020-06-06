@@ -5,7 +5,7 @@ using namespace std;
 
 #include <stdio.h>
 
-#include "../../std/src/std/lagacy.h"
+//#include "../../std/src/std/lagacy.h"
 
 #include "deeplearning/utility.h"
 
