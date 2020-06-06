@@ -39,10 +39,10 @@ int main(int argc, char **argv) {
 //		en_vocab_path = modelsDirectory()
 //				+ "en/bert/albert_base/30k-clean.model";
 //
-//		PairwiseVectorSP::config_path = modelsDirectory()
-//				+ "en/lexicon/config.json";
-//		PairwiseVectorSP::model_path = modelsDirectory()
-//				+ "en/lexicon/model.h5";
+		PairwiseVectorSP::config_path = modelsDirectory()
+				+ "en/lexicon/config.json";
+		PairwiseVectorSP::model_path = modelsDirectory()
+				+ "en/lexicon/model.h5";
 //
 		ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
 		ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
