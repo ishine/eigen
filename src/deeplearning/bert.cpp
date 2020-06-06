@@ -1802,15 +1802,6 @@ Vector& PairwiseVector::symmetric_transform(Vector &y_pred) {
 	return y_pred;
 }
 
-//const String& PairwiseVector::lexicon_label(const Vector &y_pred) {
-//
-//	static String labels[] = { u"hypernym",u"unrelated", u"related",u"synonym", u"hyponym"};
-//
-//int argmax;
-//y_pred.maxCoeff(&argmax);
-//return labels[argmax];
-//}
-
 string en_vocab_path = modelsDirectory()
 		+ "en/bert/albert_base/30k-clean.model";
 
