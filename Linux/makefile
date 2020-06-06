@@ -38,7 +38,7 @@ $(target):
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/CWSTagger.o -o src/deeplearning/CWSTagger.o ../src/deeplearning/CWSTagger.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/bert.o -o src/deeplearning/bert.o ../src/deeplearning/bert.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/utility.o -o src/deeplearning/utility.o ../src/deeplearning/utility.cpp
-#	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/SyntaxParser.o -o src/deeplearning/SyntaxParser.o ../src/deeplearning/SyntaxParser.cpp
+	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/SyntaxParser.o -o src/deeplearning/SyntaxParser.o ../src/deeplearning/SyntaxParser.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/Strassen.o -o src/deeplearning/Strassen.o ../src/deeplearning/Strassen.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/keras.o -o src/deeplearning/keras.o ../src/deeplearning/keras.cpp
 	g++ -DNDEBUG -Wall -std=c++11 -fopenmp -c -fmessage-length=0 -O3 -MMD -MP -MT src/deeplearning/classification.o -o src/deeplearning/classification.o ../src/deeplearning/classification.cpp
@@ -50,12 +50,13 @@ $(target):
 	src/deeplearning/keras.o \
 	src/deeplearning/classification.o \
 	src/deeplearning/bert.o \
+	src/deeplearning/SyntaxParser.o \
 	-ldl -L../../std/Linux -lstd \
 	-L../../hdf5/Linux -lhdf5 \
 	-L../../json/Linux -ljson \
 	-L../../sentencepiece/Linux -lsentencepiece
 #	src/deeplearning/NERTagger.o 
-#	src/deeplearning/SyntaxParser.o	 
+#		 
 #	src/deeplearning/POSTagger.o
 
 test: $(target)	
