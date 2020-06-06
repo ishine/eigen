@@ -51,7 +51,8 @@ $(target):
 	src/deeplearning/classification.o \
 	src/deeplearning/bert.o \
 	-ldl -L../../std/Linux -lstd \
-	-L../../hdf5/Linux -lhdf5
+	-L../../hdf5/Linux -lhdf5 \
+	-L../../json/Linux -ljson
 #	src/deeplearning/NERTagger.o 
 #	 
 #		 
@@ -59,7 +60,7 @@ $(target):
 #	 
 #		
 #	src/deeplearning/POSTagger.o
-#  -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
+#   -L../../sentencepiece/Linux -lsentencepiece
 
 test: $(target)	
 	./$(target) ../../jetty/src/main/resources
