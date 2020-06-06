@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
 ////	cout << "paraphrase score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
 ////	cout << "paraphrase score = " << paraphrase(u"周末你去哪里玩", u"今天他去哪里玩？") << endl;
 //
-//	cout << "lexicon score = " << lexicon(u"业务", u"公司业务") << endl;
-//	cout << "lexicon score = " << lexicon(u"今晚", u"今天") << endl;
+	cout << "lexicon score = " << lexicon(u"业务", u"公司业务") << endl;
+	cout << "lexicon score = " << lexicon(u"今晚", u"今天") << endl;
 //
 	cout << "test finished successfully!" << endl;
 	return 0;
