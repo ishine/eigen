@@ -40,8 +40,8 @@ src/deeplearning/SyntaxParser.o \
 
 
 $(artifact): $(obj)
-	$(GCC) -z noexecstack -shared -o $@ 
-#$^ -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
+	$(GCC) -z noexecstack -shared -o $@ $^ 
+#-L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
 
 #target must be the first command to execute, so the include directive should follow it!
 -include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
