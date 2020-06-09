@@ -21,7 +21,7 @@ c_src = $(wildcard ../src/*/*.c)
 #../src/deeplearning/SyntaxParser.cpp \
 #../src/deeplearning/sentencepiece.cpp \
 #cpp_src = $(wildcard ../src/jni/*.cpp $(cpp_deeplearning) ../src/sentencepiece/*.cpp ../src/hdf5/*.cpp ../src/json/*.cpp ../src/std/*.cpp)
-c_src = $(wildcard ../src/*/*.cpp)
+cpp_src = $(wildcard ../src/*/*.cpp)
 $(info $(cpp_src))
 
 cc_src = $(wildcard ../src/*/*.cc ../src/*/*/*.cc)
