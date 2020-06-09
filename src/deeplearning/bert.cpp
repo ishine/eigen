@@ -1794,9 +1794,3 @@ Vector& PairwiseVector::symmetric_transform(Vector &y_pred) {
 	std::swap(y_pred(0), y_pred(4));
 	return y_pred;
 }
-
-sentencepiece::SentencePieceProcessor& en_tokenizer() {
-	static sentencepiece::SentencePieceProcessor sp(
-			modelsDirectory() + "en/bert/albert_base/30k-clean.model");
-	return sp;
-}

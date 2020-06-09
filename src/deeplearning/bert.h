@@ -371,9 +371,7 @@ struct PairwiseVectorChar: PairwiseVector {
 	static PairwiseVectorChar& instance();
 };
 
-#include "../sentencepiece/sentencepiece_processor.h"
-//#include "../json/json.h"
-
+#include "sentencepiece.h"
 struct PairwiseVectorSP: PairwiseVector {
 	PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
 			sentencepiece::SentencePieceProcessor *tokenizer);
@@ -403,5 +401,3 @@ vector<int> lexiconStructure(int lang, const vector<vector<double>> &embedding,
 
 vector<int> lexiconStructure(const vector<string> &keywords,
 		const vector<int> &frequency);
-
-sentencepiece::SentencePieceProcessor& en_tokenizer();

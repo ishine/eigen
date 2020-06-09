@@ -1,7 +1,6 @@
 #include "keras.h"
 
 #include "matrix.h"
-#include "bert.h"
 
 struct Classifier {
 	dict<char16_t, int> word2id;
@@ -51,6 +50,8 @@ struct ClassifierChar {
 
 	static ClassifierChar& instance();
 };
+
+#include "sentencepiece.h"
 
 struct ClassifierWord {
 	dict<string, int> word2id;

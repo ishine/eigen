@@ -18,7 +18,8 @@ cpp_deeplearning = ../src/deeplearning/Strassen.cpp \
 ../src/deeplearning/bert.cpp \
 ../src/deeplearning/keras.cpp \
 ../src/deeplearning/matrix.cpp \
-../src/deeplearning/SyntaxParser.cpp
+../src/deeplearning/SyntaxParser.cpp \
+../src/deeplearning/sentencepiece.cpp \
 
 cpp_src = $(wildcard ../src/jni/*.cpp $(cpp_deeplearning) ../src/sentencepiece/*.cpp ../src/hdf5/*.cpp ../src/json/*.cpp ../src/std/*.cpp)
 $(info $(cpp_src))
