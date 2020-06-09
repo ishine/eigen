@@ -9,20 +9,19 @@ CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 c_src = $(wildcard ../src/*/*.c)
 #$(info $(c_src))
 
-cpp_deeplearning = ../src/deeplearning/Strassen.cpp \
-../src/deeplearning/NERTagger.cpp \
-../src/deeplearning/POSTagger.cpp \
-../src/deeplearning/utility.cpp \
-../src/deeplearning/CWSTagger.cpp \
-../src/deeplearning/classification.cpp \
-../src/deeplearning/bert.cpp \
-../src/deeplearning/keras.cpp \
-../src/deeplearning/matrix.cpp \
-../src/deeplearning/SyntaxParser.cpp \
-../src/deeplearning/sentencepiece.cpp \
-
+#cpp_deeplearning = ../src/deeplearning/Strassen.cpp \
+#../src/deeplearning/NERTagger.cpp \
+#../src/deeplearning/POSTagger.cpp \
+#../src/deeplearning/utility.cpp \
+#../src/deeplearning/CWSTagger.cpp \
+#../src/deeplearning/classification.cpp \
+#../src/deeplearning/bert.cpp \
+#../src/deeplearning/keras.cpp \
+#../src/deeplearning/matrix.cpp \
+#../src/deeplearning/SyntaxParser.cpp \
+#../src/deeplearning/sentencepiece.cpp \
 #cpp_src = $(wildcard ../src/jni/*.cpp $(cpp_deeplearning) ../src/sentencepiece/*.cpp ../src/hdf5/*.cpp ../src/json/*.cpp ../src/std/*.cpp)
-cpp_src = $(wildcard ../src/jni/*.cpp ../src/deeplearning/*.cpp ../src/sentencepiece/*.cpp ../src/hdf5/*.cpp ../src/json/*.cpp ../src/std/*.cpp)
+c_src = $(wildcard ../src/*/*.cpp)
 $(info $(cpp_src))
 
 cc_src = $(wildcard ../src/*/*.cc ../src/*/*/*.cc)
