@@ -3,16 +3,25 @@ target = eigen
 artifact = lib$(target).so	
 
 GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
-#GCC = g++ -DNDEBUG -Wall -std=c++11 -fopenmp
-
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
 
 c_src = $(wildcard ../src/*/*.c)
 #$(info $(c_src))
 
-cpp_src = $(wildcard ../src/*/*.cpp)
-#$(info $(cpp_src))
+cpp_deeplearning = ../src/deeplearning/Strassen.cpp \
+../src/deeplearning/NERTagger.cpp \
+../src/deeplearning/POSTagger.cpp \
+../src/deeplearning/utility.cpp \
+../src/deeplearning/CWSTagger.cpp \
+../src/deeplearning/classification.cpp \
+../src/deeplearning/bert.cpp \
+../src/deeplearning/keras.cpp \
+../src/deeplearning/matrix.cpp \
+../src/deeplearning/SyntaxParser.cpp
+
+cpp_src = $(wildcard ../src/jni/*.cpp $(cpp_deeplearning) ../src/sentencepiece/*.cpp ../src/hdf5/*.cpp ../src/json/*.cpp ../src/std/*.cpp)
+$(info $(cpp_src))
 
 cc_src = $(wildcard ../src/*/*.cc ../src/*/*/*.cc)
 #$(info $(cc_src))
@@ -20,35 +29,24 @@ cc_src = $(wildcard ../src/*/*.cc ../src/*/*/*.cc)
 asm_src = $(wildcard ../src/*/*.asm)
 #$(info $(asm_src))
 
-obj = $(c_src:%.c=%.o) $(cpp_src:%.cpp=%.o) $(cc_src:%.cc=%.o) $(asm_src:%.asm=%.o)
+obj = $(cpp_src:%.cpp=%.o) $(cc_src:%.cc=%.o) $(c_src:%.c=%.o) $(asm_src:%.asm=%.o)
 obj := $(foreach file,$(obj),$(subst ../,,$(file)))
-#$(info $(obj))
+$(info $(obj))
 
 $(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir -p $(file))))
 
-obj := src/main.o \
-src/deeplearning/Strassen.o \
-src/deeplearning/NERTagger.o \
-src/deeplearning/POSTagger.o \
-src/deeplearning/utility.o \
-src/deeplearning/CWSTagger.o \
-src/deeplearning/classification.o \
-src/deeplearning/bert.o \
-src/deeplearning/keras.o \
-src/deeplearning/matrix.o \
-src/deeplearning/SyntaxParser.o \
-
-
 $(artifact): $(obj)
-	$(GCC) -z noexecstack -shared -o $@ $^ 
-#-L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece
+	$(GCC) -z noexecstack -shared -o $@ $^
 
 #target must be the first command to execute, so the include directive should follow it!
 -include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
-$(target): src/main.o $(obj) 
-	$(GCC) -o $@ $^ -ldl -L../../std/Linux -lstd -L../../hdf5/Linux -lhdf5 -L../../json/Linux -ljson -L../../sentencepiece/Linux -lsentencepiece  
+$(target): src/main.o $(obj)
+	$(GCC) -o $@ $^ -ldl
 
+src/jni/%.o: ../src/jni/%.cpp
+	$(GCC) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux $(CMD)
+	
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
 	
@@ -58,8 +56,11 @@ src/%.o: ../src/%.cc
 src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
+src/%.o: ../src/%.asm
+	as --defsym linux=1 -o $@ $<
+
 clean:
-	-rm -f $(target) src/*.d src/*.o src/*/*.d src/*/*.o *.class *.so
+	-rm -f src/*/*.d src/*/*.o *.class *.so
 
 %.class: %.java
 	@echo "compiling $< to $@"

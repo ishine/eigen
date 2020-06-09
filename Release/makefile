@@ -22,19 +22,22 @@ asm_src = $(wildcard ../src/*/*.asm)
 
 obj = $(c_src:%.c=%.o) $(cpp_src:%.cpp=%.o) $(cc_src:%.cc=%.o) $(asm_src:%.asm=%.o)
 obj := $(foreach file,$(obj),$(subst ../,,$(file)))
-#$(info $(obj))
+$(info $(obj))
 
 $(foreach file,$(sort $(dir $(obj))),$(if $(wildcard $(file)),,$(shell mkdir $(subst /,\,$(file)))))
 
-$(artifact): $(obj) src/main.o
-	$(GCC) -shared -o $@ $^ -L../../std/Release -lstd -L../../hdf5/Release -lhdf5 -L../../json/Release -ljson -L../../sentencepiece/Release -lsentencepiece
-# 
+$(artifact): src/main.o $(obj)
+	$(GCC) -shared -o $@ $^
+
 #target must be the first command to execute, so the include directive should follow it!
 -include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
 $(target).exe: $(obj)
 	$(GCC) -o $@ $^
 
+src/jni/%.o: ../src/jni/%.cpp
+	$(GCC) -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32" $(CMD)	
+	
 src/%.o: ../src/%.cpp
 	$(GCC) $(CMD)
 
@@ -44,13 +47,13 @@ src/%.o: ../src/%.cc
 src/%.o: ../src/%.c
 	gcc -DNDEBUG -w -std=c99 -fPIC $(CMD)
 	        
+src/%.o: ../src/%.asm
+	as -o $@ $<
+
 clean:
 	-rd /s /q src
 
-install: $(artifact)
-	@echo "install $(artifact) to destination $(MINGW_HOME)\\bin"	
-	xcopy $(artifact) "$(MINGW_HOME)\\bin" /Y
-	
+install: $(artifact) 
 	@echo "install $(artifact) to destination ..\\..\\jetty\\src\\main\\resources\\lib\\static\\Windows\\amd64"	
 	xcopy $(artifact) ..\..\jetty\src\main\resources\lib\static\Windows\amd64 /Y
 	xcopy $(artifact) ..\..\jetty\target\classes\lib\static\Windows\amd64 /Y

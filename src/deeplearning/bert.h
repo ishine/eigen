@@ -1,6 +1,5 @@
 #pragma once
-#include "../../../std/src/std/utility.h"
-
+#include "../std/utility.h"
 #include<vector>
 using std::vector;
 
@@ -370,11 +369,9 @@ struct PairwiseVectorChar: PairwiseVector {
 	Vector operator ()(const String &x);
 	Vector operator ()(const char16_t *x, const char16_t *y);
 	static PairwiseVectorChar& instance();
-
-	static string config_path, model_path, vocab_path;
 };
 
-#include "../../../sentencepiece/src/sentencepiece/sentencepiece_processor.h"
+#include "../sentencepiece/sentencepiece_processor.h"
 //#include "../json/json.h"
 
 struct PairwiseVectorSP: PairwiseVector {
@@ -395,7 +392,6 @@ struct PairwiseVectorSP: PairwiseVector {
 
 	static PairwiseVectorSP& initialize(const string &config,
 			const string &path, const string &vocab);
-	static string config_path, model_path;
 };
 
 vector<int> lexiconStructure(const vector<String> &keywords,
@@ -408,5 +404,4 @@ vector<int> lexiconStructure(int lang, const vector<vector<double>> &embedding,
 vector<int> lexiconStructure(const vector<string> &keywords,
 		const vector<int> &frequency);
 
-extern string en_vocab_path;
 sentencepiece::SentencePieceProcessor& en_tokenizer();

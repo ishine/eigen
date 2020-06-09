@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../std/src/std/utility.h"
+#include "../std/utility.h"
 #include <omp.h>
 //#define EIGEN_HAS_OPENMP
 //#define EIGEN_DONT_PARALLELIZE
@@ -15,7 +15,7 @@ using Tensor = vector<Matrix>;
 using VectorI = vector<int>;
 using MatrixI = vector<VectorI>;
 using TensorI = vector<MatrixI>;
-#include "../../../hdf5/src/hdf5/H5Cpp.h"
+#include "../hdf5/H5Cpp.h"
 //https://portal.hdfgroup.org/display/support/HDF5+1.10.5
 struct KerasReader {
 	H5::H5File hdf5;

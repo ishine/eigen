@@ -1,6 +1,6 @@
 #include "classification.h"
 #include "bert.h"
-#include "../../../std/src/std/lagacy.h"
+#include "../std/lagacy.h"
 
 Vector Classifier::predict(const String &predict_text) {
 	auto text = predict_text;
@@ -327,25 +327,20 @@ Classifier& Classifier::phatic_classifier() {
 	return service;
 }
 
-string ClassifierChar::model_path = modelsDirectory() + "cn/keyword/model.h5";
-string ClassifierChar::vocab_path = modelsDirectory() + "cn/keyword/vocab.txt";
 
 ClassifierChar& ClassifierChar::instance() {
 	__cout(__PRETTY_FUNCTION__)
-	static ClassifierChar service(model_path, vocab_path);
+	static ClassifierChar service(modelsDirectory() + "cn/keyword/model.h5", modelsDirectory() + "cn/keyword/vocab.txt");
 
 	return service;
 }
 
 ClassifierWord& ClassifierWord::instance() {
 	__cout(__PRETTY_FUNCTION__)
-	static ClassifierWord service(model_path, vocab_path);
+	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5", modelsDirectory() + "en/keyword/vocab.txt");
 
 	return service;
 }
-
-string ClassifierWord::model_path = modelsDirectory() + "en/keyword/model.h5";
-string ClassifierWord::vocab_path = modelsDirectory() + "en/keyword/vocab.txt";
 
 //reading .h5 with HDF5++
 //https://portal.hdfgroup.org/display/support/HDF5%201.10.5

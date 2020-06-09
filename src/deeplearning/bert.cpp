@@ -1,6 +1,7 @@
 #include "bert.h"
 #include "matrix.h"
-#include "../../../std/src/std/lagacy.h"
+#include "../std/lagacy.h"
+
 //Matrix revert_mask(const MatrixI &mask, double weight) {
 //	Matrix out = mask * -weight;
 //	if (weight >= 0)
@@ -148,7 +149,7 @@ Tensor& LayerNormalization::operator ()(Tensor &x) {
 
 Matrix& LayerNormalization::operator ()(Matrix &x) {
 	__cout(x)
-	print_shape(x)
+	print_shape (x)
 	x = subt(x, mean(x));
 
 	Matrix &deviation = x;
@@ -381,8 +382,8 @@ vector<Vector>& MultiHeadAttention::scaled_dot_product_attention(
 		vector<Vector> &query, const Tensor &key, const Tensor &value) {
 	__cout(query.size())
 	__cout(query[0].size())
-	print_tensor(key)
-	print_tensor(value)
+	print_tensor (key)
+	print_tensor (value)
 	vector<Vector> &e = batch_dot(query, key, true);
 
 	e /= sqrt(key[0].cols());
@@ -975,7 +976,7 @@ PairwiseVectorSP::PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
 	__log(__PRETTY_FUNCTION__)
 }
 
-#include "../../../json/src/json/json.h"
+#include "../json/json.h"
 Json::Value readFromStream(const string &json_file);
 
 Pairwise& Pairwise::paraphrase() {
@@ -1010,37 +1011,30 @@ Pairwise& Pairwise::paraphrase() {
 
 PairwiseVectorChar& PairwiseVectorChar::instance() {
 	static PairwiseVectorChar inst(
-			(KerasReader&) (const KerasReader&) KerasReader(model_path),
-			vocab_path,
+			(KerasReader&) (const KerasReader&) KerasReader(
+					modelsDirectory() + "cn/lexicon/model.h5"),
+
+			modelsDirectory() + "cn/bert/vocab.txt",
 
 			12, //num_attention_heads = 12
-			readFromStream(config_path)["num_hidden_layers"].asInt());
+			readFromStream(modelsDirectory() + "cn/lexicon/config.json")["num_hidden_layers"].asInt());
 
 	return inst;
 }
-
-string PairwiseVectorChar::model_path = modelsDirectory()
-		+ "cn/lexicon/model.h5";
-string PairwiseVectorChar::config_path = modelsDirectory()
-		+ "cn/lexicon/config.json";
-string PairwiseVectorChar::vocab_path = modelsDirectory() + "cn/bert/vocab.txt";
 
 PairwiseVectorSP& PairwiseVectorSP::instance() {
 	__cout(__PRETTY_FUNCTION__);
 
 	static PairwiseVectorSP inst(
-			(KerasReader&) (const KerasReader&) KerasReader(model_path),
+			(KerasReader&) (const KerasReader&) KerasReader(
+					modelsDirectory() + "en/lexicon/model.h5"),
 
-			readFromStream(config_path)["num_hidden_layers"].asInt(),
+			readFromStream(modelsDirectory() + "en/lexicon/config.json")["num_hidden_layers"].asInt(),
 
 			&en_tokenizer());
 
 	return inst;
 }
-
-string PairwiseVectorSP::config_path = modelsDirectory()
-		+ "en/lexicon/config.json";
-string PairwiseVectorSP::model_path = modelsDirectory() + "en/lexicon/model.h5";
 
 Pairwise& Pairwise::lexicon() {
 	static const auto &config = readFromStream(
@@ -1801,10 +1795,8 @@ Vector& PairwiseVector::symmetric_transform(Vector &y_pred) {
 	return y_pred;
 }
 
-string en_vocab_path = modelsDirectory()
-		+ "en/bert/albert_base/30k-clean.model";
-
 sentencepiece::SentencePieceProcessor& en_tokenizer() {
-	static sentencepiece::SentencePieceProcessor sp(en_vocab_path);
+	static sentencepiece::SentencePieceProcessor sp(
+			modelsDirectory() + "en/bert/albert_base/30k-clean.model");
 	return sp;
 }

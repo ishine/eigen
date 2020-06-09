@@ -50,7 +50,6 @@ struct ClassifierChar {
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
 	static ClassifierChar& instance();
-	static string model_path, vocab_path;
 };
 
 struct ClassifierWord {
@@ -86,6 +85,5 @@ struct ClassifierWord {
 	vector<vector<vector<double>>>& weight(vector<vector<vector<double>>> &arr);
 
 	static ClassifierWord& instance();
-	static string model_path, vocab_path;
 };
 

@@ -1,6 +1,6 @@
 #include <math.h>
 #include "matrix.h"
-#include "../../../std/src/std/lagacy.h"
+#include "../std/lagacy.h"
 
 Vector& aggregate(const Matrix &x, Vector &v, vector<int> &arg,
 		double (Matrix::ConstRowXpr::*aggregate)(int*) const) {
@@ -47,6 +47,14 @@ Vector min(const Matrix &x) {
 //http://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
 //https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#abstract
 
+//double hard_sigmoid(double x) {
+//	if (x < -2.5)
+//		return 0;
+//	if (x > 2.5)
+//		return 1;
+//	return 0.2 * x + 0.5;
+//}
+//
 
 double elu(double x, double alpha) {
 	if (x >= 0)
@@ -60,6 +68,10 @@ double elu(double x) {
 	return exp(x) - 1;
 }
 
+//double relu(double x) {
+//	return x < 0 ? 0 : x;
+//}
+//
 double inverse(double x) {
 	return 1 / x;
 }
