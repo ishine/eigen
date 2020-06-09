@@ -67,8 +67,8 @@ clean:
 	javac $<
 
 install: $(artifact) LD_LIBRARY_PATH.class
-	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
-	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
+#	@echo "install $(artifact) to destination LD_LIBRARY_PATH"
+#	cp -f $(artifact) $(shell java -classpath ./ LD_LIBRARY_PATH)
 	
 	-mkdir -p ../../jetty/src/main/resources/lib/static/Linux/amd64
 	@echo "install $(artifact) to destination ../../jetty/src/main/resources/lib/static/Linux/amd64"	
