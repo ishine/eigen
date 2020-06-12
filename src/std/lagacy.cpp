@@ -45,5 +45,9 @@ void* movsq(void *_edi, const void *_esi, qword rcx) {
 	return edi;
 }
 
+double zero = 0;
+double one = 1;
+double one_fifth = 0.2;
+double half = 0.5;
 }
 
