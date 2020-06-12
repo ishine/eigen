@@ -1,7 +1,7 @@
 #include "bert.h"
 #include "matrix.h"
 #include "../std/lagacy.h"
-
+#include "utility.h"
 //Matrix revert_mask(const MatrixI &mask, double weight) {
 //	Matrix out = mask * -weight;
 //	if (weight >= 0)
@@ -148,8 +148,8 @@ Tensor& LayerNormalization::operator ()(Tensor &x) {
 }
 
 Matrix& LayerNormalization::operator ()(Matrix &x) {
-	__cout(x)
-	print_shape (x)
+	__cout(x);
+	print_shape(x)
 	x = subt(x, mean(x));
 
 	Matrix &deviation = x;
@@ -191,7 +191,7 @@ LayerNormalization::LayerNormalization() {
 }
 
 LayerNormalization::LayerNormalization(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	dis >> gamma;
 	dis >> beta;
@@ -229,7 +229,7 @@ int MidIndex::operator()(const VectorI &input_ids) {
 
 MidIndex::MidIndex(int SEP) {
 	this->SEP = SEP;
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 }
 
@@ -380,10 +380,10 @@ vector<Vector>& MultiHeadAttention::scaled_dot_product_attention(
 
 vector<Vector>& MultiHeadAttention::scaled_dot_product_attention(
 		vector<Vector> &query, const Tensor &key, const Tensor &value) {
-	__cout(query.size())
-	__cout(query[0].size())
-	print_tensor (key)
-	print_tensor (value)
+	__cout(query.size());
+	__cout(query[0].size());
+	print_tensor(key);
+	print_tensor(value);
 	vector<Vector> &e = batch_dot(query, key, true);
 
 	e /= sqrt(key[0].cols());
@@ -494,7 +494,7 @@ vector<Vector>& MultiHeadAttention::reshape_from_batches(vector<Vector> &x) {
 MultiHeadAttention::MultiHeadAttention(KerasReader &dis,
 		int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	dis >> Wq;
 	dis >> bq;
@@ -640,7 +640,7 @@ BertEmbedding::BertEmbedding(KerasReader &dis, int num_attention_heads) :
 		layerNormalization(dis),
 
 		embeddingMapping(dis, Activator::linear) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	embed_dim = wordEmbedding.wEmbedding.cols();
 	hidden_size = embeddingMapping.weight.cols();
@@ -655,7 +655,7 @@ NonSegmentedBertEmbedding::NonSegmentedBertEmbedding(KerasReader &dis,
 		layerNormalization(dis),
 
 		embeddingMapping(dis, Activator::linear) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	embed_dim = wordEmbedding.wEmbedding.cols();
 	hidden_size = embeddingMapping.weight.cols();
@@ -837,13 +837,14 @@ AlbertTransformer::AlbertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads, Activation hidden_act) :
 		num_hidden_layers(num_hidden_layers), encoder(dis, num_attention_heads,
 				hidden_act) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
+
 }
 
 BertTransformer::BertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads, Activation hidden_act) :
 		num_hidden_layers(num_hidden_layers), encoder(num_hidden_layers) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	for (int i = 0; i < num_hidden_layers; ++i) {
 		encoder[i] = Encoder(dis, num_attention_heads, hidden_act);
@@ -914,7 +915,7 @@ vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
 Vector& AlbertTransformer::operator ()(Matrix &input_layer, Vector &y) {
 	auto &last_layer = input_layer;
 	for (int i = 0; i < num_hidden_layers; ++i) {
-//		__cout(last_layer)
+//		__cout(last_layer);
 		if (i == num_hidden_layers - 1) {
 			y = encoder(last_layer, y);
 		} else
@@ -943,7 +944,7 @@ Pairwise::Pairwise(KerasReader &dis, const string &vocab,
 		dis, num_attention_heads), transformer(
 		dis, num_hidden_layers,
 		num_attention_heads, {Activator::gelu}), poolerDense(dis), similarityDense(dis, Activator::sigmoid) {
-			__cout(__PRETTY_FUNCTION__)
+			__cout(__PRETTY_FUNCTION__);
 		}
 
 //bool cross_layer_parameter_sharing = true;
@@ -954,7 +955,8 @@ PairwiseVector::PairwiseVector(KerasReader &dis, Activation hidden_act,
 		transformer(dis, num_hidden_layers, num_attention_heads, hidden_act),
 
 		bilinear(dis, bilinear_act) {
-	__log(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__);
+
 }
 
 PairwiseVectorChar::PairwiseVectorChar(KerasReader &dis, const string &vocab,
@@ -963,7 +965,8 @@ PairwiseVectorChar::PairwiseVectorChar(KerasReader &dis, const string &vocab,
 				num_hidden_layers, { Activator::sigmoid }),
 
 		word2id(Text(vocab).read_vocab(0)) {
-	__log(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__);
+
 }
 
 PairwiseVectorSP::PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
@@ -973,7 +976,8 @@ PairwiseVectorSP::PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
 				{ Activator::sigmoid }),
 
 		tokenizer(tokenizer) {
-	__log(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__);
+
 }
 
 #include "../json/json.h"
@@ -1004,7 +1008,7 @@ Pairwise& Pairwise::paraphrase() {
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	return inst;
 }
@@ -1062,7 +1066,7 @@ Pairwise& Pairwise::lexicon() {
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
-//	__cout(__PRETTY_FUNCTION__)
+//	__cout(__PRETTY_FUNCTION__);
 	return inst;
 }
 
@@ -1096,11 +1100,11 @@ double Pairwise::operator ()(VectorI &input_ids) {
 }
 
 Vector PairwiseVector::operator ()(const VectorI &input_ids) {
-	__cout(input_ids)
+	__cout(input_ids);
 
 	auto embed_layer = bertEmbedding(input_ids);
 
-//	__cout(embed_layer)
+//	__cout(embed_layer);
 
 	Vector clsEmbedding;
 	transformer(embed_layer, clsEmbedding);
@@ -1110,8 +1114,8 @@ Vector PairwiseVector::operator ()(const VectorI &input_ids) {
 
 Vector PairwiseVector::operator ()(const VectorI &input_ids,
 		const VectorI &input_ids1) {
-	__cout(input_ids)
-	__cout(input_ids1)
+	__cout(input_ids);
+	__cout(input_ids1);
 
 	Vector sent = (*this)(input_ids);
 	Vector sent1 = (*this)(input_ids1);
@@ -1161,8 +1165,8 @@ vector<String> PairwiseVectorChar::tokenize(const String &text) {
 }
 
 Vector PairwiseVectorChar::operator ()(const String &x, const String &y) {
-	__cout(x)
-	__cout(y)
+	__cout(x);
+	__cout(y);
 
 	vector<String> s_x = tokenize(x);
 	vector<String> s_y = tokenize(y);
@@ -1170,8 +1174,8 @@ Vector PairwiseVectorChar::operator ()(const String &x, const String &y) {
 	auto input_ids = string2id(s_x, word2id);
 	auto input_ids1 = string2id(s_y, word2id);
 
-//	__cout(input_ids)
-//	__cout(input_ids1)
+//	__cout(input_ids);
+//	__cout(input_ids1);
 
 	return (*this)(input_ids, input_ids1);
 }
@@ -1311,7 +1315,7 @@ vector<String> whitespace_tokenize(String &text) {
 FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 		vocab(Text(vocab_file).read_vocab(0)), unk_token(u"[UNK]"),
 		max_input_chars_per_word(200), do_lower_case(do_lower_case) {
-			__cout(__PRETTY_FUNCTION__)
+			__cout(__PRETTY_FUNCTION__);
 		}
 
 FullTokenizer& FullTokenizer::instance_cn() {
@@ -1544,7 +1548,7 @@ struct ClusteringAlgorithm {
 		double *priority_of_cluster;
 		less(double *priority_of_cluster = nullptr) :
 				priority_of_cluster(priority_of_cluster) {
-			__cout(__PRETTY_FUNCTION__)
+			__cout(__PRETTY_FUNCTION__);
 		}
 
 		bool operator ()(int x, int y) {
@@ -1552,12 +1556,16 @@ struct ClusteringAlgorithm {
 		}
 	};
 
-	ClusteringAlgorithm(Matrix &scores, const VectorI &frequency) :
+	ClusteringAlgorithm(Matrix &scores, const VectorI &frequency,
+//			int maxNumOfClusters,
+			int maxNumOfChildren) :
 			scores(scores),
 
 			n(scores.rows()),
 
-			max_num_of_clusters(sqrt(2 * n)),
+//			maxNumOfClusters(maxNumOfClusters),
+
+			maxNumOfChildren(std::min(maxNumOfChildren, (int) sqrt(2 * n))),
 
 			heads(n, -1),
 
@@ -1575,7 +1583,7 @@ struct ClusteringAlgorithm {
 			++num_of_children[parent];
 			priority_of_cluster[parent] += scores(parent, child);
 		}
-		__cout(num_of_children)
+		__cout(num_of_children);
 
 		double max_frequency = frequency[0];
 		for (int parent = 0; parent < n; ++parent) {
@@ -1584,12 +1592,11 @@ struct ClusteringAlgorithm {
 
 			pq.insert(parent);
 		}
-		__cout(priority_of_cluster)
+		__cout(priority_of_cluster);
 	}
 
 	Matrix &scores;
-	int n;
-	int max_num_of_clusters;
+	int n, maxNumOfChildren;
 	VectorI heads;
 	VectorI num_of_children;
 	vector<double> priority_of_cluster;
@@ -1616,15 +1623,15 @@ struct ClusteringAlgorithm {
 		while (!pq.empty()) {
 			int parent = pq.pop();
 
-			__cout(parent)
+			__cout(parent);
 			__cout(num_of_children);
 			__cout(priority_of_cluster);
 			if (parent < 0)
 				continue;
 
 			int numOfChildren = num_of_children[parent];
-			__cout(numOfChildren)
-			__cout(priority_of_cluster[parent])
+			__cout(numOfChildren);
+			__cout(priority_of_cluster[parent]);
 
 			if (!numOfChildren) {
 //				cout << "leaf node detected, with priority = " << priority_of_cluster[parent] << endl;
@@ -1640,7 +1647,7 @@ struct ClusteringAlgorithm {
 				break;
 			}
 
-			if (numOfChildren > max_num_of_clusters) {
+			if (numOfChildren > maxNumOfChildren) {
 //this parent has too many children, so this parent should abandon one of its current children and assign this abandoned child to another parent!
 				if (change_parent_for(find_worst_child(parent)))
 					continue;
@@ -1720,24 +1727,27 @@ struct ClusteringAlgorithm {
 	}
 };
 
-VectorI lexiconStructure(Matrix &scores, const VectorI &frequency) {
-	ClusteringAlgorithm cluster(scores, frequency);
+VectorI lexiconStructure(Matrix &scores, const VectorI &frequency,
+		int maxNumOfChildren) {
+	ClusteringAlgorithm cluster(scores, frequency, maxNumOfChildren);
 	cluster.run();
 	assert(cluster.sanctity_check());
 	return cluster.heads;
 }
 
 VectorI lexiconStructure(const vector<String> &keywords,
-		const VectorI &frequency) {
+		const VectorI &frequency, int maxNumOfChildren) {
 //	cout << "keywords = " << keywords << endl;
 //	cout << "frequency = " << frequency << endl;
 	auto scores = PairwiseVectorChar::instance()(keywords);
-	return lexiconStructure(scores, frequency);
+	return lexiconStructure(scores, frequency, maxNumOfChildren);
 }
 
 VectorI lexiconStructure(int lang, const vector<vector<double>> &_embedding,
-		const vector<vector<double>> &score_matrix, const VectorI &frequency) {
-	__log(score_matrix)
+		const vector<vector<double>> &score_matrix, const VectorI &frequency,
+		int maxNumOfChildren) {
+	__log(score_matrix);
+
 	int size = _embedding.size();
 	vector<Vector> embedding(size);
 	for (int i = 0; i < size; ++i) {
@@ -1759,13 +1769,13 @@ VectorI lexiconStructure(int lang, const vector<vector<double>> &_embedding,
 		}
 	}
 
-	return lexiconStructure(scores, frequency);
+	return lexiconStructure(scores, frequency, maxNumOfChildren);
 }
 
 VectorI lexiconStructure(const vector<string> &keywords,
-		const VectorI &frequency) {
+		const VectorI &frequency, int maxNumOfChildren) {
 	auto scores = PairwiseVectorSP::instance()(keywords);
-	return lexiconStructure(scores, frequency);
+	return lexiconStructure(scores, frequency, maxNumOfChildren);
 }
 
 //double PairwiseVector::probability2score(const Vector &probability) {

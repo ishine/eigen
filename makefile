@@ -1,7 +1,7 @@
 .PHONY: all clean install rebuild
 
 all: 
-	make -C Linux 
+	make -j8 -C Linux 
 
 clean:
 	make -C Linux clean
@@ -12,5 +12,5 @@ test:
 rebuild: clean all
 	
 install:
-	make -C Linux install
+	make -j8 -C Linux install
 	@echo "finish installing eigen.so"

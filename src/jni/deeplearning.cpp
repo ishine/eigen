@@ -36,7 +36,8 @@ void JNICALL Java_org_dll_Native_initializeWorkingDirectory(JNIEnv *env,
 	cout << "after initializing workingDirectory = " << workingDirectory
 			<< endl;
 
-	cout << "after initializing modelsDirectory = " << modelsDirectory() << endl;
+	cout << "after initializing modelsDirectory = " << modelsDirectory()
+			<< endl;
 }
 
 jintArray JNICALL Java_org_dll_Native_tokens2idsEN(JNIEnv *env, jobject _,
@@ -188,17 +189,10 @@ jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreENs(JNIEnv *env,
 //inputs: String [] keywords;
 //ouputs: int [] heads;
 
-jintArray JNICALL Java_org_dll_Native_lexiconStructureCN(JNIEnv *env, jobject _,
-		jobjectArray keywords, jintArray frequency) {
-	__cout(__PRETTY_FUNCTION__);
-	JArray<int> jArray(env, frequency);
-	jArray = lexiconStructure(JArray<String>(env, keywords), jArray);
-	return frequency;
-}
-
 jintArray JNICALL Java_org_dll_Native_lexiconStructureWithEmbedding(JNIEnv *env,
 		jobject _, jint lang, jobjectArray jEmbedding,
-		jobjectArray jHierarchicalMatrix, jintArray frequency) {
+		jobjectArray jHierarchicalMatrix, jintArray frequency,
+		jint maxNumOfChildren) {
 	__cout(__PRETTY_FUNCTION__);
 	JArray<int> jArray(env, frequency);
 	JArray<vector<double>> jDoubleDoubleArray(env, jEmbedding);
@@ -207,7 +201,7 @@ jintArray JNICALL Java_org_dll_Native_lexiconStructureWithEmbedding(JNIEnv *env,
 			jHierarchicalMatrix);
 
 	jArray = lexiconStructure(lang, cDoubleDoubleVector, cHierarchicalMatrix,
-			jArray);
+			jArray, maxNumOfChildren);
 	return frequency;
 }
 
@@ -237,14 +231,6 @@ jobjectArray JNICALL Java_org_dll_Native_lexiconEmbedding(JNIEnv *env,
 
 	}
 	return Object(env, matrix);
-}
-
-jintArray JNICALL Java_org_dll_Native_lexiconStructureEN(JNIEnv *env, jobject _,
-		jobjectArray seg, jintArray frequency) {
-	__cout(__PRETTY_FUNCTION__)
-	return Object(env,
-			lexiconStructure(JArray<string>(env, seg),
-					JArray<int>(env, frequency)));
 }
 
 //inputs: String [] text;

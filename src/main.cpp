@@ -83,10 +83,10 @@ int main(int argc, char **argv) {
 	cout << "lexicon score = " << lexicon(u"业务", u"公司业务") << endl;
 	cout << "lexicon score = " << lexicon(u"今晚", u"今天") << endl;
 
-//	cout << "zero = " << zero << endl;
-//	cout << "one = " << one << endl;
-//	cout << "one_fifth = " << one_fifth << endl;
-//	cout << "half = " << half << endl;
+	cout << "zero = " << zero << endl;
+	cout << "one = " << one << endl;
+	cout << "one_fifth = " << one_fifth << endl;
+	cout << "half = " << half << endl;
 
 //	cout << "gcd_long(10, 46) = " << gcd_long(10, 46) << endl;
 //	cout << "gcd_qword(10, 46) = " << gcd_qword(10, 46) << endl;
@@ -110,9 +110,6 @@ int main(int argc, char **argv) {
 //	test_eigen();
 	return 0;
 }
-//https://www.cnblogs.com/listenscience/p/11509164.html
-
-//https://academy.zhihuiya.com/#/user/learning/index
-//15821495341
-//https://ks.wjx.top/jq/69262900.aspx
-//132421
+//todo:
+//https://blog.csdn.net/AMDS123/article/details/77284751?utm_source=blogxgwz9?utm_medium=distribute.pc_relevant.none-task-blog-baidujs-1
+//openBlas

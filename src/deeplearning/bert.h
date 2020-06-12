@@ -397,7 +397,7 @@ vector<int> lexiconStructure(const vector<String> &keywords,
 
 vector<int> lexiconStructure(int lang, const vector<vector<double>> &embedding,
 		const vector<vector<double>> &score_matrix,
-		const vector<int> &frequency);
+		const vector<int> &frequency, int maxNumOfChildren);
 
 vector<int> lexiconStructure(const vector<string> &keywords,
 		const vector<int> &frequency);
