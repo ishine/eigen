@@ -15,6 +15,8 @@ half:
 .section .text
 .global relu, hard_sigmoid, gcd_long, gcd_qword, gcd_int, gcd_dword, stosd, movsq
 
+.global sum8args
+
 .ifdef linux
 //determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
 gcd_qword:
