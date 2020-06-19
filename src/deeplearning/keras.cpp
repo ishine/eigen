@@ -1,4 +1,5 @@
 #include "keras.h"
+#include "matrix.h"
 
 CRF::CRF(Matrix kernel, Matrix G, Vector bias, Vector left_boundary,
 		Vector right_boundary) {

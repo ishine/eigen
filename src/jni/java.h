@@ -2,6 +2,7 @@
 
 #include <jni.h>
 #include "../deeplearning/utility.h"
+#include "../std/utility.h"
 
 struct CString {
 	CString(JNIEnv *env, jstring str) :

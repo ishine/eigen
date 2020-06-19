@@ -167,23 +167,10 @@ jdouble JNICALL Java_org_dll_Native_relevance(JNIEnv *env, jobject _, jint lang,
 
 jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreWithEmbedding(
 		JNIEnv *env, jobject _, jint lang, jobjectArray jdoubleArrayArray) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 	auto &model =
 			lang ? (PairwiseVector&) PairwiseVectorChar::instance() : (PairwiseVector&) PairwiseVectorSP::instance();
 	return Object(env, model(JArray<Vector>(env, jdoubleArrayArray)));
-}
-
-jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreCNs(JNIEnv *env,
-		jobject _, jobjectArray jtext) {
-	__cout(__PRETTY_FUNCTION__)
-	return Object(env,
-			PairwiseVectorChar::instance()(JArray<String>(env, jtext)));
-}
-
-jobjectArray JNICALL Java_org_dll_Native_lexiconMutualScoreENs(JNIEnv *env,
-		jobject _, jobjectArray jtext) {
-//	__cout(__PRETTY_FUNCTION__)
-	return Object(env, PairwiseVectorSP::instance()(JArray<string>(env, jtext)));
 }
 
 //inputs: String [] keywords;
@@ -195,13 +182,12 @@ jintArray JNICALL Java_org_dll_Native_lexiconStructureWithEmbedding(JNIEnv *env,
 		jint maxNumOfChildren) {
 	__cout(__PRETTY_FUNCTION__);
 	JArray<int> jArray(env, frequency);
-	JArray<vector<double>> jDoubleDoubleArray(env, jEmbedding);
-	vector<vector<double>> cDoubleDoubleVector = jDoubleDoubleArray;
-	vector<vector<double>> cHierarchicalMatrix = JArray<vector<double>>(env,
-			jHierarchicalMatrix);
+	JArray<vector<double>> jScore(env, jHierarchicalMatrix);
+	vector<vector<double>> cHierarchicalMatrix = jScore;
 
-	jArray = lexiconStructure(lang, cDoubleDoubleVector, cHierarchicalMatrix,
-			jArray, maxNumOfChildren);
+	jArray = lexiconStructure(lang, JArray<vector<double>>(env, jEmbedding),
+			cHierarchicalMatrix, jArray, maxNumOfChildren);
+//	jScore = cHierarchicalMatrix;
 	return frequency;
 }
 

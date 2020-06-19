@@ -1255,9 +1255,7 @@ Matrix PairwiseVector::operator ()(const vector<Vector> &sent) {
 		int i = indices[k].first;
 		int j = indices[k].second;
 		//guarantee that i < j
-		auto probability = bilinear(sent[i], sent[j]);
-		scores(i, j) = probability(0);
-		scores(j, i) = probability(0);
+		scores(j, i) = scores(i, j) = bilinear(sent[i], sent[j])(0);
 	}
 
 	return scores;
@@ -1592,7 +1590,6 @@ struct ClusteringAlgorithm {
 
 			pq.insert(parent);
 		}
-		__cout(priority_of_cluster);
 	}
 
 	Matrix &scores;
@@ -1744,7 +1741,7 @@ VectorI lexiconStructure(const vector<String> &keywords,
 }
 
 VectorI lexiconStructure(int lang, const vector<vector<double>> &_embedding,
-		const vector<vector<double>> &score_matrix, const VectorI &frequency,
+		vector<vector<double>> &score_matrix, const VectorI &frequency,
 		int maxNumOfChildren) {
 	__log(score_matrix);
 
@@ -1765,7 +1762,6 @@ VectorI lexiconStructure(int lang, const vector<vector<double>> &_embedding,
 			s *= s;
 			s += score_matrix[i][j];
 			s *= 2;
-//			scores(i, j) = abs(scores(i, j));
 		}
 	}
 
