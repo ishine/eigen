@@ -2,6 +2,7 @@
 
 #include <jni.h>
 #include "../deeplearning/utility.h"
+#include "../std/utility.h"
 
 struct CString {
 	CString(JNIEnv *env, jstring str) :
@@ -336,10 +337,6 @@ struct JArray<int> {
 
 	operator vector<int>() const {
 		return vector<int>(ptr, ptr + length);
-	}
-
-	operator VectorI() const {
-		return Eigen::Map<VectorI>((int*) ptr, length);
 	}
 
 	jint operator [](size_t i) const {

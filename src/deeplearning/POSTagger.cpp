@@ -6,7 +6,7 @@ vector<String> POSTagger::convertToPOStags(const VectorI &ids) {
 	int n = ids.size();
 	vector<String> pos(n);
 	for (int i = 0; i < n; ++i) {
-		pos[i] = this->posTags[ids(i)];
+		pos[i] = this->posTags[ids[i]];
 	}
 	return pos;
 }
@@ -74,7 +74,7 @@ POSTagger::POSTagger(const string &h5FilePath, const string &vocabFilePath,
 POSTagger::POSTagger(KerasReader &dis, const string &vocabFilePath,
 		const string &posTagsFilePath) :
 		posTags(Text(posTagsFilePath).readlines()), word2id(
-				Text(vocabFilePath).read_char_vocab()), embedding(dis), gru(dis,
+				Text(vocabFilePath).read_vocab_char()), embedding(dis), gru(dis,
 				Bidirectional::sum), lstm0(dis, Bidirectional::sum), lstm1(dis,
 				Bidirectional::sum), lstm2(dis, Bidirectional::sum), wCRF(dis) {
 	__log(__PRETTY_FUNCTION__)

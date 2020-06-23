@@ -1,10 +1,3 @@
-//the following line is added to cope with the error:
-//relocation R_X86_64_32S against `.data' can not be used when making a shared object; recompile with -fPIC
-//DEFAULT REL
-//relocation R_X86_64_PC32 against symbol `zero' can not be used when making a shared object; recompile with -fPIC
-//assembler settings:
-//output file = std.o
-//nasm -D__symbol=1 -f elf64 ${INPUTS} -o${PWD}/${OUTPUT}
 .intel_syntax noprefix
 
 .global zero, one, one_fifth, half
@@ -22,8 +15,7 @@ half:
 .section .text
 .global relu, hard_sigmoid, gcd_long, gcd_qword, gcd_int, gcd_dword, stosd, movsq
 
-.global sum8args, CalcSum_, CalcDist_
-
+.global sum8args
 
 .ifdef linux
 //determine the gcd of (rcx, rdx): gcd(rcx, rdx) = gcd(rdx, rcx % rdx)
@@ -258,7 +250,6 @@ hard_sigmoid:
 // max(y, 0)
 	ret
 .endif
-
 
 
 jmp_ret:

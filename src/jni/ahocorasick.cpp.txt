@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include "java.h"
-#include "../ahocorasick/public.h"
+#include "../../../ahocorasick/public.h"
 template<>
 struct FindClass<Emit> {
 	static const char *name;
@@ -29,30 +29,30 @@ jobject Object(JNIEnv *env, const Emit &s) {
 }
 
 extern "C" {
-void JNICALL Java_com_util_Native_initializeAhocorasickDictionary(JNIEnv *env,
+void JNICALL Java_org_dll_Native_initializeAhocorasickDictionary(JNIEnv *env,
 		jobject obj, jstring pwd) {
 	ahocorasick::initialize(CString(env, pwd));
 }
 
-void JNICALL Java_com_util_Native_ahocorasickTest(JNIEnv *env, jobject obj) {
+void JNICALL Java_org_dll_Native_ahocorasickTest(JNIEnv *env, jobject obj) {
 	ahocorasick::test();
 }
 
-jobjectArray JNICALL Java_com_util_Native_parseText(JNIEnv *env, jobject obj,
-		jstring jText) {
-	auto start = clock();
-	JString text(env, jText);
-
-	auto ending = clock();
-	cout << "initialization time cost = " << (ending - start) << endl;
-	start = ending;
-
-	auto emit = ahocorasick::instance.parseText(text.ptr, text.length());
-	ending = clock();
-	cout << "parsing time cost     = " << (ending - start) << endl;
-
-	return Object(env, emit);
-}
+//jobjectArray JNICALL Java_org_dll_Native_parseText(JNIEnv *env, jobject obj,
+//		jstring jText) {
+//	auto start = clock();
+//	JString text(env, jText);
+//
+//	auto ending = clock();
+//	cout << "initialization time cost = " << (ending - start) << endl;
+//	start = ending;
+//
+//	auto emit = ahocorasick::instance.parseText(text.ptr, text.length());
+//	ending = clock();
+//	cout << "parsing time cost     = " << (ending - start) << endl;
+//
+//	return Object(env, emit);
+//}
 
 }
 

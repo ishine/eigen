@@ -28,16 +28,17 @@ using std::endl;
 #include "H5Cpp.h"
 using namespace H5;
 
-const H5std_string FILE_NAME("SDS.h5");
-const H5std_string DATASET_NAME("IntArray");
-const int NX_SUB = 3;	// hyperslab dimensions
-const int NY_SUB = 4;
-const int NX = 7;		// output buffer dimensions
-const int NY = 7;
-const int NZ = 3;
-const int RANK_OUT = 3;
 
 int readdata(void) {
+	const H5std_string FILE_NAME("SDS.h5");
+	const H5std_string DATASET_NAME("IntArray");
+	const int NX_SUB = 3;	// hyperslab dimensions
+	const int NY_SUB = 4;
+	const int NX = 7;		// output buffer dimensions
+	const int NY = 7;
+	const int NZ = 3;
+	const int RANK_OUT = 3;
+
 	/*
 	 * Output buffer initialization.
 	 */

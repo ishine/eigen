@@ -25,13 +25,13 @@
 #include "H5Cpp.h"
 using namespace H5;
 
-const H5std_string FILE_NAME("SDS.h5");
-const H5std_string DATASET_NAME("IntArray");
-const int NX = 5;                    // dataset dimensions
-const int NY = 6;
-const int RANK = 2;
 
 int create_hdf5_file(void) {
+	const H5std_string FILE_NAME("SDS.h5");
+	const H5std_string DATASET_NAME("IntArray");
+	const int NX = 5;                    // dataset dimensions
+	const int NY = 6;
+	const int RANK = 2;
 	/*
 	 * Data initialization.
 	 */

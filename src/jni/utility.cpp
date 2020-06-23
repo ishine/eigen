@@ -5,13 +5,13 @@
 
 #include "../std/utility.h"
 
-#include "java.h"
+#include "../jni/java.h"
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 extern "C" {
 
-jlongArray JNICALL Java_com_util_Native_double2long(JNIEnv *env, jobject obj,
+jlongArray JNICALL Java_org_dll_Native_double2long(JNIEnv *env, jobject obj,
 		jdoubleArray doubleArray) {
 	JArray<double> doubleVector(env, doubleArray);
 	using pointer = long long *;
@@ -30,7 +30,7 @@ jlongArray JNICALL Java_com_util_Native_double2long(JNIEnv *env, jobject obj,
 	return Object(env, *(vector<long long>*)&__struct);
 }
 
-jdoubleArray JNICALL Java_com_util_Native_long2double(JNIEnv *env, jobject obj,
+jdoubleArray JNICALL Java_org_dll_Native_long2double(JNIEnv *env, jobject obj,
 		jlongArray longArray) {
 	JArray<long long> longVector(env, longArray);
 	using pointer = double *;

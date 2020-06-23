@@ -22,7 +22,7 @@
  *
  * @author Robert Bor
  */
-#include "../deeplearning/utility.h"
+#include "../std/utility.h"
 #include <map>
 using std::map;
 #include <queue>

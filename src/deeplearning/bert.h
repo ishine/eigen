@@ -125,7 +125,7 @@ struct PositionEmbedding {
 	Tensor& operator()(Tensor &sequence);
 	Matrix& operator()(Matrix &sequence, int mid);
 	Matrix& operator()(Matrix &sequence);
-	vector<Vector> compute_mask(vector<VectorI> &inputToken);
+	Matrix compute_mask(vector<VectorI> &inputToken);
 };
 
 struct RevertMask {
@@ -154,7 +154,7 @@ struct BertEmbedding {
 	int embed_dim, hidden_size;
 
 	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
-			const vector<VectorI> &inputSegment, vector<Vector> &mask);
+			const vector<VectorI> &inputSegment, Matrix &mask);
 
 	Matrix operator ()(VectorI &inputToken, int inputMid,
 			const VectorI &inputSegment);
@@ -182,7 +182,6 @@ struct NonSegmentedBertEmbedding {
 	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
 
 	Matrix operator ()(const VectorI &inputToken);
-	Matrix operator ()(const vector<int> &inputToken);
 
 	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
@@ -233,12 +232,12 @@ struct AlbertTransformer {
 			const vector<MatrixI> &attention_matrix, RevertMask &fn,
 			const vector<Vector> &mask);
 
-	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
+	Tensor& operator ()(Tensor &input_layer, const Matrix &mask);
 
 	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
 			const vector<Vector> &mask);
 
-	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
+	vector<Vector>& operator ()(Tensor &input_layer, const Matrix &mask,
 			vector<Vector> &y);
 
 	Vector& operator ()(Matrix &input_layer, Vector &y);
@@ -340,68 +339,65 @@ struct Pairwise {
 };
 
 struct PairwiseVector {
-	PairwiseVector(KerasReader &dis, Activation hidden_act, int num_attention_heads,
-			int num_hidden_layers = 12);
+	PairwiseVector(KerasReader &dis, Activation hidden_act,
+			int num_attention_heads, int num_hidden_layers,
+			Activation bilinear_act);
 	NonSegmentedBertEmbedding bertEmbedding;
 
 	AlbertTransformer transformer;
 	Bilinear bilinear;
 
-	static double probability2score(const Vector &y_pred);
+//	static double probability2score(const Vector &y_pred);
 	static Vector& symmetric_transform(Vector &y_pred);
 	Matrix operator ()(const vector<VectorI> &input_ids);
-	Matrix operator ()(const vector<vector<int>> &input_ids);
-	Vector operator ()(const vector<int> &input_ids);
 	Vector operator ()(const VectorI &input_ids);
 	Vector operator ()(const VectorI &input_ids, const VectorI &input_ids1);
-	Vector operator ()(const vector<int> &input_ids,
-			const vector<int> &input_ids1);
 
 	Matrix operator ()(const vector<Vector> &s);
 
-	static const String& lexicon_label(const Vector &y_pred);
+//	static const String& lexicon_label(const Vector &y_pred);
 };
 
 struct PairwiseVectorChar: PairwiseVector {
 	PairwiseVectorChar(KerasReader &dis, const string &vocab,
 			int num_attention_heads, int num_hidden_layers = 12);
 	dict<String, int> word2id;
-
+	vector<String> tokenize(const String &text);
 	using PairwiseVector::operator ();
 	Matrix operator ()(const vector<String> &s);
 	Vector operator ()(const String &x, const String &y);
 	Vector operator ()(const String &x);
 	Vector operator ()(const char16_t *x, const char16_t *y);
-	static PairwiseVectorChar& lexicon();
-	static PairwiseVectorChar& instantiateHyponym();
+	static PairwiseVectorChar& instance();
 };
 
-#include "../sentencepiece/sentencepiece_processor.h"
-
+#include "sentencepiece.h"
 struct PairwiseVectorSP: PairwiseVector {
-	PairwiseVectorSP(KerasReader &dis, const string &path,
-			int num_attention_heads, int num_hidden_layers = 12);
-	sentencepiece::SentencePieceProcessor sp;
+	PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
+			sentencepiece::SentencePieceProcessor *tokenizer);
 	using PairwiseVector::operator ();
 
+	sentencepiece::SentencePieceProcessor *tokenizer;
+	vector<string> tokenize(const string &text);
 	Matrix operator ()(const vector<string> &s);
 	Vector operator ()(const string &x, const string &y);
 	Vector operator ()(const string &x);
+	Vector operator ()(String &x);
+	Vector operator ()(String &x, String &y);
 	Vector operator ()(const char *x, const char *y);
 
-	static PairwiseVectorSP& lexicon();
+	static PairwiseVectorSP& instance();
 
-	static PairwiseVectorSP& instantiateHyponym();
+	static PairwiseVectorSP& initialize(const string &config,
+			const string &path, const string &vocab);
 };
 
 vector<int> lexiconStructure(const vector<String> &keywords,
 		const vector<int> &frequency);
 
-vector<int> lexiconStructureCN(const vector<vector<double>> &embedding,
-		const vector<int> &frequency);
+vector<int> lexiconStructure(int lang, const vector<vector<double>> &embedding,
+		vector<vector<double>> &score_matrix,
+		const vector<int> &frequency, int maxNumOfChildren);
 
 vector<int> lexiconStructure(const vector<string> &keywords,
 		const vector<int> &frequency);
-
-#include "../sentencepiece/sentencepiece_processor.h"
-sentencepiece::SentencePieceProcessor& en_tokenizer();

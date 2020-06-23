@@ -21,7 +21,7 @@ Vector& min(const Matrix &x, Vector &min, vector<int> &argmin) {
 	return aggregate(x, min, argmin, &Matrix::ConstRowXpr::minCoeff);
 }
 
-int max(const vector<int>&x, int&index) {
+int max(const vector<int> &x, int &index) {
 	int max = std::numeric_limits<int>::min();
 	for (int i = 0, size = x.size(); i < size; ++i) {
 		if (x[i] > max) {
@@ -68,10 +68,10 @@ double elu(double x) {
 	return exp(x) - 1;
 }
 
-double relu(double x) {
-	return x < 0 ? 0 : x;
-}
-
+//double relu(double x) {
+//	return x < 0 ? 0 : x;
+//}
+//
 double inverse(double x) {
 	return 1 / x;
 }
@@ -352,18 +352,6 @@ Vector& inverse(Vector &x) {
 }
 
 MatrixI& operator !=(MatrixI &x, int y) {
-	int rows = x.rows();
-	int cols = x.cols();
-
-	for (int i = 0; i < rows; ++i) {
-		for (int j = 0; j < cols; ++j) {
-			x(i, j) = x(i, j) == y ? 0 : 1;
-		}
-	}
-	return x;
-}
-
-vector<VectorI>& operator !=(vector<VectorI> &x, int y) {
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
 		x[k] = x[k] != y;
@@ -373,7 +361,7 @@ vector<VectorI>& operator !=(vector<VectorI> &x, int y) {
 }
 
 VectorI& operator !=(VectorI &x, int y) {
-	int cols = x.cols();
+	int cols = x.size();
 	for (int j = 0; j < cols; ++j) {
 		x[j] = x[j] != y;
 	}
@@ -382,12 +370,12 @@ VectorI& operator !=(VectorI &x, int y) {
 }
 
 MatrixI& operator ==(MatrixI &x, int y) {
-	int rows = x.rows();
-	int cols = x.cols();
+	int rows = x.size();
+	int cols = x[0].size();
 
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {
-			x(i, j) = x(i, j) == y ? 1 : 0;
+			x[i][j] = x[i][j] == y ? 1 : 0;
 		}
 	}
 	return x;
@@ -545,14 +533,35 @@ Vector& operator +=(Vector &x, double y) {
 }
 
 MatrixI& operator -(int x, MatrixI &y) {
-	y.array() -= x - y.array();
+	int rows = y.size();
+	int cols = y[0].size();
+	for (int i = 0; i < rows; ++i) {
+		for (int j = 0; j < cols; ++j) {
+			y[i][j] = x - y[i][j];
+		}
+	}
+
 	return y;
 }
 
 MatrixI& operator -=(MatrixI &x, int y) {
-	x.array() -= y;
+
+	int rows = x.size();
+	for (int i = 0; i < rows; ++i) {
+		x[i] -= y;
+	}
+
 	return x;
 }
+
+VectorI& operator -=(VectorI &x, int y) {
+	for (int &t : x) {
+		t -= y;
+	}
+
+	return x;
+}
+
 
 Vector& operator -=(Vector &x, double y) {
 	x.array() -= y;
@@ -561,14 +570,6 @@ Vector& operator -=(Vector &x, double y) {
 
 Vector& operator -(Vector &x, double y) {
 	return x -= y;
-}
-
-vector<VectorI>& operator -=(vector<VectorI> &x, int y) {
-	int batch_size = x.size();
-	for (int k = 0; k < batch_size; ++k) {
-		x[k].array() -= y;
-	}
-	return x;
 }
 
 Tensor& operator -=(Tensor &x, const vector<Vector> &y) {
@@ -606,21 +607,15 @@ vector<Vector>& operator -=(vector<Vector> &x, const vector<double> &y) {
 	return x;
 }
 
-vector<Vector> operator *(double x, const vector<VectorI> &y) {
-	vector<Vector> out;
-	int batch_size = y.size();
-	out.resize(batch_size);
-	for (int k = 0; k < batch_size; ++k) {
-		out[k] = x * y[k].cast<double>();
-	}
-	return out;
-}
-
-Matrix operator *(double x, const MatrixI &y) {
-	Matrix out;
-	out = x * y.cast<double>();
-	return out;
-}
+//vector<Vector> operator *(double x, const MatrixI &y) {
+//	vector<Vector> out;
+//	int batch_size = y.size();
+//	out.resize(batch_size);
+//	for (int k = 0; k < batch_size; ++k) {
+//		out[k] = y[k] * x;
+//	}
+//	return out;
+//}
 
 Tensor& operator *=(Tensor &x, const Vector &y) {
 	const auto &y_array = y.array();
@@ -653,10 +648,17 @@ vector<Vector>& operator *=(vector<Vector> &x, const Matrix &y) {
 	return x;
 }
 
-vector<VectorI>& operator *=(vector<VectorI> &x, int y) {
+MatrixI& operator *=(MatrixI &x, int y) {
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
 		x[k] *= y;
+	}
+	return x;
+}
+
+VectorI& operator *=(VectorI &x, int y) {
+	for (int & t : x) {
+		t *= y;
 	}
 	return x;
 }
@@ -892,4 +894,12 @@ Vector ndarray(int x_shape) {
 	Vector t;
 	t.resize(x_shape);
 	return t;
+}
+
+MatrixI Zero(int m, int n) {
+	MatrixI x(m);
+	for (auto &v : x) {
+		v.resize(n);
+	}
+	return x;
 }

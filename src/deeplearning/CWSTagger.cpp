@@ -9,7 +9,7 @@ vector<String> convertToSegment(const String &predict_text,
 
 	assert((size_t ) argmax.size() == predict_text.size());
 //	size_t j = 0;
-	for (Eigen::Index i = 0; i < argmax.size(); ++i) {
+	for (int i = 0, size = argmax.size(); i < size; ++i) {
 //		if (argmax[i] < 0)
 //			continue;
 
@@ -102,7 +102,8 @@ vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 
 CWSTaggerLSTM::CWSTaggerLSTM(const string &h5FilePath,
 		const string &vocabFilePath) :
-		CWSTaggerLSTM((KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
+		CWSTaggerLSTM(
+				(KerasReader&) (const KerasReader&) KerasReader(h5FilePath),
 				vocabFilePath) {
 }
 
@@ -129,7 +130,7 @@ CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
 
 vector<String> CWSTagger::predict(const String &predict_text) {
 	VectorI seg = string2id(predict_text, this->word2id);
-//	cout << "seg = " << seg << endl;
+	__cout(seg)
 	return convertToSegment(predict_text, this->predict(seg));
 }
 
@@ -167,7 +168,7 @@ VectorI& CWSTagger::predict(VectorI &predict_text) {
 
 	Matrix lEmbedding;
 	embedding(predict_text, lEmbedding);
-
+	__cout(lEmbedding)
 	return wCRF(con1D(lEmbedding), predict_text);
 }
 
@@ -199,27 +200,13 @@ CWSTagger::CWSTagger(const string &h5FilePath, const string &vocabFilePath) :
 }
 
 CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
-		word2id(Text(vocabFilePath).read_char_vocab()), embedding(dis), con1D(
+		word2id(Text(vocabFilePath).read_vocab_char()), embedding(dis), con1D(
 				dis), wCRF(dis) {
 	__log(__PRETTY_FUNCTION__)
 }
 
 CWSTagger& CWSTagger::instance() {
-//	__cout(__PRETTY_FUNCTION__)
-	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
-	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
-	static CWSTagger instance(modelFile, vocab);
-
-	return instance;
-}
-
-CWSTagger& CWSTagger::instantiate() {
-	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
-	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
-
-	auto &instance = CWSTagger::instance();
-
-	instance = CWSTagger(modelFile, vocab);
-
-	return instance;
+	__cout(__PRETTY_FUNCTION__)
+	static CWSTagger inst(modelsDirectory() + "cn/cws/model.h5", modelsDirectory() + "cn/cws/vocab.txt");
+	return inst;
 }

@@ -282,19 +282,24 @@ struct Text {
 	vector<String> readlines();
 	Text& operator >>(int &unicode);
 	Text& operator >>(String &v);
+	Text& operator >>(string &v);
+
 	Text& operator >>(vector<String> &v);
 	Text& operator >>(dict<String, int> &word2id);
 	Text& operator >>(dict<char16_t, int> &word2id);
 	dict<String, int> read_vocab(int index = 2);
-	dict<String, int>& read_vocab(dict<String, int> &word2id, int index = 2);
+	dict<string, int> read_vocab_cstr(int index = 2);
 
-	dict<char16_t, int> read_char_vocab();
+	dict<String, int>& read_vocab(dict<String, int> &word2id, int index = 2);
+	dict<string, int>& read_vocab(dict<string, int> &word2id, int index = 2);
+
+	dict<char16_t, int> read_vocab_char();
 	String toString();
 	operator bool();
-	static char str[];
+
 	static int utf2unicode(const char *pText);
 
-	static const char* unicode2utf(word wc, char *pText = 0);
+	static const char* unicode2utf(word wc, char *pText);
 	static string unicode2utf(const String &wstr);
 	static string unicode2gbk(const String &wstr);
 	static char get_bits(char ch, int start, int size, int shift = 0);
@@ -353,16 +358,9 @@ char16_t tolower(char16_t ch);
 
 char16_t toupper(char16_t ch);
 
-template<class T>
-std::basic_string<T>& tolower(std::basic_string<T> &s) {
-	if (s.empty()) {
-		return s;
-	}
-	for (T &ch : s) {
-		ch = tolower(ch);
-	}
-	return s;
-}
+String& tolower(String &s);
+
+string& tolower(string &s);
 
 template<class _Ty>
 vector<_Ty>& operator <<(vector<_Ty> &out, const vector<_Ty> &in) {

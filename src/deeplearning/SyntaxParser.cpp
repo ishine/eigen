@@ -505,8 +505,8 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 			if (!current_nodes[node])
 				continue;
 
-			auto parent = old_input(parents[node], node);
-			auto child = old_output(parents[node], node);
+			auto parent = old_input[parents[node]][node];
+			auto child = old_output[parents[node]][node];
 			final_edges[child] = parent;
 		}
 		return;
@@ -552,12 +552,12 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 		}
 
 		score_matrix(cycle_representative, node) = in_edge_weight;
-		old_input(cycle_representative, node) = old_input(in_edge, node);
-		old_output(cycle_representative, node) = old_output(in_edge, node);
+		old_input[cycle_representative][node] = old_input[in_edge][node];
+		old_output[cycle_representative][node] = old_output[in_edge][node];
 
 		score_matrix(node, cycle_representative) = out_edge_weight;
-		old_output(node, cycle_representative) = old_output(node, out_edge);
-		old_input(node, cycle_representative) = old_input(node, out_edge);
+		old_output[node][cycle_representative] = old_output[node][out_edge];
+		old_input[node][cycle_representative] = old_input[node][out_edge];
 	}
 //# For the next recursive iteration, we want to consider the cycle as a
 //    # single node. Here we collapse the cycle into the first node in the
@@ -614,21 +614,21 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 
 	auto previous = parents[key_node];
 	while (previous != key_node) {
-		auto child = old_output(parents[previous], previous);
-		auto parent = old_input(parents[previous], previous);
+		auto child = old_output[parents[previous]][previous];
+		auto parent = old_input[parents[previous]][previous];
 		final_edges[child] = parent;
 		previous = parents[previous];
 	}
 }
 
 vector<int> decode_mst(Matrix &scores) {
-	__cout(__PRETTY_FUNCTION__)
+//	__cout(__PRETTY_FUNCTION__)
 //	int max_length = scores.rows();
 	int length = scores.rows();
 	auto &original_score_matrix = scores;
 	auto score_matrix = scores;
-	MatrixI old_input = MatrixI::Zero(length, length);
-	MatrixI old_output = MatrixI::Zero(length, length);
+	MatrixI old_input = Zero(length, length);
+	MatrixI old_output = Zero(length, length);
 	vector<bool> current_nodes(length, true);
 	vector<std::set<int>> representatives(length);
 
@@ -638,11 +638,11 @@ vector<int> decode_mst(Matrix &scores) {
 		representatives[node1] = as_set( { node1 });
 
 		for (int node2 = node1 + 1; node2 < length; ++node2) {
-			old_input(node1, node2) = node1;
-			old_output(node1, node2) = node2;
+			old_input[node1][node2] = node1;
+			old_output[node1][node2] = node2;
 
-			old_input(node2, node1) = node2;
-			old_output(node2, node1) = node1;
+			old_input[node2][node1] = node2;
+			old_output[node2][node1] = node1;
 		}
 	}
 
@@ -676,8 +676,7 @@ vector<int> BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
 	int seq_len = energy[0].cols();
 	Matrix scores;
 	scores.resize(seq_len, seq_len);
-	MatrixI tag_ids;
-	tag_ids.resize(seq_len, seq_len);
+	MatrixI tag_ids = Zero(seq_len, seq_len);
 	for (int j = 0; j < seq_len; ++j) {
 		for (int i = 0; i < seq_len; ++i) {
 			double m = -oo;
@@ -691,7 +690,7 @@ vector<int> BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
 			}
 
 			scores(i, j) = m;
-			tag_ids(i, j) = index;
+			tag_ids[i][j] = index;
 		}
 		//    # Although we need to include the root node so that the MST includes it,
 		//    # we do not want any word to be the parent of the root node.
@@ -715,7 +714,7 @@ vector<int> BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
 		if (parent < 0)
 			instance_head_tags[child] = 0;
 		else
-			instance_head_tags[child] = tag_ids(parent, child);
+			instance_head_tags[child] = tag_ids[parent][child];
 	}
 //    # We don't care what the head or tag is for the root token, but by default it's
 //    # not necesarily the same in the batched vs unbatched case, which is annoying.

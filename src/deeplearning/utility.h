@@ -12,8 +12,8 @@ using Vector = Eigen::Matrix<double, 1, -1, 1>;
 using Matrix = Eigen::Matrix<double, -1, -1, 1>;
 using Tensor = vector<Matrix>;
 
-using VectorI = Eigen::Matrix<int, 1, -1, 1>;
-using MatrixI = Eigen::Matrix<int, -1, -1, 1>;
+using VectorI = vector<int>;
+using MatrixI = vector<VectorI>;
 using TensorI = vector<MatrixI>;
 #include "../hdf5/H5Cpp.h"
 //https://portal.hdfgroup.org/display/support/HDF5+1.10.5
@@ -74,7 +74,7 @@ struct TorchReader {
 	~TorchReader();
 };
 
-string& modelsDirectory();
+//string& modelsDirectory();
 string& nerModelsDirectory();
 string& serviceBinary();
 
@@ -84,6 +84,8 @@ vector<vector<double>> convert2vector(const Matrix &m);
 
 VectorI string2id(const String &s, const dict<char16_t, int> &dict);
 VectorI string2id(const vector<String> &s, const dict<String, int> &dict);
+
+VectorI string2id(const vector<string> &s, const dict<string, int> &dict);
 vector<VectorI> string2id(const vector<String> &s,
 		const dict<char16_t, int> &dict);
 
@@ -92,6 +94,7 @@ vector<VectorI> string2ids(const vector<String> &s,
 
 //forward declaration to prevent runtime linking error.
 extern string workingDirectory;
+string& modelsDirectory();
 
 #ifdef _DEBUG
 #define print_shape(matrix) {std::cout << #matrix << ".shape = (" << matrix.rows() << ", " << matrix.cols() << ")" << std::endl;}

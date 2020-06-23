@@ -1,59 +1,50 @@
 #include "bert.h"
 #include "matrix.h"
 #include "../std/lagacy.h"
+#include "utility.h"
+//Matrix revert_mask(const MatrixI &mask, double weight) {
+//	Matrix out = mask * -weight;
+//	if (weight >= 0)
+//		out += weight;
+//
+//	return out;
+//}
 
-Matrix revert_mask(const MatrixI &mask, double weight) {
-	Matrix out;
-	out = mask.cast<double>() * -weight;
-	if (weight >= 0)
-		out += weight;
-
-	return out;
-}
-
-vector<Vector> revert_mask(const vector<VectorI> &mask, double weight) {
-	auto out = -weight * mask;
-	if (weight >= 0)
-		out += weight;
-
-	return out;
-}
-
-vector<MatrixI> CrossAttentionMask::operator ()(
-		const vector<VectorI> &segment_ids) {
-	int batch_size = segment_ids.size();
-	vector<MatrixI> mask;
-
-	mask.resize(batch_size);
-
-	auto vec = segment_ids * 2;
-	vec -= 1;
-
-	for (int k = 0; k < batch_size; ++k) {
-		vec[k](0) = 0;
-	}
-
-	for (int k = 0; k < batch_size; ++k) {
-		const auto &row = vec[k];
-		mask[k] = row.transpose() * row;
-	}
-
-	if (diagnal_attention) {
-		int sequence_length = segment_ids[0].size();
-		const auto &eye = MatrixI::Identity(sequence_length, sequence_length);
-		for (int k = 0; k < batch_size; ++k) {
-			mask[k] -= eye;
-		}
-	}
-
-	for (int k = 0; k < batch_size; ++k) {
-		mask[k] = mask[k] != 1;
-	}
-
-	if (num_attention_heads)
-		mask = parallelize(mask, num_attention_heads);
-	return mask;
-}
+//TensorI CrossAttentionMask::operator ()(
+//		const MatrixI &segment_ids) {
+//	int batch_size = segment_ids.size();
+//	TensorI mask;
+//
+//	mask.resize(batch_size);
+//
+//	auto vec = segment_ids * 2;
+//	vec -= 1;
+//
+//	for (int k = 0; k < batch_size; ++k) {
+//		vec[k][0] = 0;
+//	}
+//
+//	for (int k = 0; k < batch_size; ++k) {
+//		const auto &row = vec[k];
+//		mask[k] = outer_product(row, row);
+//	}
+//
+//	if (diagnal_attention) {
+//		int sequence_length = segment_ids[0].size();
+//		const auto &eye = Identity(sequence_length, sequence_length);
+//		for (int k = 0; k < batch_size; ++k) {
+//			mask[k] -= eye;
+//		}
+//	}
+//
+//	for (int k = 0; k < batch_size; ++k) {
+//		mask[k] = mask[k] != 1;
+//	}
+//
+//	if (num_attention_heads)
+//		mask = parallelize(mask, num_attention_heads);
+//	return mask;
+//}
 
 CrossAttentionMask::CrossAttentionMask(int num_attention_heads,
 		bool diagnal_attention) :
@@ -157,6 +148,8 @@ Tensor& LayerNormalization::operator ()(Tensor &x) {
 }
 
 Matrix& LayerNormalization::operator ()(Matrix &x) {
+	__cout(x);
+	print_shape(x)
 	x = subt(x, mean(x));
 
 	Matrix &deviation = x;
@@ -198,7 +191,7 @@ LayerNormalization::LayerNormalization() {
 }
 
 LayerNormalization::LayerNormalization(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	dis >> gamma;
 	dis >> beta;
@@ -206,15 +199,15 @@ LayerNormalization::LayerNormalization(KerasReader &dis) {
 
 const double LayerNormalization::epsilon = 1e-12;
 
-vector<int> MidIndex::operator()(const vector<VectorI> &input_ids) {
+VectorI MidIndex::operator()(const MatrixI &input_ids) {
 	int batch_size = input_ids.size();
-	vector<int> res;
+	VectorI res;
 	res.resize(batch_size);
 	int seq_len = input_ids[0].size();
 
 	for (int k = 0; k < batch_size; ++k) {
 		for (int i = 0; i < seq_len; ++i) {
-			if (input_ids[k](i) == SEP) {
+			if (input_ids[k][i] == SEP) {
 				res[k] = i + 1;
 				break;
 			}
@@ -227,7 +220,7 @@ int MidIndex::operator()(const VectorI &input_ids) {
 	int seq_len = input_ids.size();
 
 	for (int i = 0; i < seq_len; ++i) {
-		if (input_ids(i) == SEP) {
+		if (input_ids[i] == SEP) {
 			return i + 1;
 		}
 	}
@@ -236,7 +229,7 @@ int MidIndex::operator()(const VectorI &input_ids) {
 
 MidIndex::MidIndex(int SEP) {
 	this->SEP = SEP;
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 }
 
@@ -387,6 +380,10 @@ vector<Vector>& MultiHeadAttention::scaled_dot_product_attention(
 
 vector<Vector>& MultiHeadAttention::scaled_dot_product_attention(
 		vector<Vector> &query, const Tensor &key, const Tensor &value) {
+	__cout(query.size());
+	__cout(query[0].size());
+	print_tensor(key);
+	print_tensor(value);
 	vector<Vector> &e = batch_dot(query, key, true);
 
 	e /= sqrt(key[0].cols());
@@ -497,7 +494,7 @@ vector<Vector>& MultiHeadAttention::reshape_from_batches(vector<Vector> &x) {
 MultiHeadAttention::MultiHeadAttention(KerasReader &dis,
 		int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	dis >> Wq;
 	dis >> bq;
@@ -512,8 +509,7 @@ MultiHeadAttention::MultiHeadAttention(KerasReader &dis,
 	dis >> bo;
 }
 
-Tensor& PositionEmbedding::operator ()(Tensor &sequence,
-		const vector<int> &mid) {
+Tensor& PositionEmbedding::operator ()(Tensor &sequence, const VectorI &mid) {
 	int batch_size = sequence.size();
 	int seq_len = sequence[0].rows();
 
@@ -562,56 +558,56 @@ Tensor& PositionEmbedding::operator ()(Tensor &sequence) {
 	return sequence;
 }
 
-vector<Vector> PositionEmbedding::compute_mask(vector<VectorI> &inputToken) {
-	vector<VectorI> &mask = inputToken != 0;
-
-	parallelize(mask, num_attention_heads);
-	return revert_mask(mask, 10000.0);
-}
+//Matrix PositionEmbedding::compute_mask(MatrixI &inputToken) {
+//	MatrixI &mask = inputToken != 0;
+//
+//	parallelize(mask, num_attention_heads);
+//	return revert_mask(mask, 10000.0);
+//}
 
 PositionEmbedding::PositionEmbedding(KerasReader &dis, int num_attention_heads) :
 		embeddings(dis.read_matrix()), num_attention_heads(num_attention_heads) {
 }
 
-Tensor& RevertMask::operator ()(const vector<MatrixI> &attention_mask) {
-	Tensor res;
-	return (*this)(attention_mask, res);
-}
+//Tensor& RevertMask::operator ()(const TensorI &attention_mask) {
+//	Tensor res;
+//	return (*this)(attention_mask, res);
+//}
 
-Tensor& RevertMask::operator ()(const vector<MatrixI> &attention_mask,
-		Tensor &res) {
-
-	int batch_size = attention_mask.size();
-
-	res.resize(batch_size);
-
-	for (int k = 0; k < batch_size; ++k) {
-		res[k] = revert_mask(attention_mask[k], weight(step));
-	}
-
-	if (++step == weight.size())
-		step = 0;
-
-	return res;
-}
+//Tensor& RevertMask::operator ()(const TensorI &attention_mask,
+//		Tensor &res) {
+//
+//	int batch_size = attention_mask.size();
+//
+//	res.resize(batch_size);
+//
+//	for (int k = 0; k < batch_size; ++k) {
+//		res[k] = revert_mask(attention_mask[k], weight(step));
+//	}
+//
+//	if (++step == weight.size())
+//		step = 0;
+//
+//	return res;
+//}
 
 RevertMask::RevertMask(double cross_attention) :
 		cross_attention(cross_attention) {
 	step = 0;
 }
 
-vector<VectorI> SegmentInput::operator ()(const vector<VectorI> &inputToken,
-		vector<int> &inputMid) {
+MatrixI SegmentInput::operator ()(const MatrixI &inputToken,
+		VectorI &inputMid) {
 	int batch_size = inputToken.size();
 	int length = inputToken[0].size();
-	vector<VectorI> inputSegment;
+	MatrixI inputSegment;
 	inputSegment.resize(batch_size);
 
 	for (int k = 0; k < batch_size; ++k) {
 		inputSegment[k].resize(length);
 		int mid = inputMid[k];
-		stosd(&inputSegment[k](0), 0, mid);
-		stosd(&inputSegment[k](mid), 1, length - mid);
+		stosd(&inputSegment[k][0], 0, mid);
+		stosd(&inputSegment[k][mid], 1, length - mid);
 	}
 	return inputSegment;
 }
@@ -619,8 +615,7 @@ vector<VectorI> SegmentInput::operator ()(const vector<VectorI> &inputToken,
 VectorI SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 	int length = inputToken.size();
 //	cout << "inputToken.size() = " << inputToken.size() << endl;
-	VectorI inputSegment;
-	inputSegment.resize(length);
+	VectorI inputSegment(length);
 
 //	cout << "inputSegment.size() = " << inputSegment.size() << endl;
 
@@ -628,9 +623,9 @@ VectorI SegmentInput::operator ()(const VectorI &inputToken, int mid) {
 
 //	cout << "inputSegment(mid) = " << inputSegment(mid) << endl;
 
-	stosd(&inputSegment(0), 0, mid);
+	stosd(&inputSegment[0], 0, mid);
 
-	stosd(&inputSegment(mid), 1, length - mid);
+	stosd(&inputSegment[mid], 1, length - mid);
 
 	return inputSegment;
 }
@@ -645,7 +640,7 @@ BertEmbedding::BertEmbedding(KerasReader &dis, int num_attention_heads) :
 		layerNormalization(dis),
 
 		embeddingMapping(dis, Activator::linear) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	embed_dim = wordEmbedding.wEmbedding.cols();
 	hidden_size = embeddingMapping.weight.cols();
@@ -660,34 +655,34 @@ NonSegmentedBertEmbedding::NonSegmentedBertEmbedding(KerasReader &dis,
 		layerNormalization(dis),
 
 		embeddingMapping(dis, Activator::linear) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	embed_dim = wordEmbedding.wEmbedding.cols();
 	hidden_size = embeddingMapping.weight.cols();
 }
 
-Tensor BertEmbedding::operator ()(vector<VectorI> &inputToken,
-		const vector<int> &inputMid, const vector<VectorI> &inputSegment,
-		vector<Vector> &mask) {
-	auto embeddings = wordEmbedding(inputToken);
-	mask = this->positionEmbedding.compute_mask(inputToken);
-
-//	if (factorization(true)) {
+//Tensor BertEmbedding::operator ()(MatrixI &inputToken,
+//		const VectorI &inputMid, const MatrixI &inputSegment,
+//		Matrix &mask) {
+//	auto embeddings = wordEmbedding(inputToken);
+//	mask = this->positionEmbedding.compute_mask(inputToken);
+//
+////	if (factorization(true)) {
+////		embeddings = embeddingMapping(embeddings);
+////	}
+//
+//	auto segment_layer = segmentEmbedding(inputSegment);
+//	embeddings += segment_layer;
+//	auto &embed_layer = positionEmbedding(embeddings, inputMid);
+//
+//	embed_layer = layerNormalization(embed_layer);
+//
+//	if (hidden_size != embed_dim) {
 //		embeddings = embeddingMapping(embeddings);
 //	}
-
-	auto segment_layer = segmentEmbedding(inputSegment);
-	embeddings += segment_layer;
-	auto &embed_layer = positionEmbedding(embeddings, inputMid);
-
-	embed_layer = layerNormalization(embed_layer);
-
-	if (hidden_size != embed_dim) {
-		embeddings = embeddingMapping(embeddings);
-	}
-
-	return embeddings;
-}
+//
+//	return embeddings;
+//}
 
 Matrix BertEmbedding::operator ()(VectorI &input_ids, int inputMid,
 		const VectorI &inputSegment) {
@@ -743,31 +738,6 @@ Matrix BertEmbedding::operator ()(VectorI &input_ids,
 
 Matrix NonSegmentedBertEmbedding::operator ()(const VectorI &input_ids) {
 	auto embeddings = wordEmbedding(input_ids);
-
-//	cout << "wordEmbeddings = " << embeddings << endl;
-
-//	if (factorization(true)) {
-//		embeddings = embeddingMapping(embeddings);
-//	}
-
-	auto &embed_layer = positionEmbedding(embeddings);
-	embed_layer = layerNormalization(embed_layer);
-
-	if (hidden_size != embed_dim) {
-		embeddings = embeddingMapping(embeddings);
-	}
-
-	return embeddings;
-}
-
-Matrix NonSegmentedBertEmbedding::operator ()(const vector<int> &input_ids) {
-	auto embeddings = wordEmbedding(input_ids);
-
-//	cout << "wordEmbeddings = " << embeddings << endl;
-
-//	if (factorization(true)) {
-//		embeddings = embeddingMapping(embeddings);
-//	}
 
 	auto &embed_layer = positionEmbedding(embeddings);
 	embed_layer = layerNormalization(embed_layer);
@@ -867,13 +837,14 @@ AlbertTransformer::AlbertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads, Activation hidden_act) :
 		num_hidden_layers(num_hidden_layers), encoder(dis, num_attention_heads,
 				hidden_act) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
+
 }
 
 BertTransformer::BertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads, Activation hidden_act) :
 		num_hidden_layers(num_hidden_layers), encoder(num_hidden_layers) {
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	for (int i = 0; i < num_hidden_layers; ++i) {
 		encoder[i] = Encoder(dis, num_attention_heads, hidden_act);
@@ -903,43 +874,31 @@ Encoder& BertTransformer::operator [](int i) {
 	return encoder[i];
 }
 
-vector<Vector>& AlbertTransformer::operator ()(Tensor &input_layer,
-		const vector<MatrixI> &attention_matrix, RevertMask &fn,
-		const vector<Vector> &mask, vector<Vector> &y) {
-	auto &last_layer = input_layer;
-	for (int i = 0; i < num_hidden_layers; ++i) {
-		if (i == num_hidden_layers - 1) {
-			y = encoder(last_layer, mask, y);
-		} else
-			last_layer = encoder(last_layer, fn(attention_matrix), mask);
-	}
-	return y;
-}
+//vector<Vector>& AlbertTransformer::operator ()(Tensor &input_layer,
+//		const TensorI &attention_matrix, RevertMask &fn,
+//		const vector<Vector> &mask, vector<Vector> &y) {
+//	auto &last_layer = input_layer;
+//	for (int i = 0; i < num_hidden_layers; ++i) {
+//		if (i == num_hidden_layers - 1) {
+//			y = encoder(last_layer, mask, y);
+//		} else
+//			last_layer = encoder(last_layer, fn(attention_matrix), mask);
+//	}
+//	return y;
+//}
 
-vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
-		const vector<MatrixI> &attention_matrix, RevertMask &fn,
-		const vector<Vector> &mask, vector<Vector> &y) {
-	auto &last_layer = input_layer;
-	for (int i = 0; i < num_hidden_layers; ++i) {
-		if (i == num_hidden_layers - 1) {
-			y = (*this)[i](last_layer, mask, y);
-		} else
-			last_layer = (*this)[i](last_layer, fn(attention_matrix), mask);
-	}
-	return y;
-}
-
-vector<Vector>& AlbertTransformer::operator ()(Tensor &input_layer,
-		const vector<Vector> &mask, vector<Vector> &y) {
-	auto &last_layer = input_layer;
-	for (int i = 0; i < num_hidden_layers; ++i) {
-		if (i == num_hidden_layers - 1) {
-			y = encoder(last_layer, mask, y);
-		} else
-			last_layer = encoder(last_layer, mask);
-	}
-	return y;
-}
+//vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
+//		const TensorI &attention_matrix, RevertMask &fn,
+//		const vector<Vector> &mask, vector<Vector> &y) {
+//	auto &last_layer = input_layer;
+//	for (int i = 0; i < num_hidden_layers; ++i) {
+//		if (i == num_hidden_layers - 1) {
+//			y = (*this)[i](last_layer, mask, y);
+//		} else
+//			last_layer = (*this)[i](last_layer, fn(attention_matrix), mask);
+//	}
+//	return y;
+//}
 
 vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
 		const vector<Vector> &mask, vector<Vector> &y) {
@@ -956,6 +915,7 @@ vector<Vector>& BertTransformer::operator ()(Tensor &input_layer,
 Vector& AlbertTransformer::operator ()(Matrix &input_layer, Vector &y) {
 	auto &last_layer = input_layer;
 	for (int i = 0; i < num_hidden_layers; ++i) {
+//		__cout(last_layer);
 		if (i == num_hidden_layers - 1) {
 			y = encoder(last_layer, y);
 		} else
@@ -984,36 +944,40 @@ Pairwise::Pairwise(KerasReader &dis, const string &vocab,
 		dis, num_attention_heads), transformer(
 		dis, num_hidden_layers,
 		num_attention_heads, {Activator::gelu}), poolerDense(dis), similarityDense(dis, Activator::sigmoid) {
-			__cout(__PRETTY_FUNCTION__)
+			__cout(__PRETTY_FUNCTION__);
 		}
 
 //bool cross_layer_parameter_sharing = true;
 PairwiseVector::PairwiseVector(KerasReader &dis, Activation hidden_act,
-		int num_attention_heads, int num_hidden_layers) :
+		int num_attention_heads, int num_hidden_layers, Activation bilinear_act) :
 		bertEmbedding(dis, num_attention_heads),
 
 		transformer(dis, num_hidden_layers, num_attention_heads, hidden_act),
 
-		bilinear(dis, { Activator::softmax }) {
-	__log(__PRETTY_FUNCTION__)
+		bilinear(dis, bilinear_act) {
+	__log(__PRETTY_FUNCTION__);
+
 }
 
 PairwiseVectorChar::PairwiseVectorChar(KerasReader &dis, const string &vocab,
 		int num_attention_heads, int num_hidden_layers) :
 		PairwiseVector(dis, { Activator::relu }, num_attention_heads,
-				num_hidden_layers),
+				num_hidden_layers, { Activator::sigmoid }),
 
 		word2id(Text(vocab).read_vocab(0)) {
-	__log(__PRETTY_FUNCTION__)
+	__log(__PRETTY_FUNCTION__);
+
 }
 
-PairwiseVectorSP::PairwiseVectorSP(KerasReader &dis, const string &path,
-		int num_attention_heads, int num_hidden_layers) :
-		PairwiseVector(dis, { Activator::gelu }, num_attention_heads,
-				num_hidden_layers),
+PairwiseVectorSP::PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
+		sentencepiece::SentencePieceProcessor *tokenizer) :
+		PairwiseVector(dis, { Activator::gelu },
+		/*num_attention_heads = 12*/12, num_hidden_layers,
+				{ Activator::sigmoid }),
 
-		sp(path) {
-	__log(__PRETTY_FUNCTION__)
+		tokenizer(tokenizer) {
+	__log(__PRETTY_FUNCTION__);
+
 }
 
 #include "../json/json.h"
@@ -1044,70 +1008,35 @@ Pairwise& Pairwise::paraphrase() {
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
-	__cout(__PRETTY_FUNCTION__)
+	__cout(__PRETTY_FUNCTION__);
 
 	return inst;
 }
 
-PairwiseVectorChar& PairwiseVectorChar::lexicon() {
-	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/lexicon/config.json");
-
-	static int num_attention_heads = 12;
-
-	static int num_hidden_layers = config["num_hidden_layers"].asInt();
-
+PairwiseVectorChar& PairwiseVectorChar::instance() {
 	static PairwiseVectorChar inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
 					modelsDirectory() + "cn/lexicon/model.h5"),
-			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
-			num_hidden_layers);
-//	__cout(__PRETTY_FUNCTION__)
+
+			modelsDirectory() + "cn/bert/vocab.txt",
+
+			12, //num_attention_heads = 12
+			readFromStream(modelsDirectory() + "cn/lexicon/config.json")["num_hidden_layers"].asInt());
+
 	return inst;
 }
 
-PairwiseVectorChar& PairwiseVectorChar::instantiateHyponym() {
-	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/lexicon/config.json");
-
-	auto &inst = lexicon();
-	inst = PairwiseVectorChar(
-			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/lexicon/model.h5"),
-			modelsDirectory() + "cn/bert/vocab.txt", 12,
-			config["num_hidden_layers"].asInt());
-	__log(__PRETTY_FUNCTION__)
-	return inst;
-}
-
-PairwiseVectorSP& PairwiseVectorSP::lexicon() {
-	static const auto &config = readFromStream(
-			modelsDirectory() + "en/lexicon/config.json");
-
-	static int num_attention_heads = 12;
-
-	static int num_hidden_layers = config["num_hidden_layers"].asInt();
+PairwiseVectorSP& PairwiseVectorSP::instance() {
+	__cout(__PRETTY_FUNCTION__);
 
 	static PairwiseVectorSP inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
 					modelsDirectory() + "en/lexicon/model.h5"),
-			modelsDirectory() + "en/bert/albert_base/30k-clean.model",
-			num_attention_heads, num_hidden_layers);
-//	__cout(__PRETTY_FUNCTION__)
-	return inst;
-}
 
-PairwiseVectorSP& PairwiseVectorSP::instantiateHyponym() {
-	static const auto &config = readFromStream(
-			modelsDirectory() + "en/lexicon/config.json");
+			readFromStream(modelsDirectory() + "en/lexicon/config.json")["num_hidden_layers"].asInt(),
 
-	auto &inst = lexicon();
-	(PairwiseVector&) inst = PairwiseVector(
-			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "en/lexicon/model.h5"),
+			&en_tokenizer());
 
-			{ Activator::gelu }, 12, config["num_hidden_layers"].asInt());
-//	__cout(__PRETTY_FUNCTION__)
 	return inst;
 }
 
@@ -1137,31 +1066,8 @@ Pairwise& Pairwise::lexicon() {
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
-//	__cout(__PRETTY_FUNCTION__)
+//	__cout(__PRETTY_FUNCTION__);
 	return inst;
-}
-
-vector<double> Pairwise::operator ()(vector<VectorI> &input_ids) {
-	auto inputMid = midIndex(input_ids);
-
-	auto inputSegment = segmentInput(input_ids, inputMid);
-
-//	auto &matrixAttention = CrossAttentionMask(inputSegment);
-
-	vector<Vector> mask;
-	auto embed_layer = bertEmbedding(input_ids, inputMid, inputSegment, mask);
-
-	vector<Vector> clsEmbedding;
-	transformer(embed_layer, mask, clsEmbedding);
-	auto &sent = poolerDense(clsEmbedding);
-	vector<double> similarity;
-	int batch_size = sent.size();
-	similarity.resize(batch_size);
-	sent = similarityDense(sent);
-	for (int k = 0; k < batch_size; ++k) {
-		similarity[k] = sent[k](0);
-	}
-	return similarity;
 }
 
 double Pairwise::operator ()(VectorI &input_ids) {
@@ -1194,56 +1100,30 @@ double Pairwise::operator ()(VectorI &input_ids) {
 }
 
 Vector PairwiseVector::operator ()(const VectorI &input_ids) {
-	__cout(input_ids)
+	__cout(input_ids);
 
 	auto embed_layer = bertEmbedding(input_ids);
+
+//	__cout(embed_layer);
 
 	Vector clsEmbedding;
 	transformer(embed_layer, clsEmbedding);
 
 	return clsEmbedding;
-}
-
-Vector PairwiseVector::operator ()(const vector<int> &input_ids) {
-	__cout(input_ids)
-
-	auto embed_layer = bertEmbedding(input_ids);
-
-	Vector clsEmbedding;
-	transformer(embed_layer, clsEmbedding);
-
-	return clsEmbedding;
-}
-
-Vector PairwiseVector::operator ()(const vector<int> &input_ids,
-		const vector<int> &input_ids1) {
-	Vector sent = (*this)(input_ids);
-	Vector sent1 = (*this)(input_ids1);
-
-	return bilinear(sent, sent1);
 }
 
 Vector PairwiseVector::operator ()(const VectorI &input_ids,
 		const VectorI &input_ids1) {
+	__cout(input_ids);
+	__cout(input_ids1);
+
 	Vector sent = (*this)(input_ids);
 	Vector sent1 = (*this)(input_ids1);
 
 	return bilinear(sent, sent1);
 }
 
-Matrix PairwiseVector::operator ()(const vector<VectorI> &input_ids) {
-	int n = input_ids.size();
-	vector<Vector> sent(n);
-
-#pragma omp parallel for
-	for (int index = 0; index < n; ++index) {
-		sent[index] = (*this)(input_ids[index]);
-	}
-
-	return (*this)(sent);
-}
-
-Matrix PairwiseVector::operator ()(const vector<vector<int>> &input_ids) {
+Matrix PairwiseVector::operator ()(const MatrixI &input_ids) {
 	int n = input_ids.size();
 	vector<Vector> sent(n);
 
@@ -1274,40 +1154,56 @@ double Pairwise::operator ()(String &x, String &y) {
 	return (*this)(tokenizer.tokenize(x, y));
 }
 
-Vector PairwiseVectorChar::operator ()(const String &x, const String &y) {
-//	cout << "x = " << x << endl;
-//	cout << "y = " << y << endl;
+vector<String> PairwiseVectorChar::tokenize(const String &text) {
 	vector<String> s_x;
 	s_x << u"[CLS]";
-	for (auto ch : x) {
+	for (auto ch : text) {
 		s_x << String(1, tolower(ch));
 	}
 	s_x << u"[SEP]";
+	return s_x;
+}
 
-	vector<String> s_y = { u"[CLS]"};
-	for (auto ch : y) {
-		s_y << String(1, tolower(ch));
-	}
+Vector PairwiseVectorChar::operator ()(const String &x, const String &y) {
+	__cout(x);
+	__cout(y);
 
-	s_y << u"[SEP]";
+	vector<String> s_x = tokenize(x);
+	vector<String> s_y = tokenize(y);
+
 	auto input_ids = string2id(s_x, word2id);
 	auto input_ids1 = string2id(s_y, word2id);
+
+//	__cout(input_ids);
+//	__cout(input_ids1);
 
 	return (*this)(input_ids, input_ids1);
 }
 
-Vector PairwiseVectorSP::operator ()(const string &x, const string &y) {
+Vector PairwiseVectorSP::operator ()(String &x, String &y) {
+	return (*this)(Text::unicode2utf(tolower(x)), Text::unicode2utf(tolower(y)));
+}
+
+Vector PairwiseVectorSP::operator ()(const char *x, const char *y) {
+	string s_x = x;
+	string s_y = y;
+	return (*this)(s_x, s_y);
+}
+
+vector<string> PairwiseVectorSP::tokenize(const string &text) {
 	vector<string> s_x;
-	s_x << "[CLS]";
-	s_x << sp.EncodeAsPieces(x);
-	s_x << "[SEP]";
+	s_x << "[CLS]" << tokenizer->EncodeAsPieces(text) << "[SEP]";
+	return s_x;
+}
 
-	vector<string> s_y = { "[CLS]" };
-	s_y << sp.EncodeAsPieces(y);
-	s_y << "[SEP]";
+Vector PairwiseVectorSP::operator ()(const string &x, const string &y) {
+	vector<string> s_x = tokenize(x);
+	vector<string> s_y = tokenize(y);
 
-	auto input_ids = sp.PieceToId(s_x);
-	auto input_ids1 = sp.PieceToId(s_y);
+	__cout(s_x);
+	__cout(s_y);
+	auto input_ids = tokenizer->PieceToId(s_x);
+	auto input_ids1 = tokenizer->PieceToId(s_y);
 
 	return (*this)(input_ids, input_ids1);
 }
@@ -1315,17 +1211,10 @@ Vector PairwiseVectorSP::operator ()(const string &x, const string &y) {
 Matrix PairwiseVectorChar::operator ()(const vector<String> &str) {
 //	cout << "x = " << x << endl;
 //	cout << "y = " << y << endl;
-	vector<VectorI> input_ids(str.size());
+	MatrixI input_ids(str.size());
 	int i = 0;
 	for (auto &sent : str) {
-		vector<String> s;
-		s << u"[CLS]";
-
-		for (auto ch : sent) {
-			s << String(1, tolower(ch));
-		}
-		s << u"[SEP]";
-
+		vector<String> s = tokenize(sent);
 		input_ids[i++] = string2id(s, word2id);
 	}
 
@@ -1333,15 +1222,11 @@ Matrix PairwiseVectorChar::operator ()(const vector<String> &str) {
 }
 
 Matrix PairwiseVectorSP::operator ()(const vector<string> &str) {
-	vector<vector<int>> input_ids(str.size());
+	vector<VectorI> input_ids(str.size());
 	int i = 0;
 	for (auto &sent : str) {
-		vector<string> s = { "[CLS]" };
-
-		s << sp.EncodeAsPieces(sent);
-		s << "[SEP]";
-
-		input_ids[i++] = sp.PieceToId(s);
+		vector<string> s = tokenize(sent);
+		input_ids[i++] = tokenizer->PieceToId(s);
 	}
 
 	return (*this)(input_ids);
@@ -1370,9 +1255,7 @@ Matrix PairwiseVector::operator ()(const vector<Vector> &sent) {
 		int i = indices[k].first;
 		int j = indices[k].second;
 		//guarantee that i < j
-		auto probability = bilinear(sent[i], sent[j]);
-		scores(i, j) = probability2score(probability);
-		scores(j, i) = probability2score(symmetric_transform(probability));
+		scores(j, i) = scores(i, j) = bilinear(sent[i], sent[j])(0);
 	}
 
 	return scores;
@@ -1380,24 +1263,19 @@ Matrix PairwiseVector::operator ()(const vector<Vector> &sent) {
 
 Vector PairwiseVectorChar::operator ()(const String &str) {
 
-	vector<String> s;
-	s << u"[CLS]";
-	for (auto ch : str) {
-		s << String(1, tolower(ch));
-	}
-	s << u"[SEP]";
+	vector<String> s = tokenize(str);
 
 	return (*this)(string2id(s, word2id));
 }
 
+Vector PairwiseVectorSP::operator ()(String &str) {
+	return (*this)(Text::unicode2utf(tolower(str)));
+}
+
 Vector PairwiseVectorSP::operator ()(const string &str) {
-
-	vector<string> s;
-	s << "[CLS]";
-	s << sp.EncodeAsPieces(str);
-	s << "[SEP]";
-
-	return (*this)(sp.PieceToId(s));
+	vector<string> s = tokenize(str);
+	__cout(s);
+	return (*this)(tokenizer->PieceToId(s));
 }
 
 double Pairwise::operator ()(const char16_t *_x, const char16_t *_y) {
@@ -1435,7 +1313,7 @@ vector<String> whitespace_tokenize(String &text) {
 FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 		vocab(Text(vocab_file).read_vocab(0)), unk_token(u"[UNK]"),
 		max_input_chars_per_word(200), do_lower_case(do_lower_case) {
-			__cout(__PRETTY_FUNCTION__)
+			__cout(__PRETTY_FUNCTION__);
 		}
 
 FullTokenizer& FullTokenizer::instance_cn() {
@@ -1449,14 +1327,13 @@ FullTokenizer& FullTokenizer::instance_en() {
 }
 
 VectorI FullTokenizer::convert_tokens_to_ids(const vector<String> &items) {
-	VectorI output;
-	output.resize(items.size());
+	VectorI output(items.size());
 
 	int index = 0;
 	for (auto &item : items) {
 		auto iter = vocab.find(item);
 //		output(index) = iter == vocab.end() ? -vocab.at(lstrip(item)) : iter->second;
-		output(index) = iter == vocab.end() ? 1 : iter->second;
+		output[index] = iter == vocab.end() ? 1 : iter->second;
 
 		++index;
 	}
@@ -1555,13 +1432,9 @@ vector<String> FullTokenizer::_run_split_on_punc(String &text) {
 }
 
 vector<String> FullTokenizer::tokenize(const String &x, const String &y) {
-	vector<String> s = { u"[CLS]"};
-
-s << tokenize(x);
-s << u"[SEP]";
-s << tokenize(y);
-s << u"[SEP]";
-return s;
+	vector<String> s;
+	s << u"[CLS]" << tokenize(x) << u"[SEP]" << tokenize(y) << u"[SEP]";
+	return s;
 }
 
 vector<String> FullTokenizer::tokenize(const String &text) {
@@ -1673,7 +1546,7 @@ struct ClusteringAlgorithm {
 		double *priority_of_cluster;
 		less(double *priority_of_cluster = nullptr) :
 				priority_of_cluster(priority_of_cluster) {
-			__cout(__PRETTY_FUNCTION__)
+			__cout(__PRETTY_FUNCTION__);
 		}
 
 		bool operator ()(int x, int y) {
@@ -1681,12 +1554,16 @@ struct ClusteringAlgorithm {
 		}
 	};
 
-	ClusteringAlgorithm(Matrix &scores, const vector<int> &frequency) :
+	ClusteringAlgorithm(Matrix &scores, const VectorI &frequency,
+//			int maxNumOfClusters,
+			int maxNumOfChildren) :
 			scores(scores),
 
 			n(scores.rows()),
 
-			max_num_of_clusters(sqrt(2 * n)),
+//			maxNumOfClusters(maxNumOfClusters),
+
+			maxNumOfChildren(std::min(maxNumOfChildren, (int) sqrt(2 * n))),
 
 			heads(n, -1),
 
@@ -1704,7 +1581,7 @@ struct ClusteringAlgorithm {
 			++num_of_children[parent];
 			priority_of_cluster[parent] += scores(parent, child);
 		}
-		__cout(num_of_children)
+		__cout(num_of_children);
 
 		double max_frequency = frequency[0];
 		for (int parent = 0; parent < n; ++parent) {
@@ -1713,14 +1590,12 @@ struct ClusteringAlgorithm {
 
 			pq.insert(parent);
 		}
-		__cout(priority_of_cluster)
 	}
 
 	Matrix &scores;
-	int n;
-	int max_num_of_clusters;
-	vector<int> heads;
-	vector<int> num_of_children;
+	int n, maxNumOfChildren;
+	VectorI heads;
+	VectorI num_of_children;
 	vector<double> priority_of_cluster;
 	priority_dict<int, less> pq;
 
@@ -1745,15 +1620,15 @@ struct ClusteringAlgorithm {
 		while (!pq.empty()) {
 			int parent = pq.pop();
 
-			__cout(parent)
+			__cout(parent);
 			__cout(num_of_children);
 			__cout(priority_of_cluster);
 			if (parent < 0)
 				continue;
 
 			int numOfChildren = num_of_children[parent];
-			__cout(numOfChildren)
-			__cout(priority_of_cluster[parent])
+			__cout(numOfChildren);
+			__cout(priority_of_cluster[parent]);
 
 			if (!numOfChildren) {
 //				cout << "leaf node detected, with priority = " << priority_of_cluster[parent] << endl;
@@ -1769,7 +1644,7 @@ struct ClusteringAlgorithm {
 				break;
 			}
 
-			if (numOfChildren > max_num_of_clusters) {
+			if (numOfChildren > maxNumOfChildren) {
 //this parent has too many children, so this parent should abandon one of its current children and assign this abandoned child to another parent!
 				if (change_parent_for(find_worst_child(parent)))
 					continue;
@@ -1794,7 +1669,7 @@ struct ClusteringAlgorithm {
 
 	int find_worst_child(int parent) {
 		double min_score = oo;
-		double unwanted_child = -1;
+		int unwanted_child = -1;
 		for (int child = 0; child < n; ++child) {
 			if (heads[child] == parent) {
 				auto _min_score = scores(parent, child);
@@ -1849,25 +1724,27 @@ struct ClusteringAlgorithm {
 	}
 };
 
-vector<int> lexiconStructure(Matrix &scores, const vector<int> &frequency) {
-	ClusteringAlgorithm cluster(scores, frequency);
+VectorI lexiconStructure(Matrix &scores, const VectorI &frequency,
+		int maxNumOfChildren) {
+	ClusteringAlgorithm cluster(scores, frequency, maxNumOfChildren);
 	cluster.run();
 	assert(cluster.sanctity_check());
 	return cluster.heads;
 }
 
-vector<int> lexiconStructure(const vector<String> &keywords,
-		const vector<int> &frequency) {
+VectorI lexiconStructure(const vector<String> &keywords,
+		const VectorI &frequency, int maxNumOfChildren) {
 //	cout << "keywords = " << keywords << endl;
 //	cout << "frequency = " << frequency << endl;
-	auto scores = PairwiseVectorChar::lexicon()(keywords);
-	return lexiconStructure(scores, frequency);
+	auto scores = PairwiseVectorChar::instance()(keywords);
+	return lexiconStructure(scores, frequency, maxNumOfChildren);
 }
 
-vector<int> lexiconStructureCN(const vector<vector<double>> &_embedding,
-		const vector<int> &frequency) {
-//	cout << "keywords = " << keywords << endl;
-//	cout << "frequency = " << frequency << endl;
+VectorI lexiconStructure(int lang, const vector<vector<double>> &_embedding,
+		vector<vector<double>> &score_matrix, const VectorI &frequency,
+		int maxNumOfChildren) {
+	__log(score_matrix);
+
 	int size = _embedding.size();
 	vector<Vector> embedding(size);
 	for (int i = 0; i < size; ++i) {
@@ -1876,59 +1753,50 @@ vector<int> lexiconStructureCN(const vector<vector<double>> &_embedding,
 		movsq(embedding[i].data(), _embedding[i].data(), sz);
 	}
 
-	auto scores = PairwiseVectorChar::lexicon()(embedding);
-	return lexiconStructure(scores, frequency);
+	auto scores =
+			lang ? PairwiseVectorChar::instance()(embedding) : PairwiseVectorSP::instance()(
+							embedding);
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			double &s = scores(i, j);
+			s *= s;
+			s += score_matrix[i][j];
+			s *= 2;
+		}
+	}
+
+	return lexiconStructure(scores, frequency, maxNumOfChildren);
 }
 
-vector<int> lexiconStructure(const vector<string> &keywords,
-		const vector<int> &frequency) {
-	auto scores = PairwiseVectorSP::lexicon()(keywords);
-	return lexiconStructure(scores, frequency);
+VectorI lexiconStructure(const vector<string> &keywords,
+		const VectorI &frequency, int maxNumOfChildren) {
+	auto scores = PairwiseVectorSP::instance()(keywords);
+	return lexiconStructure(scores, frequency, maxNumOfChildren);
 }
 
-double PairwiseVector::probability2score(const Vector &probability) {
-	static const int k = 5;
-	static double interval[][2] = { { 0, 0.01 },
-
-	{ 0.02, 0.2 },
-
-	{ 1, 2 },
-
-	{ 2, 3 },
-
-	{ 3.5, 4 } };
-
-	static auto probability2score = [](double p, double a, double b) {
-		return (b - a) * k / (k - 1) * p + (k * a - b) / (k - 1);
-	};
-
-	int argmax;
-	probability.maxCoeff(&argmax);
-	auto pair = interval[argmax];
-	return probability2score(probability(argmax), pair[0], pair[1]);
-}
+//double PairwiseVector::probability2score(const Vector &probability) {
+//	static const int k = 5;
+//	static double interval[][2] = { { 0, 0.01 },
+//
+//	{ 0.02, 0.2 },
+//
+//	{ 1, 2 },
+//
+//	{ 2, 3 },
+//
+//	{ 3.5, 4 } };
+//
+//	static auto probability2score = [](double p, double a, double b) {
+//		return (b - a) * k / (k - 1) * p + (k * a - b) / (k - 1);
+//	};
+//
+//	int argmax;
+//	probability.maxCoeff(&argmax);
+//	auto pair = interval[argmax];
+//	return probability2score(probability(argmax), pair[0], pair[1]);
+//}
 
 Vector& PairwiseVector::symmetric_transform(Vector &y_pred) {
 	std::swap(y_pred(0), y_pred(4));
 	return y_pred;
-}
-
-const String& PairwiseVector::lexicon_label(const Vector &y_pred) {
-
-	static String labels[] = { u"hypernym",u"unrelated", u"related",u"synonym", u"hyponym"};
-
-int argmax;
-y_pred.maxCoeff(&argmax);
-return labels[argmax];
-}
-
-sentencepiece::SentencePieceProcessor& en_tokenizer() {
-
-	static sentencepiece::SentencePieceProcessor processor;
-
-	static const auto status = processor.Load(
-			modelsDirectory() + "en/bert/albert_base/30k-clean.model");
-
-	return processor;
-
 }
