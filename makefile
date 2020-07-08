@@ -9,10 +9,10 @@ ifneq ($(shell echo $(cpu_count) | awk '{if($$1 >= "1") {print $$1;}}'), $(nulls
 endif
 	paralleled :=
 
-$(info $(paralleled))
+$(info paralleled = $(paralleled))
 
 all: 
-	make paralleled -C Linux 
+	make $(paralleled) -C Linux 
 
 clean:
 	make -C Linux clean
