@@ -1,10 +1,11 @@
 #include "AhoCorasickDoubleArrayTrie.h"
 #include <random> // std::default_random_engine
+#include "../deeplearning/utility.h"
 
 void testLoop() {
 	const bool debug = true;
 	std::map<String, String> dictionaryMap;
-	string path = "../jetty/src/test/resources/ahocorasick/dictionary.txt";
+	string path = testingDirectory + "ahocorasick/dictionary.txt";
 
 	vector<String> dictionary;
 
@@ -17,9 +18,8 @@ void testLoop() {
 
 	cout << "dictionary.size() = " << dictionaryMap.size() << endl;
 	String text =
-			Text("../jetty/src/test/resources/ahocorasick/dictionary.txt").toString()
-					+ Text(
-							"../jetty/src/test/resources/ahocorasick/text.txt").toString();
+			Text(testingDirectory + "ahocorasick/dictionary.txt").toString()
+					+ Text(testingDirectory + "ahocorasick/text.txt").toString();
 
 	seed_rand();
 	shuffle(dictionary.begin(), dictionary.end(),
@@ -50,7 +50,7 @@ void testLoop() {
 	cout << "space cost = " << _dat.node.size() << endl;
 
 	_dat.checkValidity();
-	String debugWord;// = u"水";
+	String debugWord; // = u"水";
 
 	for (String &word : subList(dictionary, 0,
 			std::min(100, (int) dictionary.size()))) {

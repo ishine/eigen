@@ -6,6 +6,7 @@
 using namespace std;
 
 string workingDirectory = "../jetty/src/main/resources/";
+string testingDirectory = "../jetty/src/test/resources/";
 
 string& modelsDirectory() {
 	static string modelsDirectory = workingDirectory + "models/";

@@ -25,12 +25,18 @@ int main(int argc, char **argv) {
 		workingDirectory = argv[1];
 		workingDirectory += '/';
 		cout << "workingDirectory = " << workingDirectory << endl;
-		modelsDirectory() = workingDirectory + "models/";
 
+		modelsDirectory() = workingDirectory + "models/";
 		cout << "modelsDirectory = " << modelsDirectory() << endl;
 	}
 
-//	KeyGenerator::test();
+	if (2 < argc) {
+		testingDirectory = argv[2];
+		testingDirectory += '/';
+		cout << "testingDirectory = " << testingDirectory << endl;
+	}
+
+	//	KeyGenerator::test();
 	void testLoop();
 	testLoop();
 //	exit(0);

@@ -76,7 +76,7 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	cp $(artifact) ../../jetty/src/main/resources/lib/static/Linux/amd64
 
 test: $(target)	
-	./$(target) ../../jetty/src/main/resources
+	./$(target) ../../jetty/src/main/resources ../../jetty/src/test/resources
 	@echo "finish testing $(target)!"
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362
