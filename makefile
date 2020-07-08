@@ -24,4 +24,4 @@ rebuild: clean all
 	
 install:
 	make -C Linux install
-	@echo "finish installing eigen.so"
+	@echo "finish installing libeigen.so"
