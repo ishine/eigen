@@ -23,8 +23,6 @@
  * @author Robert Bor
  */
 #include "../std/utility.h"
-#include <map>
-using std::map;
 #include <queue>
 
 bool State::operator ==(const State &obj) const {

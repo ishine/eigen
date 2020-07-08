@@ -193,6 +193,8 @@ using std::ios;
 template<typename KEY, typename VALUE>
 using dict = std::unordered_map<KEY, VALUE>;
 
+#include <map>
+
 #include <string>
 using std::string;
 
