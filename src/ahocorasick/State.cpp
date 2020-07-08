@@ -48,8 +48,8 @@ bool State::operator ==(const State &obj) const {
 	return true;
 }
 
-TextTreeNode* State::toShadowTree() {
-	TextTreeNode *newNode = new TextTreeNode(u"");
+TextTreeNode<char16_t>* State::toShadowTree() {
+	TextTreeNode<char16_t> *newNode = new TextTreeNode<char16_t>(u"");
 	size_t x_length = success.size() / 2;
 	size_t y_length = success.size() - x_length;
 	vector<char16_t> list;
@@ -63,7 +63,7 @@ TextTreeNode* State::toShadowTree() {
 		for (size_t i = 0; i < x_length; ++i) {
 			auto word = list[i];
 			State *state = success.at(word);
-			TextTreeNode *node = state->toShadowTree();
+			TextTreeNode<char16_t> *node = state->toShadowTree();
 
 			newNode->x[i] = node;
 			node->value += word;
@@ -91,7 +91,7 @@ TextTreeNode* State::toShadowTree() {
 		for (size_t i = x_length; i < success.size(); ++i) {
 			auto word = list[i];
 			State *state = success.at(word);
-			TextTreeNode *node = state->toShadowTree();
+			TextTreeNode<char16_t> *node = state->toShadowTree();
 
 			newNode->y[i - x_length] = node;
 			node->value += word;
@@ -116,7 +116,7 @@ TextTreeNode* State::toShadowTree() {
 }
 
 String State::toString() {
-	TextTreeNode *root = this->toShadowTree();
+	TextTreeNode<char16_t> *root = this->toShadowTree();
 	return root->toString();
 }
 

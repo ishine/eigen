@@ -500,6 +500,10 @@ int strlen(const String &value) {
 	return length;
 }
 
+int strlen(const string &value) {
+	return value.size();
+}
+
 #include <sstream>
 String toString(int d) {
 	return toString(std::to_string(d));

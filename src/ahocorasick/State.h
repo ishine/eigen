@@ -59,7 +59,7 @@ struct State {
 	bool operator !=(const State &obj) const;
 	vector<Tuple> emits;
 
-	TextTreeNode* toShadowTree();
+	TextTreeNode<char16_t>* toShadowTree();
 	String toString();
 
 	State(int depth = 0);

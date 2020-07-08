@@ -7,12 +7,15 @@ struct CWSTagger {
 
 	vector<vector<String>> segment(const vector<String> &predict_text);
 
-	vector<vector<String>> segment_paralleled(const vector<String> &predict_text);
+	vector<vector<String>> segment_paralleled(
+			const vector<String> &predict_text);
 
-	vector<vector<vector<String>>> segment_paralleled(const vector<vector<String>> &predict_text);
+	vector<vector<vector<String>>> segment_paralleled(
+			const vector<vector<String>> &predict_text);
 
 	CWSTagger(const string &vocab);
 
-	AhoCorasickDoubleArrayTrie<double> dat;
+	AhoCorasickDoubleArrayTrie<char16_t, double> dat;
 
+	static std::map<String, double> to_map(const string &vocab);
 };

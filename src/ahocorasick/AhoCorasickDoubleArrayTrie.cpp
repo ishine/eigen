@@ -34,7 +34,7 @@ void testLoop() {
 //	}
 
 	long start = clock();
-	AhoCorasickDoubleArrayTrie<String> dat(dictionaryMap);
+	AhoCorasickDoubleArrayTrie<char16_t, String> dat(dictionaryMap);
 	cout << "time cost = " << (clock() - start) / CLOCKS_PER_SEC << endl;
 	cout << "space cost = " << dat.node.size() << endl;
 
@@ -43,9 +43,9 @@ void testLoop() {
 	}
 
 	dat.checkValidity();
-	vector<AhoCorasickDoubleArrayTrie<String>::Hit> arr = dat.parseText(text);
+	vector<AhoCorasickDoubleArrayTrie<char16_t, String>::Hit> arr = dat.parseText(text);
 	start = clock();
-	AhoCorasickDoubleArrayTrie<String> _dat(dictionaryMap);
+	AhoCorasickDoubleArrayTrie<char16_t, String> _dat(dictionaryMap);
 	cout << "time cost = " << (clock() - start) / CLOCKS_PER_SEC << endl;
 	cout << "space cost = " << _dat.node.size() << endl;
 
@@ -72,7 +72,7 @@ void testLoop() {
 		}
 		_dat.checkValidity();
 		assert(dat == _dat);
-		vector<AhoCorasickDoubleArrayTrie<String>::Hit> _arr = _dat.parseText(
+		vector<AhoCorasickDoubleArrayTrie<char16_t, String>::Hit> _arr = _dat.parseText(
 				text);
 		assert(arr == _arr);
 	}
