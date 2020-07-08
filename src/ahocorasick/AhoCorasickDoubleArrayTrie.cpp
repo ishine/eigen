@@ -4,7 +4,7 @@
 void testLoop() {
 	const bool debug = true;
 	std::map<String, String> dictionaryMap;
-	string path = "../jetty/src/test/resources/ahocorasick/dictionary-small.txt";
+	string path = "../jetty/src/test/resources/ahocorasick/dictionary.txt";
 
 	vector<String> dictionary;
 
@@ -17,9 +17,9 @@ void testLoop() {
 
 	cout << "dictionary.size() = " << dictionaryMap.size() << endl;
 	String text =
-			Text("../jetty/src/test/resources/ahocorasick/dictionary-small.txt").toString()
+			Text("../jetty/src/test/resources/ahocorasick/dictionary.txt").toString()
 					+ Text(
-							"../jetty/src/test/resources/ahocorasick/text-small.txt").toString();
+							"../jetty/src/test/resources/ahocorasick/text.txt").toString();
 
 	seed_rand();
 	shuffle(dictionary.begin(), dictionary.end(),
