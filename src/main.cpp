@@ -13,7 +13,7 @@ using namespace std;
 
 #include "deeplearning/CWSTagger.h"
 #include "deeplearning/SyntaxParser.h"
-//#include "ahocorasick/public.h"
+#include "ahocorasick/KeyGenerator.h"
 
 int main(int argc, char **argv) {
 	cout << "argc = " << argc << endl;
@@ -30,6 +30,10 @@ int main(int argc, char **argv) {
 		cout << "modelsDirectory = " << modelsDirectory() << endl;
 	}
 
+//	KeyGenerator::test();
+	void testLoop();
+	testLoop();
+//	exit(0);
 	auto &lexiconSP = PairwiseVectorSP::instance();
 	cout << lexiconSP("abd", "deflkj") << endl;
 

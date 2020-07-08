@@ -343,10 +343,23 @@ dict<String, int> Text::read_vocab(int index) {
 	return read_vocab(word2id, index);
 }
 
-dict<string, int> Text::read_vocab_cstr(int index) {
+dict<string, int> Text::read_vocab_cstr() {
 	dict<string, int> word2id;
 //	__log(__PRETTY_FUNCTION__)
-	return read_vocab(word2id, index);
+	string s;
+	int index = 0;
+	while (*this >> s) {
+		strip(s);
+		s = s.substr(0, s.find_first_of('\t'));
+		assert(!s.empty());
+
+		assert(word2id.count(s) == 0);
+
+		word2id[s] = index++;
+	}
+	cout << "word2id.size() = " << word2id.size() << endl;
+	cout << "index = " << index << endl;
+	return word2id;
 }
 
 dict<String, int>& Text::read_vocab(dict<String, int> &word2id, int index) {
@@ -843,4 +856,12 @@ String& tolower(String &s) {
 		ch = tolower(ch);
 	}
 	return s;
+}
+
+void seed_rand(){
+	srand(time(0));
+}
+
+int nextInt(int max){
+	return rand() % max;
 }

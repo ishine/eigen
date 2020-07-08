@@ -337,7 +337,7 @@ ClassifierChar& ClassifierChar::instance() {
 
 ClassifierWord& ClassifierWord::instance() {
 	__cout(__PRETTY_FUNCTION__)
-	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5", modelsDirectory() + "en/keyword/vocab.txt");
+	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5", modelsDirectory() + "en/bert/albert_base/30k-clean.vocab");
 
 	return service;
 }

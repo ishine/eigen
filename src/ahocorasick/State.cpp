@@ -27,174 +27,6 @@
 using std::map;
 #include <queue>
 
-LNodeShadow::LNodeShadow(const String &value) :
-		value(value) {
-}
-
-int LNodeShadow::max_width(vector<object<LNodeShadow>> &list) {
-	int length = 0;
-	for (LNodeShadow *x : list) {
-		int width = x->max_width();
-		if (width > length) {
-			length = width;
-		}
-	}
-	return length;
-}
-
-int LNodeShadow::max_width() {
-	int width = strlen(value);
-	if (x.size()) {
-		int width_x = max_width(x);
-		if (width_x > width)
-			width = width_x;
-	}
-	if (y.size()) {
-		int width_y = max_width(y);
-		if (width_y > width)
-			width = width_y;
-	}
-	return width;
-}
-
-void LNodeShadow::hierarchize() {
-	int column = 0;
-	hierarchize(0, column);
-}
-
-void LNodeShadow::hierarchize(vector<object<LNodeShadow>> &list, int level,
-		int &column) {
-	for (LNodeShadow *x : list) {
-		x->hierarchize(level, column);
-	}
-}
-
-// static int size(vector<LNodeShadow> list){
-// int size = 0;
-// for (LNodeShadow x : list){
-// size += x.size();
-// }
-// return size;
-// }
-//
-// int size(){
-// int size = 1;
-// if (x != nullptr)
-// size += size(x);
-// if (y != nullptr)
-// size += size(y);
-// return size;
-// }
-//
-// static int sizeInbeween(vector<LNodeShadow> list){
-// int size = list.size();
-// if (size == 1)
-// return size;
-// int i = 0;
-// size += size(list.get(i).y);
-//
-// for (++i; i < list.size() - 1; ++i){
-// size += list.get(i).size();
-// }
-// size += size(list.get(i).x);
-// return size;
-// }
-//
-void LNodeShadow::hierarchize(int level, int &column) {
-	if (x.size())
-		hierarchize(x, level + 1, column);
-	// allocate node for left child at next level in tree; attach node
-	i = level;
-	j = column++; // update column to next cell in the table
-
-	if (y.size())
-		hierarchize(y, level + 1, column);
-}
-
-// the font type should be simsun;
-String LNodeShadow::toString() {
-	return toString(max_width());
-}
-
-String LNodeShadow::toString(int max_width) {
-	const static auto lineSeparator = u'\n';
-
-	String cout = u"";
-	int currLevel = 0;
-	int currCol = 0;
-
-	// build the shadow tree
-	hierarchize();
-	// const int colWidth = Math.max(max_width, max_width()) + 1;
-	const int colWidth = max_width;
-
-	// use during the level order scan of the shadow tree
-	LNodeShadow *currNode;
-	//
-	// store siblings of each nodeShadow object in a queue so that they
-	// are visited in order at the next level of the tree
-	std::queue<LNodeShadow*> q;
-	//
-	// insert the root in the queue and set current level to 0
-	q.push(this);
-	//
-	// continue the iterative process until the queue
-	// is empty
-	while (q.size() != 0) {
-		// delete front node from queue and make it the
-		// current node
-		currNode = q.front();
-		q.pop();
-
-		if (currNode->i > currLevel) {
-			// if level changes, output a newline
-			currLevel = currNode->i;
-			currCol = 0;
-			cout += lineSeparator;
-		}
-
-		char16_t ch;
-		if (currNode->x.size()) {
-//				assert(currNode->x.length > 0);
-			for (LNodeShadow *t : currNode->x)
-				q.push(t);
-
-			LNodeShadow *head = currNode->x[0];
-			// the string is right-aligned / right-justified, that's why
-			// there a series of leading ' ';
-			int dif = colWidth - strlen(head->value);	// for leading ' 's
-			cout += String((head->j - currCol) * colWidth + dif, u' ');
-			cout += String((currNode->j - head->j) * colWidth - dif, u'_');
-
-			ch = u'_';
-		} else {
-			cout += String((currNode->j - currCol) * colWidth, u' ');
-
-			ch = u' ';
-		}
-
-		// for leading white spaces;
-		cout += String(colWidth - strlen(currNode->value), ch)
-				+ currNode->value;
-
-		currCol = currNode->j;
-		if (currNode->y.size()) {
-			for (LNodeShadow *t : currNode->y)
-				q.push(t);
-
-			LNodeShadow *last = currNode->y[currNode->y.size() - 1];
-			cout += String((last->j - currCol) * colWidth, u'_');
-
-			currCol = last->j;
-		}
-
-		++currCol;
-	}
-	cout += lineSeparator;
-
-	return cout;
-}
-
 bool State::operator ==(const State &obj) const {
 	if (depth != obj.depth)
 		return false;
@@ -218,8 +50,8 @@ bool State::operator ==(const State &obj) const {
 	return true;
 }
 
-LNodeShadow* State::toShadowTree() {
-	LNodeShadow *newNode = new LNodeShadow(u"");
+TextTreeNode* State::toShadowTree() {
+	TextTreeNode *newNode = new TextTreeNode(u"");
 	size_t x_length = success.size() / 2;
 	size_t y_length = success.size() - x_length;
 	vector<char16_t> list;
@@ -233,7 +65,7 @@ LNodeShadow* State::toShadowTree() {
 		for (size_t i = 0; i < x_length; ++i) {
 			auto word = list[i];
 			State *state = success.at(word);
-			LNodeShadow *node = state->toShadowTree();
+			TextTreeNode *node = state->toShadowTree();
 
 			newNode->x[i] = node;
 			node->value += word;
@@ -261,7 +93,7 @@ LNodeShadow* State::toShadowTree() {
 		for (size_t i = x_length; i < success.size(); ++i) {
 			auto word = list[i];
 			State *state = success.at(word);
-			LNodeShadow *node = state->toShadowTree();
+			TextTreeNode *node = state->toShadowTree();
 
 			newNode->y[i - x_length] = node;
 			node->value += word;
@@ -286,7 +118,7 @@ LNodeShadow* State::toShadowTree() {
 }
 
 String State::toString() {
-	LNodeShadow *root = this->toShadowTree();
+	TextTreeNode *root = this->toShadowTree();
 	return root->toString();
 }
 
@@ -574,21 +406,6 @@ void State::deleteFailureStates(State *parent, const String &previous_keyword,
 		} catch (std::out_of_range&) {
 		}
 	}
-}
-
-bool operator ==(const std::map<char16_t, State*> &lhs,
-		const std::map<char16_t, State*> &rhs) {
-	if (lhs.size() != rhs.size())
-		return false;
-	auto q = rhs.begin();
-	for (auto p : lhs) {
-		if (p.first != q->first)
-			return false;
-		if (*p.second != *q->second)
-			return false;
-		++q;
-	}
-	return true;
 }
 
 bool operator ==(const std::unordered_map<char16_t, State*> &lhs,
