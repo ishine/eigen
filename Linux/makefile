@@ -74,12 +74,9 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	-mkdir -p ../../jetty/src/main/resources/lib/static/Linux/amd64
 	@echo "install $(artifact) to destination ../../jetty/src/main/resources/lib/static/Linux/amd64"	
 	cp $(artifact) ../../jetty/src/main/resources/lib/static/Linux/amd64
-	@echo "install $(artifact) to destination ../../research-wordcloud/wordcloud-service/src/main/resources/lib/static/Linux/amd64"
-	cp $(artifact) ../../research-wordcloud/wordcloud-service/src/main/resources/lib/static/Linux/amd64
-	cd ../../research-wordcloud && git pull	&& git add . && git commit -m '$(artifact) modified' && git push
 
 test: $(target)	
-	./$(target) ../../jetty/src/main/resources
+	./$(target) ../../jetty/src/main/resources ../../jetty/src/test/resources
 	@echo "finish testing $(target)!"
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362

@@ -43,6 +43,7 @@ struct color_ptr {
 	}
 
 	color_ptr() {
+		value = 0;
 	}
 
 	explicit color_ptr(value_type *ptr, byte color = 0) {
@@ -192,6 +193,8 @@ using std::ios;
 template<typename KEY, typename VALUE>
 using dict = std::unordered_map<KEY, VALUE>;
 
+#include <map>
+
 #include <string>
 using std::string;
 
@@ -235,6 +238,24 @@ std::ostream& operator <<(std::ostream &cout, const std::set<_Ty> &v) {
 	return cout;
 }
 
+#include <unordered_set>
+template<typename _Ty>
+std::ostream& operator <<(std::ostream &cout,
+		const std::unordered_set<_Ty> &v) {
+	cout << '{';
+	bool initial = true;
+	for (const auto &e : v) {
+		if (initial) {
+			cout << e;
+			initial = false;
+		} else
+			cout << ", " << e;
+	}
+
+	cout << '}';
+	return cout;
+}
+
 template<typename _Key, typename _Ty>
 std::ostream& operator <<(std::ostream &cout, const dict<_Key, _Ty> &map) {
 	cout << '{';
@@ -245,7 +266,22 @@ std::ostream& operator <<(std::ostream &cout, const dict<_Key, _Ty> &map) {
 		} else
 			cout << ", ";
 		cout << p.first << " : " << p.second;
-		;
+	}
+
+	cout << '}';
+	return cout;
+}
+
+template<typename _Key, typename _Ty>
+std::ostream& operator <<(std::ostream &cout, const std::map<_Key, _Ty> &map) {
+	cout << '{';
+	bool initial = true;
+	for (const auto &p : map) {
+		if (initial) {
+			initial = false;
+		} else
+			cout << ", ";
+		cout << p.first << " : " << p.second;
 	}
 
 	cout << '}';
@@ -288,7 +324,7 @@ struct Text {
 	Text& operator >>(dict<String, int> &word2id);
 	Text& operator >>(dict<char16_t, int> &word2id);
 	dict<String, int> read_vocab(int index = 2);
-	dict<string, int> read_vocab_cstr(int index = 2);
+	dict<string, int> read_vocab_cstr();
 
 	dict<String, int>& read_vocab(dict<String, int> &word2id, int index = 2);
 	dict<string, int>& read_vocab(dict<string, int> &word2id, int index = 2);
@@ -313,15 +349,22 @@ std::ostream& operator <<(std::ostream &cout, const String &v);
 
 vector<String> split(const String &in);
 
+template<class _CharT>
+bool startsWith(const std::basic_string<_CharT> &str,
+		const std::basic_string<_CharT> &start) {
+	auto startlen = start.size();
+	return str.size() >= startlen && str.substr(0, startlen) == start;
+}
+
 #include "wchar.h"
 
-template<class T>
-std::basic_string<T>& strip(std::basic_string<T> &s) {
+template<class _CharT>
+std::basic_string<_CharT>& strip(std::basic_string<_CharT> &s) {
 	if (s.empty()) {
 		return s;
 	}
 
-	typename std::basic_string<T>::iterator c;
+	typename std::basic_string<_CharT>::iterator c;
 
 	// Erase whitespace before the string
 
@@ -337,13 +380,13 @@ std::basic_string<T>& strip(std::basic_string<T> &s) {
 	return s;
 }
 
-template<class T>
-std::basic_string<T>& lstrip(std::basic_string<T> &s) {
+template<class _CharT>
+std::basic_string<_CharT>& lstrip(std::basic_string<_CharT> &s) {
 	if (s.empty()) {
 		return s;
 	}
 
-	typename std::basic_string<T>::iterator c;
+	typename std::basic_string<_CharT>::iterator c;
 
 	// Erase whitespace before the string
 
@@ -385,8 +428,8 @@ bool operator !(const vector<_Ty> &x) {
 	return x.empty();
 }
 
-template<class T>
-bool operator !(const std::basic_string<T> &s) {
+template<class _CharT>
+bool operator !(const std::basic_string<_CharT> &s) {
 	return s.empty();
 }
 
@@ -438,18 +481,49 @@ int indexOf(const vector<T> &elementData, const T &o, int index = 0) {
 }
 
 template<typename T>
+vector<T> copierSauf(const vector<T> &arr, size_t i) {
+	vector<T> arrNew(arr.size() - 1);
+	int index = 0;
+	for (size_t j = 0; j < arr.size(); ++j) {
+		if (i != j)
+			arrNew[index++] = arr[j];
+	}
+	return arrNew;
+}
+
+template<typename T>
 bool contains(const vector<T> &elementData, const T &o) {
 	return indexOf(elementData, o) >= 0;
 }
 
 const double oo = std::numeric_limits<double>::infinity();
 
-#define __log(symbol) {std::cout << #symbol << " = \n" << symbol << std::endl;}
+#define __log(symbol) {std::cout << #symbol << " = \n" << (symbol) << std::endl;}
 
 #ifdef _DEBUG
 #define __cout(symbol) __log(symbol)
+#define assert_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_true(expr) if (expr){}else{std::cout << #expr << " is true " << std::endl; __cout(expr);}
+#define assert_false(expr) if (!expr){}else{std::cout << #expr << " is false " << std::endl; __cout(expr);}
+#define assert_or(x, y) if (x || y){}else{std::cout << #x << " || " << #y << std::endl; __cout(x);__cout(y);}
+#define assert_and(x, y) if (x && y){}else{std::cout << #x << " && " << #y << std::endl; __cout(x);__cout(y);}
 #else
 #define __cout(symbol)
+#define assert_gt(x, y)
+#define assert_lt(x, y)
+#define assert_le(x, y)
+#define assert_ge(x, y)
+#define assert_eq(x, y)
+#define assert_neq(x, y)
+#define assert_true(expr)
+#define assert_false(expr)
+#define assert_or(x, y)
+#define assert_and(x, y)
 #endif
 
 struct Timer {
@@ -649,3 +723,88 @@ protected:
 };
 //template <typename _Ty, typename _Pr>
 //_Pr priority_queue<_Ty, _Pr>::_Pred;
+void seed_rand();
+int nextInt(int max);
+
+template<typename _Ty>
+struct SubList {
+	_Ty *_begin, *_end;
+	struct iterator {
+		_Ty *ptr;
+
+		iterator& operator++() {
+			++ptr;
+			return *this;
+		}
+
+		bool operator!=(const iterator &other) const {
+			return ptr != other.ptr;
+		}
+
+		_Ty& operator*() {
+			return *ptr;
+		}
+	};
+
+	struct const_iterator {
+		_Ty *ptr;
+
+		const_iterator& operator++();
+		bool operator!=(const const_iterator &other) const;
+		const _Ty& operator*();
+	};
+
+	iterator begin() {
+		return {_begin};
+	}
+	iterator end() {
+		return {_end};
+	}
+	const_iterator begin() const;
+	const_iterator end() const;
+};
+
+template<typename _Ty>
+SubList<_Ty> subList(vector<_Ty> &list, int start, int end) {
+	return SubList<_Ty> { list.data() + start, list.data() + end };
+}
+
+template<typename _Ty>
+vector<_Ty> copyOfRange(const vector<_Ty> &list, int start, int end) {
+	vector<_Ty> arr(end - start);
+	int index = 0;
+	for (int i = start; i < end; ++i) {
+		arr[index++] = list[i];
+	}
+	return arr;
+
+}
+
+template<typename _Ty>
+vector<_Ty> copier(const vector<_Ty> &a, const vector<_Ty> &b) {
+	vector<_Ty> c(a.size() + b.size());
+	int index = 0;
+	for (auto &e : a) {
+		c[index++] = e;
+	}
+	for (auto &e : b) {
+		c[index++] = e;
+	}
+	return c;
+}
+
+template<typename Key, typename Value>
+bool operator ==(const std::map<Key, Value*> &lhs,
+		const std::map<Key, Value*> &rhs) {
+	if (lhs.size() != rhs.size())
+		return false;
+	auto q = rhs.begin();
+	for (auto p : lhs) {
+		if (p.first != q->first)
+			return false;
+		if (*p.second != *q->second)
+			return false;
+		++q;
+	}
+	return true;
+}

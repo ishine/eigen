@@ -23,32 +23,10 @@
  */
 #include "../std/utility.h"
 #include <map>
+
+#include "../std/TextTreeNode.h"
 using std::map;
 #include <queue>
-
-struct LNodeShadow {
-	vector<object<LNodeShadow>> x, y;
-
-	// objects hold a formatted label string and the level,column
-	// coordinates for a shadow tree node
-	String value; // formatted node value
-	int i, j;
-
-	LNodeShadow(const String &value = u"");
-
-	static int max_width(vector<object<LNodeShadow>> &list);
-	int max_width();
-	void hierarchize();
-
-	static void hierarchize(vector<object<LNodeShadow>> &list, int level,
-	int &column);
-
-	void hierarchize(int level, int &column);
-	// the font type should be simsun;
-	String toString();
-
-	String toString(int max_width);
-};
 
 struct State {
 
@@ -81,7 +59,7 @@ struct State {
 	bool operator !=(const State &obj) const;
 	vector<Tuple> emits;
 
-	LNodeShadow* toShadowTree();
+	TextTreeNode<char16_t>* toShadowTree();
 	String toString();
 
 	State(int depth = 0);
@@ -143,6 +121,5 @@ struct State {
 			int char_length);
 };
 
-bool operator == (const std::map<char16_t, State*> &lhs, const std::map<char16_t, State*> &rhs);
 bool operator == (const std::unordered_map<char16_t, State*> &lhs, const std::unordered_map<char16_t, State*> &rhs);
 //bool operator != (const std::map<char16_t, State*> &lhs, const std::map<char16_t, State*> &rhs);

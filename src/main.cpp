@@ -13,7 +13,7 @@ using namespace std;
 
 #include "deeplearning/CWSTagger.h"
 #include "deeplearning/SyntaxParser.h"
-//#include "ahocorasick/public.h"
+#include "ahocorasick/KeyGenerator.h"
 
 int main(int argc, char **argv) {
 	cout << "argc = " << argc << endl;
@@ -25,11 +25,21 @@ int main(int argc, char **argv) {
 		workingDirectory = argv[1];
 		workingDirectory += '/';
 		cout << "workingDirectory = " << workingDirectory << endl;
-		modelsDirectory() = workingDirectory + "models/";
 
+		modelsDirectory() = workingDirectory + "models/";
 		cout << "modelsDirectory = " << modelsDirectory() << endl;
 	}
 
+	if (2 < argc) {
+		testingDirectory = argv[2];
+		testingDirectory += '/';
+		cout << "testingDirectory = " << testingDirectory << endl;
+	}
+
+	//	KeyGenerator::test();
+	void testLoop();
+	testLoop();
+//	exit(0);
 	auto &lexiconSP = PairwiseVectorSP::instance();
 	cout << lexiconSP("abd", "deflkj") << endl;
 
