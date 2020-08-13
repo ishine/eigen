@@ -52,7 +52,7 @@ $(artifact): $(obj)
 #target must be the first command to execute, so the include directive should follow it!
 -include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
-$(target): src/main.o $(obj)
+$(target).exe: src/main.o $(obj)
 	$(GCC) -o $@ $^ -ldl
 
 src/jni/%.o: ../src/jni/%.cpp
@@ -89,8 +89,8 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	@echo "install $(artifact) to destination ../../pytext/lib"	
 	cp $(artifact) ../../pytext/lib	
 
-test: $(target)	
-	./$(target) ../../jetty/src/main/resources ../../jetty/src/test/resources
-	@echo "finish testing $(target)!"
+test: $(target).exe	
+	./$(target).exe ../../jetty/src/main/resources ../../jetty/src/test/resources
+	@echo "finish testing $(target).exe!"
 
 # https://blog.csdn.net/qq_42334372/article/details/83037362
