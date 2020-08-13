@@ -1,7 +1,6 @@
 /Debug
 /Release/*/
 !/Release/makefile
-*.so
 *.o
 *.dll
 *.exe
