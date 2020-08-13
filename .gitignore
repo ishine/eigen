@@ -2,6 +2,7 @@
 /Release/*/
 !/Release/makefile
 *.o
+*.d
 *.class
 *.dll
 *.exe
