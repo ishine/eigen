@@ -7,6 +7,7 @@ Vector& max(const Matrix &x, Vector &m, vector<int> &argmax);
 Vector min(const Matrix &x);
 Vector max(const Matrix &x);
 int max(const vector<int> &x, int &index);
+int max(const vector<int> &x);
 
 Tensor& exp(Tensor &x);
 Matrix& exp(Matrix &x);
@@ -202,6 +203,7 @@ Tensor& operator *=(Tensor &x, const Matrix &y);
 vector<Vector>& operator *=(vector<Vector> &x, const Matrix &y);
 MatrixI& operator *=(MatrixI &x, int y);
 VectorI& operator *=(VectorI &x, int y);
+vector<double>& operator *=(vector<double> &x, double y);
 Matrix operator *(const MatrixI &x, double y);
 Vector operator *(const VectorI &x, double y);
 
@@ -265,3 +267,6 @@ Vector ndarray(int x_shape);
 
 MatrixI Zero(int m, int n);
 MatrixI Identity(int m, int n);
+
+vector<double> compress(const double *begin, const double *end,
+		int compress_size);

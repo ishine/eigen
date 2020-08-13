@@ -44,6 +44,6 @@ struct CWSTagger {
 	CWSTagger(const string &h5FilePath, const string &vocabFilePath);
 	CWSTagger(KerasReader &dis, const string &vocabFilePath);
 
-	static CWSTagger& instance();
+	static CWSTagger& instance_crf();
 };
 

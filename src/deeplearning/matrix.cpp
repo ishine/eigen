@@ -32,6 +32,11 @@ int max(const vector<int> &x, int &index) {
 	return max;
 }
 
+int max(const vector<int> &x) {
+	int index;
+	return max(x, index);
+}
+
 Vector max(const Matrix &x) {
 	Vector y;
 	vector<int> argmax;
@@ -382,7 +387,7 @@ MatrixI& operator ==(MatrixI &x, int y) {
 }
 
 vector<Vector> mean(const Tensor &x) {
-	vector<Vector> mean;
+	vector < Vector > mean;
 	int batch_size = x.size();
 	for (int k = 0; k < batch_size; ++k) {
 		mean[k] = x[k].rowwise().mean();
@@ -562,7 +567,6 @@ VectorI& operator -=(VectorI &x, int y) {
 	return x;
 }
 
-
 Vector& operator -=(Vector &x, double y) {
 	x.array() -= y;
 	return x;
@@ -657,7 +661,14 @@ MatrixI& operator *=(MatrixI &x, int y) {
 }
 
 VectorI& operator *=(VectorI &x, int y) {
-	for (int & t : x) {
+	for (auto &t : x) {
+		t *= y;
+	}
+	return x;
+}
+
+vector<double>& operator *=(vector<double> &x, double y) {
+	for (auto &t : x) {
 		t *= y;
 	}
 	return x;
@@ -722,7 +733,7 @@ vector<Vector>& batch_dot(vector<Vector> &x, const Tensor &y, bool transpose) {
 }
 
 vector<Vector>& extract(const Tensor &x, int index) {
-	vector<Vector> out;
+	vector < Vector > out;
 	return extract(x, index, out);
 }
 
@@ -902,4 +913,18 @@ MatrixI Zero(int m, int n) {
 		v.resize(n);
 	}
 	return x;
+}
+
+vector<double> compress(const double *begin, const double *end,
+		int compress_size) {
+//	__log(__PRETTY_FUNCTION__);
+
+	int size = (end - begin) / compress_size;
+	vector<double> newV(size);
+	for (int i = 0; i < size; ++i) {
+//		newV[i] = sum(begin + i * compress_size, begin + (i + 1) * compress_size);
+		newV[i] = begin[i * compress_size];
+	}
+	return newV;
+
 }

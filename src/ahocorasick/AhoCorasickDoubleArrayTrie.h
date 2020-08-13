@@ -1,3 +1,4 @@
+#pragma once
 /**
  * An implementation of Aho Corasick algorithm based on Double Array Trie
  *
@@ -19,11 +20,9 @@ using std::endl;
 
 #include "KeyGenerator.h"
 
-template<typename Char, typename V>
+template<typename _CharT, typename V>
 struct AhoCorasickDoubleArrayTrie {
-	~AhoCorasickDoubleArrayTrie() {
-		delete root;
-	}
+	using String = std::basic_string<_CharT>;
 
 	struct Node {
 		Node() :
@@ -50,7 +49,7 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 	};
 
-	std::basic_string<Char> toString() const {
+	String toString() const {
 		return root->toString();
 	}
 
@@ -99,15 +98,15 @@ struct AhoCorasickDoubleArrayTrie {
 			return begin == obj.begin && end == obj.end && value == obj.value;
 		}
 
-//		std::basic_string<Char> toString() {
+//		String toString() {
 //			return String.format("[%d:%d]=%s", begin, end, value);
 //		}
 
-		std::basic_string<Char> substring(const std::basic_string<Char> &text) {
+		String substr(const String &text) {
 			return text.substr(begin, end - begin);
 		}
 
-		bool intersects(const Hit &part) {
+		bool intersects(const Hit &part) const {
 			return begin < part.end && part.begin < end;
 		}
 	};
@@ -133,41 +132,38 @@ struct AhoCorasickDoubleArrayTrie {
 	 * @param text The text
 	 * @return a list of outputs
 	 */
-	vector<Hit> parseText(const std::basic_string<Char> &text) {
-		int position = 1;
+	vector<Hit> parseText(const String &text) {
+		int position = 0;
 		int currentState = 0;
 		vector<Hit> collectedEmits;
 		for (auto ch : text) {
 			currentState = getState(currentState, ch);
-			storeEmits(position, currentState, collectedEmits);
-			++position;
+			storeEmits(++position, currentState, collectedEmits);
 		}
 
 		return collectedEmits;
 	}
 
-	vector<HitIndexed> parseTextIndexed(const std::basic_string<Char> &text) {
-		int position = 1;
+	vector<HitIndexed> parseTextIndexed(const String &text) {
+		int position = 0;
 		int currentState = 0;
 		vector<HitIndexed> collectedEmits;
 		for (auto ch : text) {
 			currentState = getState(currentState, ch);
-			storeEmits(position, currentState, collectedEmits);
-			++position;
+			storeEmits(++position, currentState, collectedEmits);
 		}
 		return collectedEmits;
 	}
 
-	vector<Hit> parseTextReturnLongest(const std::basic_string<Char> &text) {
-		int position = 1;
+	vector<Hit> parseTextReturnLongest(const String &text) {
+		int position = 0;
 		int currentState = 0;
 		vector<Hit> collectedEmits;
 		for (auto ch : text) {
 			currentState = getState(currentState, ch);
-			Hit hit = storeEmits(position, currentState);
-			if (hit.is_null())
+			auto hit = storeEmits(++position, currentState);
+			if (!hit.is_null())
 				collectedEmits.push_back(hit);
-			++position;
 		}
 
 		return collectedEmits;
@@ -179,12 +175,11 @@ struct AhoCorasickDoubleArrayTrie {
 	 * @param text source text to check
 	 * @return {@code true} if string contains at least one substring
 	 */
-	bool matches(const std::basic_string<Char> &text) {
+	bool matches(const String &text) {
 		int currentState = 0;
 		for (auto ch : text) {
 			currentState = getState(currentState, ch);
-			vector<int> hitArray = node[currentState].emit;
-			if (hitArray.size()) {
+			if (node[currentState].emit.size()) {
 				return true;
 			}
 		}
@@ -192,12 +187,12 @@ struct AhoCorasickDoubleArrayTrie {
 	}
 
 	/**
-	 * Get value by a std::basic_string<Char> key, just like a map.get() method
+	 * Get value by a String key, just like a map.get() method
 	 *
 	 * @param key The key
 	 * @return value if exist otherwise it return nullptr
 	 */
-	V& get(const std::basic_string<Char> &key) {
+	V& get(const String &key) {
 		int index = exactMatchSearch(key);
 		if (index >= 0) {
 			return emit[index].value;
@@ -247,7 +242,7 @@ struct AhoCorasickDoubleArrayTrie {
 	void storeEmits(int position, int currentState,
 			vector<Hit> &collectedEmits) {
 		for (int hit : node[currentState].emit) {
-			collectedEmits.push_back(Hit { position - emit[hit].char_length,
+			collectedEmits.push_back( { position - emit[hit].char_length,
 					position, emit[hit].value });
 		}
 	}
@@ -266,8 +261,8 @@ struct AhoCorasickDoubleArrayTrie {
 		vector<int> &hitArray = node[currentState].emit;
 		if (hitArray.size()) {
 			int hit = hitArray.back();
-			return Hit(position - emit[hit].char_length, position,
-					emit[hit].value);
+			return {position - emit[hit].char_length, position,
+				emit[hit].value};
 		}
 		static Hit null = { 0, 0, V() };
 		return null;
@@ -280,11 +275,11 @@ struct AhoCorasickDoubleArrayTrie {
 	 * @param c
 	 * @return
 	 */
-	int transition(int current, char16_t c) {
+	int transition(int current, _CharT c) {
 		int b = current;
 		int p;
 
-		p = b + (char16_t) (c + 1);
+		p = b + (_CharT) (c + 1);
 		if (b == node[p].check)
 			b = node[p].base;
 		else
@@ -307,7 +302,6 @@ struct AhoCorasickDoubleArrayTrie {
 		int p;
 
 		p = b + c + 1;
-//		p = b + (char16_t) (c + 1);
 		if (b != (p < (int) node.size() ? node[p].check : 0)) {
 			if (nodePos == 0) // depth == 0
 				return 0;
@@ -323,7 +317,7 @@ struct AhoCorasickDoubleArrayTrie {
 	 * @param key the key
 	 * @return the index of the key, you can use it as a perfect hash function
 	 */
-	int exactMatchSearch(const std::basic_string<Char> &key) {
+	int exactMatchSearch(const String &key) {
 		return exactMatchSearch(key, 0, 0, 0);
 	}
 
@@ -336,8 +330,7 @@ struct AhoCorasickDoubleArrayTrie {
 	 * @param nodePos
 	 * @return
 	 */
-	int exactMatchSearch(const std::basic_string<Char> &key, int pos, int len,
-			int nodePos) {
+	int exactMatchSearch(const String &key, int pos, int len, int nodePos) {
 		if (len <= 0)
 			len = key.size();
 		if (nodePos <= 0)
@@ -348,13 +341,13 @@ struct AhoCorasickDoubleArrayTrie {
 		return getMatched(pos, len, result, key, node[nodePos].base);
 	}
 
-	int getMatched(int pos, int len, int result,
-			const std::basic_string<Char> &keyChars, int b1) {
+	int getMatched(int pos, int len, int result, const String &keyChars,
+			int b1) {
 		int b = b1;
 		int p;
 
 		for (int i = pos; i < len; i++) {
-			p = b + (char16_t) (keyChars[i] + 1);
+			p = b + (_CharT) (keyChars[i] + 1);
 			if (b == node[p].check)
 				b = node[p].base;
 			else
@@ -372,13 +365,13 @@ struct AhoCorasickDoubleArrayTrie {
 	/**
 	 * match exactly by a key
 	 *
-	 * @param keyChars the char16_t array of the key
-	 * @param pos      the begin index of char16_t array
+	 * @param keyChars the _CharT array of the key
+	 * @param pos      the begin index of _CharT array
 	 * @param len      the length of the key
 	 * @param nodePos  the starting position of the node for searching
 	 * @return the value index of the key, minus indicates nullptr
 	 */
-	int exactMatchSearch(const char16_t *keyChars, int pos, int len,
+	int exactMatchSearch(const _CharT *keyChars, int pos, int len,
 			int nodePos) {
 		int result = -1;
 
@@ -409,12 +402,30 @@ struct AhoCorasickDoubleArrayTrie {
 		void set_failure();
 	};
 
+	std::map<String, V> enumerate() {
+		std::map<String, V> map;
+		root->enumerate(String(), map);
+		return map;
+	}
+
 	struct State {
 
 		AhoCorasickDoubleArrayTrie *self;
 		State *failure;
 		std::map<int, State*> success;
 		int index;
+
+		void enumerate(const String &text, std::map<String, V> &map) {
+			for (auto &entry : success) {
+				if (entry.first < 0) {
+					int index = emit().back();
+					__log(index);
+					map[text] = self->emit[index].value;
+				} else {
+					entry.second->enumerate(text + (_CharT) entry.first, map);
+				}
+			}
+		}
 
 		~State() {
 			for (auto &entry : success) {
@@ -458,13 +469,13 @@ struct AhoCorasickDoubleArrayTrie {
 
 			for (auto &entry : success) {
 				int word = entry.first;
-				State *state = entry.second;
+				auto state = entry.second;
 				if (state->index != 0) {
-					assert_eq(state->index, begin + (char16_t ) (word + 1));
+					assert_eq(state->index, begin + (_CharT ) (word + 1));
 					assert_eq(self->node[state->index].check, begin);
 				}
 
-				int code = _begin + (char16_t) (word + 1);
+				int code = _begin + (_CharT) (word + 1);
 				assert_eq(self->node[code].check, 0);
 				if (state->index != 0) {
 					self->node[code].base = self->node[state->index].base;
@@ -518,8 +529,8 @@ struct AhoCorasickDoubleArrayTrie {
 			return map;
 		}
 
-		bool update_failure(State *parent, char16_t ch) {
-			State *newFailureState = self->newFailureState(parent, ch);
+		bool update_failure(State *parent, _CharT ch) {
+			auto newFailureState = self->newFailureState(parent, ch);
 			if (failure == newFailureState) {
 				return false;
 			}
@@ -529,8 +540,8 @@ struct AhoCorasickDoubleArrayTrie {
 			return true;
 		}
 
-		State* update_failure(State *parent, char16_t ch, State *keywordNode) {
-			State *newFailureState = self->newFailureState(parent, ch);
+		State* update_failure(State *parent, _CharT ch, State *keywordNode) {
+			auto newFailureState = self->newFailureState(parent, ch);
 			if (failure == newFailureState) {
 				if (keywordNode != nullptr)
 					addEmit(keywordNode->emit());
@@ -543,8 +554,8 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		void constructFailureStates_(State *parent, State *rootState,
-				const std::basic_string<Char> &keyword) {
-			char16_t character = keyword[0];
+				const String &keyword) {
+			_CharT character = keyword[0];
 			rootState = rootState->success[(int) character];
 
 			if (failure->depth() <= rootState->depth()) {
@@ -568,8 +579,8 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		void constructFailureStates(State *parent, State *rootState,
-				const std::basic_string<Char> &keyword) {
-			char16_t character = keyword[0];
+				const String &keyword) {
+			_CharT character = keyword[0];
 			rootState = rootState->success[(int) character];
 
 			bool failure = true;
@@ -612,7 +623,6 @@ struct AhoCorasickDoubleArrayTrie {
 
 		void checkValidity(bool recursively) {
 			if (emit().size()) {
-//				__cout(emit());
 				for (size_t i = 1; i < emit().size(); ++i) {
 					assert_lt(self->emit[emit()[i - 1]].char_length,
 							self->emit[emit()[i]].char_length);
@@ -631,16 +641,15 @@ struct AhoCorasickDoubleArrayTrie {
 
 			int begin = self->node[index].base;
 			for (auto &entry : success) {
-				assert_eq(
-						self->node[begin + (char16_t ) (entry.first + 1)].check,
+				assert_eq(self->node[begin + (_CharT ) (entry.first + 1)].check,
 						begin);
 			}
 
 			for (auto &entry : success) {
-				State *state = entry.second;
+				auto state = entry.second;
 				if (state->is_null_terminator()) {
 					assert_eq(
-							-self->node[begin + (char16_t ) (entry.first + 1)].base
+							-self->node[begin + (_CharT ) (entry.first + 1)].base
 									- 1, emit().back());
 				}
 			}
@@ -659,18 +668,15 @@ struct AhoCorasickDoubleArrayTrie {
 				bool needMofification = false;
 				if (last_index >= 0) {
 					emit()[last_index] = index;
-//					__cout(emit());
 					needMofification = true;
 				}
 
 				if (first_index >= 0) {
 					emit() = copierSauf(emit(), first_index);
-//					__cout(emit());
 					needMofification = false;
 				}
 				if (needMofification) {
 					emit() = toArray(self->toTreeMap(emit()));
-//					__cout(emit());
 				}
 			}
 
@@ -691,20 +697,15 @@ struct AhoCorasickDoubleArrayTrie {
 
 		int lastKey() {
 			return self->emit[emit().back()].char_length;
-//			std::map<int, int> map = toTreeMap(emit);
-//			return map.lastKey();
 		}
 
 		int lastValue() {
 			return emit().back();
-//			std::map<int, int> map = toTreeMap(emit);
-//			return map.lastEntry().second;
 		}
 
 		int remove(int char_length) {
 //			emit.remove(char_length);
-			std::map<int, int> map = self->toTreeMap(emit());
-//			__cout(map);
+			auto map = self->toTreeMap(emit());
 			if (map.count(char_length)) {
 				int index = map[char_length];
 				map.erase(char_length);
@@ -716,13 +717,11 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		bool containsKey(int char_length) {
-			std::map<int, int> map = self->toTreeMap(emit());
-
-			return map.count(char_length);
+			return self->toTreeMap(emit()).count(char_length);
 		}
 
-		bool delete_failure(State *parent, char16_t ch) {
-			State *newFailureState = self->newFailureState(parent, ch);
+		bool delete_failure(State *parent, _CharT ch) {
+			auto newFailureState = self->newFailureState(parent, ch);
 			if (failure == newFailureState) {
 				return false;
 			}
@@ -731,17 +730,13 @@ struct AhoCorasickDoubleArrayTrie {
 			return true;
 		}
 
-		void deleteFailureStates(State *parent,
-				const std::basic_string<Char> &keyword, int char_length) {
+		void deleteFailureStates(State *parent, const String &keyword,
+				int char_length) {
 			delete_failure(parent, keyword[0]);
 
 			if (keyword.size() == 1) {
 				remove(char_length);
 			} else {
-//				State *state = success[(int) keyword[0]];
-//				if (state != nullptr) {
-//					state->deleteFailureStates(this, keyword, char_length);
-//				}
 				auto find = success.find((int) keyword[1]);
 				if (find != success.end()) {
 					find->second->deleteFailureStates(this, keyword.substr(1),
@@ -753,7 +748,6 @@ struct AhoCorasickDoubleArrayTrie {
 		int deleteEmit(std::stack<State*> &parent) {
 			auto leaf = success[-1];
 			success.erase(-1);
-//			__cout(success);
 			assert_eq(self->node[leaf->index].check, leaf->index);
 			self->node[leaf->index].clear();
 
@@ -792,28 +786,27 @@ struct AhoCorasickDoubleArrayTrie {
 		void print() {
 			int begin = node[index].base;
 			for (auto &entry : success) {
-				cout << "check[" << (begin + (char16_t) (entry.first + 1))
+				cout << "check[" << (begin + (_CharT) (entry.first + 1))
 						<< "] = ";
 
-				assert_eq(node[begin + (char16_t ) (entry.first + 1)].check,
+				assert_eq(node[begin + (_CharT ) (entry.first + 1)].check,
 						begin);
 			}
 
 			cout << "base[" << index << "] = " << begin;
 
 			for (auto &entry : success) {
-				State state = entry.second;
+				auto state = entry.second;
 				if (state->is_null_terminator()) {
-					cout << ", \tbase["
-							<< (begin + (char16_t) (entry.first + 1))
+					cout << ", \tbase[" << (begin + (_CharT) (entry.first + 1))
 							<< "] = value["
-							<< (-node[begin + (char16_t) (entry.first + 1)].base
+							<< (-node[begin + (_CharT) (entry.first + 1)].base
 									- 1) << "] = "
 							<< self->emit[emit().back()].value;
 
 					assert_eq(
-							-node[begin + (char16_t ) (entry.first + 1)].base
-									- 1, emit().back());
+							-node[begin + (_CharT ) (entry.first + 1)].base - 1,
+							emit().back());
 				}
 			}
 			cout << endl;
@@ -828,14 +821,14 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		void appendNullTerminator(int index) {
-			State *null_terminator = new State { self, nullptr, { }, 0 };
+			auto null_terminator = new State { self, nullptr, { }, 0 };
 			null_terminator->index = -index - 1;
 			success[-1] = null_terminator;
 		}
 
 		void ensureCapacity() {
 			int begin = self->node[index].base;
-			int addr = begin + (char16_t) (this->success.rbegin()->first + 1);
+			int addr = begin + (_CharT) (this->success.rbegin()->first + 1);
 			if (addr >= (int) self->node.size()) {
 				self->resize(addr + 1);
 			}
@@ -843,7 +836,7 @@ struct AhoCorasickDoubleArrayTrie {
 
 		int try_nextCheckPos(int begin) {
 			assert_gt(begin, 0);
-			int addr = begin + (char16_t) (success.begin()->first + 1);
+			int addr = begin + (_CharT) (success.begin()->first + 1);
 			if (addr < (int) self->node.size() && self->node[addr].check != 0) {
 				return -1;
 			}
@@ -852,8 +845,7 @@ struct AhoCorasickDoubleArrayTrie {
 
 		int try_nextCheckPos() {
 			int begin = std::max(1,
-					self->nextCheckPos
-							- (char16_t) (success.begin()->first + 1));
+					self->nextCheckPos - (_CharT) (success.begin()->first + 1));
 
 			while (true) {
 				self->nextCheckPos = try_nextCheckPos(begin);
@@ -879,7 +871,7 @@ struct AhoCorasickDoubleArrayTrie {
 			assert_gt(begin, 0);
 			for (auto &entry : success) {
 				int word = entry.first;
-				int addr = begin + (char16_t) (word + 1);
+				int addr = begin + (_CharT) (word + 1);
 				if (addr < (int) self->node.size()
 						&& self->node[addr].check != 0) {
 					return false;
@@ -919,8 +911,8 @@ struct AhoCorasickDoubleArrayTrie {
 
 			ensureCapacity();
 			for (auto &entry : success) {
-				State *state = entry.second;
-				int index = begin + (char16_t) (entry.first + 1);
+				auto state = entry.second;
+				int index = begin + (_CharT) (entry.first + 1);
 				if (state->is_null_terminator()) {
 					self->node[index].base = state->index;
 					state->index = index;
@@ -944,7 +936,7 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		void addEmit() {
-			State *leaf = new State { self, nullptr, { }, 0 };
+			auto leaf = new State { self, nullptr, { }, 0 };
 			success[-1] = leaf;
 			if (success.size() > 1) {
 				int begin = self->node[index].base;
@@ -975,8 +967,8 @@ struct AhoCorasickDoubleArrayTrie {
 						if (entry.first == -1)
 							continue;
 
-						int code = begin + (char16_t) (entry.first + 1);
-						State *state = entry.second;
+						int code = begin + (_CharT) (entry.first + 1);
+						auto state = entry.second;
 						assert_and(self->node[code].check == 0,
 								self->node[code].base == 0);
 
@@ -1002,7 +994,6 @@ struct AhoCorasickDoubleArrayTrie {
 			std::map<int, int> map = self->toTreeMap(emit());
 			map[self->emit[value_index].char_length] = value_index;
 			emit() = toArray(map);
-//			__cout(emit());
 		}
 
 		void check_initialization() {
@@ -1021,11 +1012,10 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		void addEmit(const vector<int> &emit) {
-			std::map<int, int> map = self->toTreeMap(this->emit());
+			auto map = self->toTreeMap(this->emit());
 			auto _map = self->toTreeMap(emit);
 			map.insert(_map.begin(), _map.end());
 			this->emit() = toArray(map);
-//			__cout(this->emit());
 		}
 
 		void setFailure(State *failure) {
@@ -1049,7 +1039,7 @@ struct AhoCorasickDoubleArrayTrie {
 				if (entry.first == -1)
 					continue;
 
-				State *state = entry.second;
+				auto state = entry.second;
 				assert_eq(state->depth(), depth);
 				if (entry.first == ch && depth > 1) {
 					list.push_back(this);
@@ -1064,23 +1054,20 @@ struct AhoCorasickDoubleArrayTrie {
 			return list;
 		}
 
-		vector<State*> locate_state(const std::basic_string<Char> &keyword) {
+		vector<State*> locate_state(const String &keyword) {
 			vector<State*> list;
-			locate_state(u"", keyword, list, 0);
-//			__cout(list.size());
+			locate_state(String(), keyword, list, 0);
 			return list;
 		}
 
-		void locate_state(const std::basic_string<Char> &prefix,
-				const std::basic_string<Char> &keyword, vector<State*> &list,
-				int depth) {
+		void locate_state(const String &prefix, const String &keyword,
+				vector<State*> &list, int depth) {
 			++depth;
 			for (auto &entry : success) {
 				if (entry.first == -1)
 					continue;
 				auto state = entry.second;
-				std::basic_string<Char> newPrefix = prefix
-						+ (char16_t) (int) entry.first;
+				String newPrefix = prefix + (_CharT) (int) entry.first;
 
 				assert_eq(state->depth(), depth);
 
@@ -1103,11 +1090,6 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		State* nextState(int character) const {
-//			State *nextState = success[character];
-//			if (nextState == nullptr && isRoot())
-//				return (State*) this;
-//
-//			return nextState;
 			auto find = success.find(character);
 			if (find == success.end()) {
 				return isRoot() ? (State*) this : nullptr;
@@ -1116,7 +1098,7 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		State* addState(int character) {
-			State *nextState = success[character];
+			auto nextState = success[character];
 			if (nextState == nullptr) {
 				nextState = new State { self, nullptr, { }, 0 };
 				success[character] = nextState;
@@ -1124,35 +1106,37 @@ struct AhoCorasickDoubleArrayTrie {
 			return nextState;
 		}
 
-		TextTreeNode<char16_t>* toShadowTree() {
-			std::basic_string<Char> value = u"@";
+		TextTreeNode<_CharT>* toShadowTree() {
+			String value(1, '@');
 
 			if (self->node[this->index].base > 0)
-			value += std::toString(this->index) + u":" + std::toString(self->node[this->index].base);
+				value += std::toString(this->index) + String(1, ':')
+						+ std::toString(self->node[this->index].base);
 			else
-			value += std::toString(this->index) + u"=" + std::toString(-self->node[this->index].base - 1);
+				value += std::toString(this->index) + String(1, '=')
+						+ std::toString(-self->node[this->index].base - 1);
 
-			TextTreeNode<char16_t> *newNode = new TextTreeNode<char16_t>(value);
+			auto newNode = new TextTreeNode<_CharT>(value);
 			vector<int> list(success.size());
 
 			size_t i = 0;
-			for (auto &entry: success) {
+			for (auto &entry : success) {
 				list[i++] = entry.first;
 			}
 
-			vector<TextTreeNode<char16_t>*> arr(list.size());
+			vector<TextTreeNode<_CharT>*> arr(list.size());
 			for (i = 0; i < arr.size(); ++i) {
 				int word = list[i];
 				auto state = success[word];
 				auto node = state->toShadowTree();
 
 				if (word == -1)
-				value = u"*";
+					value = String(1, '*');
 				else
-				value = std::basic_string<Char>() + (char16_t) word;
+					value = String(1, word);
 
 //				if (state->failure != nullptr && state->failure.depth != 0) {
-//					node.value += std::basic_string<Char>.valueOf(state->failure.depth);
+//					node.value += String.valueOf(state->failure.depth);
 //				}
 //				if (state->is_null_terminator()) {
 //					newNode.value += '+';
@@ -1169,19 +1153,21 @@ struct AhoCorasickDoubleArrayTrie {
 // tree node
 				if (x_length > 0) {
 					newNode->x.resize(x_length);
-					std::copy(arr.begin(), arr.begin() + x_length, newNode->x.begin());
+					std::copy(arr.begin(), arr.begin() + x_length,
+							newNode->x.begin());
 				}
 
 				if (y_length > 0) {
 					newNode->y.resize(y_length);
-					std::copy(arr.begin() + x_length, arr.end(), newNode->y.begin());
+					std::copy(arr.begin() + x_length, arr.end(),
+							newNode->y.begin());
 				}
 			}
 			return newNode;
 		}
 
-		std::basic_string<Char> toString() {
-			object<TextTreeNode<char16_t>> root = this->toShadowTree();
+		String toString() {
+			object<TextTreeNode<_CharT>> root = this->toShadowTree();
 			return root->toString(root->max_width() + 1, true);
 //			return root->toString(root->max_width() + 1);
 		}
@@ -1190,7 +1176,7 @@ struct AhoCorasickDoubleArrayTrie {
 	/**
 	 * the root state of trie
 	 */
-	State *root;
+	object<State> root;
 	/**
 	 * whether the position has been used
 	 */
@@ -1205,21 +1191,18 @@ struct AhoCorasickDoubleArrayTrie {
 	 *
 	 * @param map a map containing key-value pairs
 	 */
-	AhoCorasickDoubleArrayTrie(const std::map<std::basic_string<Char>, V> &map) : emit(map.size()) {
-		root = new State {
-			this,
-			nullptr, {},
-			0};
+	AhoCorasickDoubleArrayTrie(const std::map<String, V> &map) :
+			emit(map.size()) {
+		root = new State { this, nullptr, { }, 0 };
 		int value_index = 0;
 		for (auto &entry : map) {
-			const std::basic_string<Char> &keyword = entry.first;
+			const String &keyword = entry.first;
 			State *currentState = this->root;
-			for (char16_t character : keyword) {
+			for (_CharT character : keyword) {
 				currentState = currentState->addState(character);
 			}
 
-			emit[value_index] = Emit {(int)keyword.size(),
-				entry.second};
+			emit[value_index] = { (int) keyword.size(), entry.second };
 			currentState->initializeEmit(value_index);
 			currentState->appendNullTerminator(value_index);
 
@@ -1233,10 +1216,7 @@ struct AhoCorasickDoubleArrayTrie {
 //		used = nullptr;
 
 		int length = memory_size();
-		if (length < (int)node.size()) {
-//			vector<Node> pointer(length);
-//			std::copy(node.begin(), node.begin() + length, pointer.begin());
-//			node = pointer;
+		if (length < (int) node.size()) {
 			node.resize(length);
 		}
 
@@ -1250,7 +1230,7 @@ struct AhoCorasickDoubleArrayTrie {
 		std::queue<State*> queue;
 
 // First, set the fail state of all depth 1 states to the root state
-		for (auto &entry: root->success) {
+		for (auto &entry : root->success) {
 			auto depthOneState = entry.second;
 			depthOneState->setFailure(root);
 			queue.push(depthOneState);
@@ -1264,12 +1244,13 @@ struct AhoCorasickDoubleArrayTrie {
 			for (auto &entry : currentState->success) {
 				int transition = entry.first;
 				if (transition == -1)
-				continue;
+					continue;
 
 				auto targetState = entry.second;
 				queue.push(targetState);
 
-				auto newFailureState = this->newFailureState(currentState, transition);
+				auto newFailureState = this->newFailureState(currentState,
+						transition);
 				targetState->setFailure(newFailureState);
 				targetState->addEmit(newFailureState->emit());
 			}
@@ -1284,15 +1265,17 @@ struct AhoCorasickDoubleArrayTrie {
 	 * @param newSize of the new array
 	 */
 	void resize(int newSize) {
-		assert_or(node.empty(), newSize > (int)node.size());
+		assert_or(node.empty(), newSize > (int )node.size());
 		newSize = (int) std::pow(2.0, (int) ceil(log(newSize) / log(2.0)));
 
 		vector<Node> _pointer(newSize);
 
 		int start;
 		if (node.size()) {
-			std::copy(node.begin(), node.end(), _pointer.begin()); start = node.size();
-		} else start = 0;
+			std::copy(node.begin(), node.end(), _pointer.begin());
+			start = node.size();
+		} else
+			start = 0;
 
 		for (int i = start; i < newSize; ++i) {
 			_pointer[i] = Node();
@@ -1302,7 +1285,9 @@ struct AhoCorasickDoubleArrayTrie {
 	}
 
 	int try_base(std::map<int, State*> &siblings) {
-		int begin = 0; int pos = std::max((char16_t) (siblings.begin()->first + 1) + 1, nextCheckPos) - 1;
+		int begin = 0;
+		int pos = std::max((_CharT) (siblings.begin()->first + 1) + 1,
+				nextCheckPos) - 1;
 //		int nonzero_num = 0;
 		int first = 0;
 
@@ -1315,24 +1300,29 @@ struct AhoCorasickDoubleArrayTrie {
 			}
 
 			if (first == 0) {
-				nextCheckPos = pos; first = 1;
+				nextCheckPos = pos;
+				first = 1;
 			}
 
-			begin = pos - (char16_t) (siblings.firstKey() + 1); // 当前位置离第一个兄弟节点的距离
-//			if (pointer.size() <= (begin + (char16_t) (siblings.lastKey() + 1))) {
+			begin = pos - (_CharT) (siblings.firstKey() + 1); // 当前位置离第一个兄弟节点的距离
+//			if (pointer.size() <= (begin + (_CharT) (siblings.lastKey() + 1))) {
 //				// progress can be zero // 防止progress产生除零错误
 //				double l = (1.05 > 1.0 * v.size() / (progress + 1)) ? 1.05 : 1.0 * v.size() / (progress + 1);
 //				resize((int) (pointer.size() * l));
 //			}
 
-			if (used.isRregistered(begin)) continue;
+			if (used.isRregistered(begin))
+				continue;
 
 			auto iterator = siblings.iterator();
 
 			if (iterator.hasNext()) {
-				iterator.next(); while (iterator.hasNext()) {
-					auto p = iterator.next(); int addr = begin + (char16_t) (p.first + 1);
-					if (addr < node.size() && node[addr].check != 0) goto outer;
+				iterator.next();
+				while (iterator.hasNext()) {
+					auto p = iterator.next();
+					int addr = begin + (_CharT) (p.first + 1);
+					if (addr < node.size() && node[addr].check != 0)
+						goto outer;
 				}
 			}
 
@@ -1351,13 +1341,13 @@ struct AhoCorasickDoubleArrayTrie {
 
 	void occupy(int begin) {
 //		System.out.println("occupy begin = " + begin);
-		assert_false (used.isRregistered(begin));
+		assert_false(used.isRregistered(begin));
 		used.register_key(begin);
 	}
 
 	void recycle(int begin) {
 		if (begin > 0) {
-			assert_true (used.isRregistered(begin));
+			assert_true(used.isRregistered(begin));
 			used.unregister_key(begin);
 		}
 	}
@@ -1387,7 +1377,7 @@ struct AhoCorasickDoubleArrayTrie {
 		vector<int> indices;
 		for (size_t i = 1; i < node.size(); ++i) {
 			if (!used.isRregistered(i))
-			continue;
+				continue;
 
 			indices.push_back(i);
 		}
@@ -1399,54 +1389,52 @@ struct AhoCorasickDoubleArrayTrie {
 		root->checkValidity(true);
 		for (auto &node : this->node) {
 			if (node.check != 0) {
-				assert_neq (node.base, 0);
-			}
-			else {
-				assert_true (node.emit.empty());
-				assert_eq (node.failure, -1);
+				assert_neq(node.base, 0);
+			} else {
+				assert_true(node.emit.empty());
+				assert_eq(node.failure, -1);
 			}
 		}
 
-		vector<int> checkIndex = getNonzeroCheckIndex();
-		vector<int> baseIndex = getNonzeroBaseIndex();
+		auto checkIndex = getNonzeroCheckIndex();
+		auto baseIndex = getNonzeroBaseIndex();
 
-		assert_eq (checkIndex.size() + 1, baseIndex.size());
+		assert_eq(checkIndex.size() + 1, baseIndex.size());
 
-		assert_eq (baseIndex[0], 0);
+		assert_eq(baseIndex[0], 0);
 
-		assert_eq(vector<int>(baseIndex.begin() + 1, baseIndex.end()), checkIndex);
+		assert_eq(vector<int>(baseIndex.begin() + 1, baseIndex.end()),
+				checkIndex);
 
-		vector<int> usedIndex = getValidUsedIndex();
-		assert_eq (usedIndex.size() + emit.size(), baseIndex.size());
+		auto usedIndex = getValidUsedIndex();
+		assert_eq(usedIndex.size() + emit.size(), baseIndex.size());
 
-		assert_eq (this->root->size(), (int)baseIndex.size());
+		assert_eq(this->root->size(), (int )baseIndex.size());
 
 		for (int kinder : checkIndex) {
-			assert_true (used.isRregistered(node[kinder].check));
+			assert_true(used.isRregistered(node[kinder].check));
 		}
 
 		for (int index : baseIndex) {
 			int begin = node[index].base;
 			if (begin < 0) {
-				assert_lt(-begin - 1, (int)emit.size());
-			}
-			else {
-				assert_true (used.isRregistered(begin));
+				assert_lt(-begin - 1, (int )emit.size());
+			} else {
+				assert_true(used.isRregistered(begin));
 			}
 		}
 
 		for (int begin : usedIndex) {
 			if (node[begin].check != 0) {
 				if (node[begin].check == begin) {
-					assert_lt (node[begin].base, 0);
-				}
-				else {
+					assert_lt(node[begin].base, 0);
+				} else {
 					assert_gt(node[begin].base, 0);
 				}
 			}
 		}
 
-		assert_eq((int)baseIndex.size(), this->root->size());
+		assert_eq((int )baseIndex.size(), this->root->size());
 		assert_eq(usedIndex.size() + emit.size(), baseIndex.size());
 	}
 
@@ -1455,19 +1443,20 @@ struct AhoCorasickDoubleArrayTrie {
 //	order = 0 means random order	
 	int order;
 
-	void remove(const std::basic_string<Char> &keyword) {
+	void remove(const String &keyword) {
 		State *currentState;
-		if (order < 0) {} else {
+		if (order < 0) {
+		} else {
 			int index = exactMatchSearch(keyword);
 			if (index < 0)
-			return;
+				return;
 //			int length = emit.size();
 // now change emit from key.size() to index
 			removeIndex(index);
 
 			currentState = this->root;
 			std::stack<State*> parent;
-			for (auto ch :keyword) {
+			for (auto ch : keyword) {
 				parent.push(currentState);
 				currentState = currentState->success[(int) ch];
 			}
@@ -1480,7 +1469,7 @@ struct AhoCorasickDoubleArrayTrie {
 
 			if (character != -1) {
 				numOfDeletion -= parent.size();
-				deleteFailureStates((char16_t) character, keyword, numOfDeletion);
+				deleteFailureStates((_CharT) character, keyword, numOfDeletion);
 			}
 			emit.pop_back();
 //			__cout(emit);
@@ -1497,7 +1486,7 @@ struct AhoCorasickDoubleArrayTrie {
 		first_node = second_node = nullptr;
 
 		index = -index - 1;
-		for (Node &node : this->node) {
+		for (auto &node : this->node) {
 			if (node.base == index) {
 				first_node = &node;
 				break;
@@ -1505,7 +1494,7 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		last = -last - 1;
-		for (Node &node : this->node) {
+		for (auto &node : this->node) {
 			if (node.base == last) {
 				second_node = &node;
 				break;
@@ -1516,7 +1505,8 @@ struct AhoCorasickDoubleArrayTrie {
 		second_node->base = index;
 	}
 
-	void deleteFailureStates(char16_t character, const std::basic_string<Char> &keyword, int numOfDeletion) {
+	void deleteFailureStates(_CharT character, const String &keyword,
+			int numOfDeletion) {
 		int char_length = keyword.size();
 
 		vector<State*> list;
@@ -1525,8 +1515,8 @@ struct AhoCorasickDoubleArrayTrie {
 			list = root->locate_state(character);
 			deleteFailureStates(list, keyword, char_length);
 		} else {
-			if (keyword.empty() || (int)keyword.size() < mid)
-			return;
+			if (keyword.empty() || (int) keyword.size() < mid)
+				return;
 
 			list = root->locate_state(keyword.substr(0, mid));
 
@@ -1534,15 +1524,16 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 	}
 
-	void deleteFailureStates(vector<State*> &list, const std::basic_string<Char> &keyword, int char_length) {
-		char16_t character = keyword[0];
-		for (State *parent : list) {
-			State *state = parent->success[(int) character];
+	void deleteFailureStates(vector<State*> &list, const String &keyword,
+			int char_length) {
+		_CharT character = keyword[0];
+		for (auto parent : list) {
+			auto state = parent->success[(int) character];
 			state->deleteFailureStates(parent, keyword, char_length);
 		}
 	}
 
-	void put(const std::basic_string<Char> &keyword, const V &value) {
+	void put(const String &keyword, const V &value) {
 		if (order < 0) {
 		} else {
 			int index = exactMatchSearch(keyword);
@@ -1553,17 +1544,17 @@ struct AhoCorasickDoubleArrayTrie {
 
 			index = emit.size();
 			emit.resize(emit.size() + 1);
-			emit[index] = Emit {(int)keyword.size(), value};
+			emit[index] = Emit { (int) keyword.size(), value };
 
-			auto currentState = this->root;
+			State *currentState = this->root;
 			State *crutialState = nullptr;
 			int crutialIndex = -1;
 			State *parent = nullptr;
 			vector<Transition> queue;
 			for (size_t i = 0; i < keyword.size(); ++i) {
-				char16_t ch = keyword[i];
+				_CharT ch = keyword[i];
 				if (crutialState == nullptr)
-				parent = currentState;
+					parent = currentState;
 				currentState = currentState->addState(ch, queue);
 				if (currentState->index == 0 && crutialState == nullptr) {
 					crutialState = parent;
@@ -1573,7 +1564,7 @@ struct AhoCorasickDoubleArrayTrie {
 
 			currentState->addEmit();
 			if (crutialIndex >= 0) {
-				char16_t ch = keyword[crutialIndex];
+				_CharT ch = keyword[crutialIndex];
 				update(crutialState, ch, index);
 			}
 
@@ -1582,13 +1573,13 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 	}
 
-	void updateFailureStates(vector<Transition> &queue, const std::basic_string<Char> &keyword) {
+	void updateFailureStates(vector<Transition> &queue, const String &keyword) {
 		for (auto &transit : queue) {
 			transit.set_failure();
 		}
 
 		vector<State*> list;
-		Transition keywordHead = {0, 0};
+		Transition keywordHead = { 0, 0 };
 
 		if (!queue.empty()) {
 			keywordHead = queue[0];
@@ -1597,14 +1588,14 @@ struct AhoCorasickDoubleArrayTrie {
 			}
 		}
 
-		auto rootState = this->root;
+		State *rootState = this->root;
 
 		if (keywordHead.parent != nullptr) {
 			list = keywordHead.parent->locate_state(keywordHead.character);
 			constructFailureStates(list, rootState, keyword);
 		} else {
-			std::basic_string<Char> oldKeyword = keyword;
-			std::basic_string<Char> _keyword;
+			String oldKeyword = keyword;
+			String _keyword;
 			if (queue.empty()) {
 				int mid = keyword.size();
 				_keyword = keyword.substr(mid - 1);
@@ -1625,8 +1616,9 @@ struct AhoCorasickDoubleArrayTrie {
 
 	}
 
-	void constructFailureStates(vector<State*> &list, State *rootState, const std::basic_string<Char> &keyword) {
-		char16_t character = keyword[0];
+	void constructFailureStates(vector<State*> &list, State *rootState,
+			const String &keyword) {
+		_CharT character = keyword[0];
 		for (auto parent : list) {
 			auto state = parent->success[(int) character];
 			state->constructFailureStates(parent, rootState, keyword);
@@ -1644,13 +1636,13 @@ struct AhoCorasickDoubleArrayTrie {
 				need_update_base = true;
 			} else {
 				assert_or(code == 0, node[code].check != 0);
-				pos = begin + (char16_t) (word + 1);
+				pos = begin + (_CharT) (word + 1);
 				need_update_base = node[pos].check != 0;
 			}
 
 			if (need_update_base) {
 				begin = parent->update_base();
-				pos = begin + (char16_t) (word + 1);
+				pos = begin + (_CharT) (word + 1);
 			}
 
 			if (!used.isRregistered(begin)) {
@@ -1668,10 +1660,10 @@ struct AhoCorasickDoubleArrayTrie {
 				for (auto &entry : parent->success) {
 					int key = entry.first;
 					if (key != word) {
-						State *sibling = entry.second;
+						auto sibling = entry.second;
 						node[sibling->index].clear();
 
-						int new_code = begin + (char16_t) (key + 1);
+						int new_code = begin + (_CharT) (key + 1);
 						sibling->index = new_code;
 						assert_eq(node[new_code].check, 0);
 						node[new_code].check = begin;
@@ -1702,13 +1694,12 @@ struct AhoCorasickDoubleArrayTrie {
 			map[this->emit[index].char_length] = index;
 		}
 
-//		__cout(map);
 		return map;
 	}
 
 	static vector<int> toArray(const std::map<int, int> &map) {
 		if (map.empty())
-		return {};
+			return {};
 
 		vector<int> emit(map.size());
 		int i = 0;
@@ -1721,13 +1712,13 @@ struct AhoCorasickDoubleArrayTrie {
 
 	bool operator ==(const AhoCorasickDoubleArrayTrie &obj) const {
 		if (to_map() != obj.to_map())
-		return false;
+			return false;
 		return *root == *obj.root;
 	}
 
 	std::map<int, std::set<V>> to_map() const {
 		std::map<int, std::set<V>> map;
-		for (const Emit &e : emit) {
+		for (auto &e : emit) {
 			map[e.char_length].insert(e.value);
 		}
 
@@ -1739,8 +1730,7 @@ struct AhoCorasickDoubleArrayTrie {
 		do {
 			currentState = currentState->failure;
 			state = currentState->nextState(transition);
-		}
-		while (state == nullptr);
+		} while (state == nullptr);
 
 		return state;
 	}
@@ -1748,20 +1738,20 @@ struct AhoCorasickDoubleArrayTrie {
 	const static bool debug = true;
 };
 
-template<typename Char, typename V>
-typename AhoCorasickDoubleArrayTrie<Char, V>::State* AhoCorasickDoubleArrayTrie<
-		Char, V>::Transition::node() {
+template<typename _CharT, typename V>
+typename AhoCorasickDoubleArrayTrie<_CharT, V>::State* AhoCorasickDoubleArrayTrie<
+		_CharT, V>::Transition::node() {
 	return parent->success[character];
 }
 
-template<typename Char, typename V>
-void AhoCorasickDoubleArrayTrie<Char, V>::Transition::set_failure() {
+template<typename _CharT, typename V>
+void AhoCorasickDoubleArrayTrie<_CharT, V>::Transition::set_failure() {
 	if (parent->isRoot()) {
 		parent->success[character]->setFailure(parent);
 	} else {
 		auto targetState = parent->success[character];
 		auto newFailureState =
-				AhoCorasickDoubleArrayTrie<Char, V>::newFailureState(parent,
+				AhoCorasickDoubleArrayTrie<_CharT, V>::newFailureState(parent,
 						character);
 		targetState->setFailure(newFailureState);
 

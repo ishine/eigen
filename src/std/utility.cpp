@@ -1,5 +1,6 @@
 #include "utility.h"
 #include <string>
+#include<cstring> // to include strlen
 
 size_t Text::get_utf8_char_len(char byte) {
 // return 0 表示错误
@@ -20,6 +21,8 @@ size_t Text::get_utf8_char_len(char byte) {
 	while (byte & mask) {
 		len++;
 		if (len > 6) {
+			__log(__PRETTY_FUNCTION__);
+			cerr << "illegal char encountered" << (int) byte << endl;
 			//cerr << "The mask get len is over 6." << endl;
 			return 0;
 		}
@@ -57,7 +60,7 @@ void Text::test_utf_unicode_conversion() {
 	char str[7];
 	for (word wc = 1; wc > 0; ++wc) {
 		auto cstr = unicode2utf(wc, str);
-		auto _wc = utf2unicode(cstr);
+		auto _wc = utf2unicode(cstr, strlen(cstr));
 		assert(_wc == wc);
 		if (_wc != wc) {
 			cout << wc << " != " << _wc << endl;
@@ -81,7 +84,7 @@ int Text::unicode2jchar(int unicode) {
 	return res_jchars;
 }
 
-int Text::utf2unicode(const char *pText) {
+int Text::utf2unicode(const char *pText, int length) {
 //	https://blog.csdn.net/qq_38279908/article/details/89329740
 //	https://www.cnblogs.com/cfas/p/7931787.html
 //  #include <codecvt>        // std::codecvt_utf8
@@ -89,34 +92,47 @@ int Text::utf2unicode(const char *pText) {
 	int wc = 0;
 	char *uchar = (char*) &wc;
 
-	if (!pText[1]) {
+//	if (length == 0) {
+//		length = strlen(pText);
+//	}
+
+	switch (length) {
+	case 1:
 		uchar[1] = 0;
 		uchar[0] = pText[0];
-	} else if (!pText[2]) {
-//		U-000007FF: 110xxxxx 10xxxxxx
+		break;
+	case 2:
+		//		U-000007FF: 110xxxxx 10xxxxxx
 		uchar[1] = get_bits(pText[0], 2, 4);
 		uchar[0] = get_bits(pText[1], 0, 6, pText[0]);
-	} else if (!pText[3]) {
-//		U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
+		break;
+	case 3:
+		//		U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
 		uchar[1] = get_bits(pText[1], 2, 4, pText[0]);
 		uchar[0] = get_bits(pText[2], 0, 6, pText[1]);
-	} else if (!pText[4]) {
+		break;
+	case 4:
 		//		U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 		uchar[2] = get_bits(pText[1], 4, 2, pText[0], 4);
 		uchar[1] = get_bits(pText[2], 2, 4, pText[1]);
 		uchar[0] = get_bits(pText[3], 0, 6, pText[2]);
-	} else if (!pText[5]) {
+		break;
+	case 5:
 		//		U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		uchar[3] = get_bits(pText[0], 0, 3);
 		uchar[2] = get_bits(pText[2], 4, 2, pText[1]);
 		uchar[1] = get_bits(pText[3], 2, 4, pText[2]);
 		uchar[0] = get_bits(pText[4], 0, 6, pText[3]);
-	} else if (!pText[6]) {
+		break;
+	case 6:
 		//		U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		uchar[3] = get_bits(pText[1], 0, 6, pText[0]);
 		uchar[2] = get_bits(pText[3], 4, 2, pText[2]);
 		uchar[1] = get_bits(pText[4], 2, 4, pText[3]);
 		uchar[0] = get_bits(pText[5], 0, 6, pText[4]);
+		break;
+	default:
+		;
 	}
 	return wc;
 }
@@ -244,13 +260,11 @@ Text::iterator Text::end() {
 //char Text::str[7];
 
 Text& Text::operator >>(int &unicode) {
-	char str[7];
+	char str[6];
 	if (file.get(str[0])) {
 		int length = get_utf8_char_len(str[0]);
 		file.read(str + 1, length - 1);
-		str[length] = 0;
-
-		unicode = utf2unicode(str);
+		unicode = utf2unicode(str, length);
 	}
 	return *this;
 }
@@ -283,14 +297,25 @@ Text& Text::operator >>(vector<String> &v) {
 		}
 	} else {
 		while (*this >> line) {
-			v << line;
+			v.push_back(line);
 		}
 
 		if (!line.empty())
-			v << line;
+			v.push_back(line);
 
 	}
 	return *this;
+}
+
+String& Text::append_unicode(String &v, int wc) {
+	if (wc & 0xffff0000) {
+		wc = unicode2jchar(wc);
+		auto jchars = (word*) &wc;
+		v += jchars[0];
+		v += jchars[1];
+	} else
+		v += wc;
+	return v;
 }
 
 Text& Text::operator >>(String &v) {
@@ -306,35 +331,9 @@ Text& Text::operator >>(String &v) {
 			else
 				continue;
 		}
-		if (wc & 0xffff0000) {
-			wc = this->unicode2jchar(wc);
-			auto jchars = (word*) &wc;
-			v += jchars[0];
-			v += jchars[1];
-		} else
-			v += wc;
-
+		append_unicode(v, wc);
 	}
 #pragma GCC diagnostic pop
-	return *this;
-}
-
-Text& Text::operator >>(string &v) {
-	v.clear();
-	char str[7];
-	while (file.get(str[0])) {
-		int length = get_utf8_char_len(str[0]);
-		file.read(str + 1, length - 1);
-		str[length] = 0;
-
-		if (str[0] == '\r' || str[0] == '\n') {
-			if (v.size())
-				break;
-			else
-				continue;
-		}
-		v += str;
-	}
 	return *this;
 }
 
@@ -348,7 +347,7 @@ dict<string, int> Text::read_vocab_cstr() {
 //	__log(__PRETTY_FUNCTION__)
 	string s;
 	int index = 0;
-	while (*this >> s) {
+	while (std::getline(file, s)) {
 		strip(s);
 		s = s.substr(0, s.find_first_of('\t'));
 		assert(!s.empty());
@@ -383,7 +382,7 @@ dict<string, int>& Text::read_vocab(dict<string, int> &word2id, int index) {
 	__log(__PRETTY_FUNCTION__)
 	word2id.clear();
 	string s;
-	while (*this >> s) {
+	while (std::getline(file, s)) {
 		strip(s);
 		assert(!s.empty());
 
@@ -443,7 +442,8 @@ Text& Text::operator >>(dict<char16_t, int> &word2id) {
 
 #include<fstream>
 using namespace std;
-#ifdef _DEBUG
+
+#if defined(_DEBUG) or defined(__WIN64__)
 #include <windows.h>
 string Text::unicode2gbk(const String &wstr) {
 	string result;
@@ -458,7 +458,7 @@ string Text::unicode2gbk(const String &wstr) {
 #endif
 
 std::ostream& operator <<(std::ostream &cout, const String &unicode) {
-#ifdef _DEBUG
+#if defined(_DEBUG) //or defined(__WIN64__)
 	cout << Text::unicode2gbk(unicode);
 #else
 	cout << Text::unicode2utf(unicode);
@@ -469,12 +469,11 @@ std::ostream& operator <<(std::ostream &cout, const String &unicode) {
 
 vector<String> split(const String &in) {
 	vector<String> array;
-//	array.clear();
 	String s;
 	for (auto ch : in) {
 		if (iswspace(ch)) {
 			if (!s.empty()) {
-				array << s;
+				array.push_back(s);
 				s.clear();
 			}
 		} else {
@@ -483,7 +482,47 @@ vector<String> split(const String &in) {
 	}
 
 	if (!s.empty()) {
-		array << s;
+		array.push_back(s);
+	}
+	return array;
+}
+
+vector<string> split(const string &in) {
+	vector<string> array;
+	string s;
+	for (auto ch : in) {
+		if (isspace(ch)) {
+			if (!s.empty()) {
+				array.push_back(s);
+				s.clear();
+			}
+		} else {
+			s += ch;
+		}
+	}
+
+	if (!s.empty()) {
+		array.push_back(s);
+	}
+	return array;
+}
+
+vector<string> split(const string &in, char separator) {
+	vector<string> array;
+	string s;
+	for (auto ch : in) {
+		if (ch == separator) {
+			if (!s.empty()) {
+				array.push_back(s);
+				s.clear();
+			}
+		} else {
+			s += ch;
+		}
+	}
+
+	if (!s.empty()) {
+		array.push_back(s);
 	}
 	return array;
 }
@@ -510,9 +549,33 @@ String toString(int d) {
 }
 
 String toString(const string &c_str) {
-	String s(c_str.begin(), c_str.end());
+	String s;
+	for (size_t j = 0, size = c_str.size(); j < size;) {
+		auto &ch = c_str[j];
+		auto length = Text::get_utf8_char_len(ch);
+		if (length == 0)
+			return u"??";
+
+		j += length;
+
+		ensure_le(j, size);
+
+		Text::append_unicode(s, Text::utf2unicode(&ch, length));
+	}
+
 	return s;
 }
+
+//possible bugs
+string to_string(const String &wstr) {
+	string s;
+	char str[7];
+	for (word wc : wstr) {
+		s += Text::unicode2utf(wc, str);
+	}
+	return s;
+}
+
 }
 
 #pragma GCC diagnostic ignored "-Wparentheses"
@@ -862,10 +925,77 @@ String& tolower(String &s) {
 	return s;
 }
 
-void seed_rand(){
+void seed_rand() {
 	srand(time(0));
 }
 
-int nextInt(int max){
+int nextInt(int max) {
 	return rand() % max;
 }
+
+void append_file_separator(string &workingDirectory) {
+	switch (workingDirectory.back()) {
+	case '/':
+	case '\\':
+		break;
+	default:
+		workingDirectory += '/';
+	}
+}
+void test_set_operation() {
+	std::set<string> A { "a", "b", "c", "d" };
+	std::set<string> B { "a", "b", "c", "e" };
+
+	cout << "A = " << A << endl;
+	cout << "B = " << B << endl;
+	cout << "A - B = " << (A - B) << endl;
+	cout << "A | B = " << (A | B) << endl;
+	cout << "A & B = " << (A & B) << endl;
+}
+
+#include <unistd.h>
+
+string getcwd() {
+	char pPath[256] = { 0 };
+	return ::getcwd(pPath, sizeof(pPath));
+}
+
+string now() {
+	time_t t = time(0);
+	char buffer[9] = { 0 };
+	strftime(buffer, sizeof(buffer), "%H:%M:%S", localtime(&t));
+//	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&t));
+	return buffer;
+}
+
+BinaryFile::BinaryFile(const string &file, ByteOrder byteorder) :
+		byteorder(byteorder) {
+	if (os_access(file)) {
+		this->file.open(file, std::ios::in | std::ios::out | std::ios::binary);
+	} else {
+		this->file.open(file, std::ios::out | std::ios::binary);
+	}
+}
+
+int BinaryFile::getsize() {
+	size_t current_pos = file.tellg();
+	file.seekg(0, std::ios::end);
+	size_t ending_pos = file.tellg();
+	int remaining_size = ending_pos - current_pos;
+
+	file.seekg(-remaining_size, std::ios::cur);
+	return remaining_size;
+}
+
+void BinaryFile::swap_byte_order(char *buffer, int length) {
+	for (int i = 0; i < length / 2; ++i) {
+		std::swap(buffer[i], buffer[length - 1 - i]);
+	}
+}
+
+#include <unistd.h>
+
+bool os_access(const std::string &name, int status) {
+	return (access(name.c_str(), status) != -1);
+}
+

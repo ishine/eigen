@@ -538,9 +538,7 @@ const char *FindClass<vector<_Ty>>::name = [](const char *name) -> const char* {
 		//[Ljava/lang/String;
 		array_name = left_bracket + 'L' + name + ';';
 	}
-	cout << "array type for " << name << " = " << array_name << endl;
-//	pool.push_back(array_name);
-//	cout << "pool = " << pool << endl;
+//	cout << "array type for " << name << " = " << array_name << endl;
 	return array_name.c_str();
 }(FindClass<_Ty>::name);
 

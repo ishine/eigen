@@ -5,18 +5,6 @@ using std::vector;
 
 #include "keras.h"
 
-template<typename _Ty>
-vector<_Ty>& parallelize(vector<_Ty> &mask, int num_attention_heads) {
-	int batch_size = mask.size();
-	mask.resize(batch_size * num_attention_heads);
-	for (int i = batch_size - 1; i >= 0; --i) {
-		for (int j = 0; j < num_attention_heads; ++j)
-			mask[i * num_attention_heads + j] = mask[i];
-	}
-
-	return mask;
-}
-
 struct FeedForward {
 	/**
 	 *
@@ -36,18 +24,6 @@ struct FeedForward {
 	FeedForward(KerasReader &dis, bool bias = true);
 	FeedForward(KerasReader &dis, Activation activation);
 	FeedForward();
-};
-
-struct CrossAttentionMask {
-	CrossAttentionMask(int num_attention_heads = 0, bool diagnal_attention =
-			false);
-	int num_attention_heads;
-	bool diagnal_attention;
-
-	vector<MatrixI> operator()(const vector<VectorI> &segment_ids);
-
-	vector<MatrixI> operator()(const vector<VectorI> &segment_ids,
-			int num_attention_heads);
 };
 
 struct LayerNormalization {
@@ -74,13 +50,7 @@ struct MultiHeadAttention {
 	MultiHeadAttention(KerasReader &dis, int num_attention_heads);
 	MultiHeadAttention();
 
-	Tensor operator()(const Tensor &sequence, const Tensor &attention_matrix,
-			const vector<Vector> &mask);
-	Tensor operator()(const Tensor &sequence, const vector<Vector> &mask);
 	Matrix operator()(const Matrix &sequence);
-
-	vector<Vector>& operator ()(const Tensor &sequence,
-			const vector<Vector> &mask, vector<Vector> &y);
 
 	Vector& operator ()(const Matrix &sequence, Vector &y);
 
@@ -90,17 +60,7 @@ struct MultiHeadAttention {
 	int num_attention_heads;
 
 	Tensor& scaled_dot_product_attention(Tensor &query, Tensor &key,
-			Tensor &value, const Tensor &attention_mask,
-			const vector<Vector> &mask);
-
-	Tensor& scaled_dot_product_attention(Tensor &query, Tensor &key,
-			Tensor &value, const vector<Vector> &mask);
-
-	Tensor& scaled_dot_product_attention(Tensor &query, Tensor &key,
 			Tensor &value);
-
-	vector<Vector>& scaled_dot_product_attention(vector<Vector> &query,
-			const Tensor &key, const Tensor &value, const vector<Vector> &mask);
 
 	vector<Vector>& scaled_dot_product_attention(vector<Vector> &query,
 			const Tensor &key, const Tensor &value);
@@ -125,16 +85,6 @@ struct PositionEmbedding {
 	Tensor& operator()(Tensor &sequence);
 	Matrix& operator()(Matrix &sequence, int mid);
 	Matrix& operator()(Matrix &sequence);
-	Matrix compute_mask(vector<VectorI> &inputToken);
-};
-
-struct RevertMask {
-	RevertMask(double cross_attention);
-	double cross_attention;
-	Vector weight;
-	int step;
-	Tensor& operator()(const vector<MatrixI> &mask, Tensor &res);
-	Tensor& operator()(const vector<MatrixI> &mask);
 };
 
 struct SegmentInput {
@@ -153,37 +103,12 @@ struct BertEmbedding {
 	DenseLayer embeddingMapping;
 	int embed_dim, hidden_size;
 
-	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
-			const vector<VectorI> &inputSegment, Matrix &mask);
-
 	Matrix operator ()(VectorI &inputToken, int inputMid,
 			const VectorI &inputSegment);
 
-	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
-
-	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
-};
-
-struct NonSegmentedBertEmbedding {
-	NonSegmentedBertEmbedding(KerasReader &dis, int num_attention_heads);
-
-	Embedding wordEmbedding;
-	PositionEmbedding positionEmbedding;
-	LayerNormalization layerNormalization;
-	DenseLayer embeddingMapping;
-	int embed_dim, hidden_size;
-
-	Tensor operator ()(vector<VectorI> &inputToken, const vector<int> &inputMid,
-			const vector<VectorI> &inputSegment, vector<Vector> &mask);
-
-	Matrix operator ()(VectorI &inputToken, int inputMid,
-			const VectorI &inputSegment);
-
-	Matrix operator ()(VectorI &inputToken, const VectorI &inputSegment);
+	Matrix operator ()(const VectorI &inputToken, const VectorI &inputSegment);
 
 	Matrix operator ()(const VectorI &inputToken);
-
-	vector<Vector>& compute_mask(vector<VectorI> &inputToken);
 };
 
 struct Encoder {
@@ -195,14 +120,7 @@ struct Encoder {
 	::FeedForward FeedForward;
 	LayerNormalization FeedForwardNorm;
 
-	Tensor& wrap_attention(Tensor &input_layer, const Tensor &attention_matrix,
-			const vector<Vector> &mask);
-
-	Tensor& wrap_attention(Tensor &input_layer, const vector<Vector> &mask);
 	Matrix& wrap_attention(Matrix &input_layer);
-
-	vector<Vector>& wrap_attention(Tensor &input_layer,
-			const vector<Vector> &mask, vector<Vector> &y);
 
 	Vector& wrap_attention(Matrix &input_layer, Vector &y);
 
@@ -211,15 +129,9 @@ struct Encoder {
 	vector<Vector>& wrap_feedforward(vector<Vector> &input_layer);
 	Vector& wrap_feedforward(Vector &input_layer);
 
-	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
-			const vector<Vector> &mask);
-	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
 	Matrix& operator ()(Matrix &input_layer);
 
 	Vector& operator ()(Matrix &input_layer, Vector &y);
-
-	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
-			vector<Vector> &y);
 };
 
 struct AlbertTransformer {
@@ -228,24 +140,7 @@ struct AlbertTransformer {
 	int num_hidden_layers;
 	Encoder encoder;
 
-	Tensor& operator ()(Tensor &input_layer,
-			const vector<MatrixI> &attention_matrix, RevertMask &fn,
-			const vector<Vector> &mask);
-
-	Tensor& operator ()(Tensor &input_layer, const Matrix &mask);
-
-	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
-			const vector<Vector> &mask);
-
-	vector<Vector>& operator ()(Tensor &input_layer, const Matrix &mask,
-			vector<Vector> &y);
-
 	Vector& operator ()(Matrix &input_layer, Vector &y);
-
-	vector<Vector>& operator ()(Tensor &input_layer,
-			const vector<MatrixI> &attention_matrix, RevertMask &fn,
-			const vector<Vector> &mask, vector<Vector> &y);
-
 };
 
 struct BertTransformer {
@@ -256,25 +151,7 @@ struct BertTransformer {
 	vector<Encoder> encoder;
 
 	Encoder& operator [](int i);
-
-	Tensor& operator ()(Tensor &input_layer,
-			const vector<MatrixI> &attention_matrix, RevertMask &fn,
-			const vector<Vector> &mask);
-
-	Tensor& operator ()(Tensor &input_layer, const vector<Vector> &mask);
-
-	Tensor& operator ()(Tensor &input_layer, const Tensor &attention_matrix,
-			const vector<Vector> &mask);
-
-	vector<Vector>& operator ()(Tensor &input_layer, const vector<Vector> &mask,
-			vector<Vector> &y);
-
 	Vector& operator ()(Matrix &input_layer, Vector &y);
-
-	vector<Vector>& operator ()(Tensor &input_layer,
-			const vector<MatrixI> &attention_matrix, RevertMask &fn,
-			const vector<Vector> &mask, vector<Vector> &y);
-
 };
 
 struct FullTokenizer {
@@ -321,8 +198,7 @@ struct Pairwise {
 
 	MidIndex midIndex;
 	SegmentInput segmentInput;
-//	::CrossAttentionMask CrossAttentionMask;
-//	::RevertMask RevertMask;
+
 	BertEmbedding bertEmbedding;
 
 	AlbertTransformer transformer;
@@ -338,66 +214,36 @@ struct Pairwise {
 	static Pairwise& lexicon();
 };
 
-struct PairwiseVector {
-	PairwiseVector(KerasReader &dis, Activation hidden_act,
-			int num_attention_heads, int num_hidden_layers,
-			Activation bilinear_act);
-	NonSegmentedBertEmbedding bertEmbedding;
+struct PretrainingAlbert {
+	PretrainingAlbert(KerasReader &dis, Activation hidden_act,
+			int num_attention_heads, int num_hidden_layers);
+	BertEmbedding bertEmbedding;
 
 	AlbertTransformer transformer;
-	Bilinear bilinear;
 
-//	static double probability2score(const Vector &y_pred);
-	static Vector& symmetric_transform(Vector &y_pred);
-	Matrix operator ()(const vector<VectorI> &input_ids);
 	Vector operator ()(const VectorI &input_ids);
-	Vector operator ()(const VectorI &input_ids, const VectorI &input_ids1);
-
-	Matrix operator ()(const vector<Vector> &s);
-
-//	static const String& lexicon_label(const Vector &y_pred);
 };
 
-struct PairwiseVectorChar: PairwiseVector {
-	PairwiseVectorChar(KerasReader &dis, const string &vocab,
-			int num_attention_heads, int num_hidden_layers = 12);
-	dict<String, int> word2id;
+struct PretrainingAlbertChinese: PretrainingAlbert {
+	PretrainingAlbertChinese(KerasReader &dis, int num_attention_heads,
+			int num_hidden_layers = 12);
 	vector<String> tokenize(const String &text);
-	using PairwiseVector::operator ();
-	Matrix operator ()(const vector<String> &s);
-	Vector operator ()(const String &x, const String &y);
+	using PretrainingAlbert::operator ();
 	Vector operator ()(const String &x);
-	Vector operator ()(const char16_t *x, const char16_t *y);
-	static PairwiseVectorChar& instance();
+	static PretrainingAlbertChinese& instance();
 };
 
-#include "sentencepiece.h"
-struct PairwiseVectorSP: PairwiseVector {
-	PairwiseVectorSP(KerasReader &dis, int num_hidden_layers,
-			sentencepiece::SentencePieceProcessor *tokenizer);
-	using PairwiseVector::operator ();
+struct PretrainingAlbertEnglish: PretrainingAlbert {
+	PretrainingAlbertEnglish(KerasReader &dis, int num_hidden_layers);
+	using PretrainingAlbert::operator ();
 
-	sentencepiece::SentencePieceProcessor *tokenizer;
 	vector<string> tokenize(const string &text);
-	Matrix operator ()(const vector<string> &s);
-	Vector operator ()(const string &x, const string &y);
 	Vector operator ()(const string &x);
 	Vector operator ()(String &x);
-	Vector operator ()(String &x, String &y);
-	Vector operator ()(const char *x, const char *y);
 
-	static PairwiseVectorSP& instance();
+	static PretrainingAlbertEnglish& instance();
 
-	static PairwiseVectorSP& initialize(const string &config,
+	static PretrainingAlbertEnglish& initialize(const string &config,
 			const string &path, const string &vocab);
 };
 
-vector<int> lexiconStructure(const vector<String> &keywords,
-		const vector<int> &frequency);
-
-vector<int> lexiconStructure(int lang, const vector<vector<double>> &embedding,
-		vector<vector<double>> &score_matrix,
-		const vector<int> &frequency, int maxNumOfChildren);
-
-vector<int> lexiconStructure(const vector<string> &keywords,
-		const vector<int> &frequency);

@@ -2,6 +2,16 @@ target = eigen
 
 artifact = lib$(target).so	
 
+JAVA_HOME = $(shell echo $$JAVA_HOME)
+ifeq ($(JAVA_HOME), $(nullstring))
+	JAVA_HOME := $(shell ls -l `which java` | awk '{if ($$(NF-1) == "->") {print $$NF;} else{}}')
+	JAVA_HOME := $(shell ls -l $(JAVA_HOME) | awk '{if ($$(NF-1) == "->") {print $$NF;} else{}}')
+	JAVA_HOME := $(dir $(JAVA_HOME))
+	JAVA_HOME := $(shell dirname $(JAVA_HOME))
+	JAVA_HOME := $(shell dirname $(JAVA_HOME))
+endif
+$(info JAVA_HOME = $(JAVA_HOME))
+
 GCC = g++ -DNDEBUG -Wall -std=c++11 -fPIC -fopenmp
 #CMD = -c -fmessage-length=0 -O3 -MMD -MP -MF $(@:%.o=%.d) -MT $@ -o $@ $<
 CMD = -c -fmessage-length=0 -O3 -MMD -MP -MT $@ -o $@ $<
@@ -74,6 +84,10 @@ install: $(artifact) LD_LIBRARY_PATH.class
 	-mkdir -p ../../jetty/src/main/resources/lib/static/Linux/amd64
 	@echo "install $(artifact) to destination ../../jetty/src/main/resources/lib/static/Linux/amd64"	
 	cp $(artifact) ../../jetty/src/main/resources/lib/static/Linux/amd64
+	
+	-mkdir -p ../../pytext/lib
+	@echo "install $(artifact) to destination ../../pytext/lib"	
+	cp $(artifact) ../../pytext/lib	
 
 test: $(target)	
 	./$(target) ../../jetty/src/main/resources ../../jetty/src/test/resources

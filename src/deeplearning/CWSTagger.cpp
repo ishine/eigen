@@ -1,6 +1,5 @@
 #include "CWSTagger.h"
 #include "utility.h"
-#include "../std/utility.h"
 
 vector<String> convertToSegment(const String &predict_text,
 		const VectorI &argmax) {
@@ -20,13 +19,13 @@ vector<String> convertToSegment(const String &predict_text,
 //			if (arr.size()) {
 //				sstr = u" " + sstr;
 //			}
-			arr << sstr;
+			arr.push_back(sstr);
 			sstr.clear();
 		}
 	}
 
 	if (sstr.size())
-		arr << sstr;
+		arr.push_back(sstr);
 	return arr;
 }
 
@@ -205,7 +204,7 @@ CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 	__log(__PRETTY_FUNCTION__)
 }
 
-CWSTagger& CWSTagger::instance() {
+CWSTagger& CWSTagger::instance_crf() {
 	__cout(__PRETTY_FUNCTION__)
 	static CWSTagger inst(modelsDirectory() + "cn/cws/model.h5", modelsDirectory() + "cn/cws/vocab.txt");
 	return inst;

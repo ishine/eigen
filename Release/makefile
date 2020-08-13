@@ -32,7 +32,7 @@ $(artifact): src/main.o $(obj)
 #target must be the first command to execute, so the include directive should follow it!
 -include $(wildcard src/*.d) $(wildcard src/*/*.d) $(wildcard src/*/*/*.d)
 
-$(target).exe: $(obj)
+$(target).exe: src/main.o $(obj)
 	$(GCC) -o $@ $^
 
 src/jni/%.o: ../src/jni/%.cpp
@@ -57,6 +57,8 @@ install: $(artifact)
 	@echo "install $(artifact) to destination ..\\..\\jetty\\src\\main\\resources\\lib\\static\\Windows\\amd64"	
 	xcopy $(artifact) ..\..\jetty\src\main\resources\lib\static\Windows\amd64 /Y
 	xcopy $(artifact) ..\..\jetty\target\classes\lib\static\Windows\amd64 /Y
+	@echo "install $(artifact) to destination ..\\..\\pytext\\lib"	
+	xcopy $(artifact) ..\..\pytext\lib /Y
 
 test: $(target).exe
 	./$(target).exe ../../

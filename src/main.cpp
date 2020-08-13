@@ -11,9 +11,10 @@ using namespace std;
 #include "deeplearning/classification.h"
 #include "deeplearning/bert.h"
 
-#include "deeplearning/CWSTagger.h"
+#include "ahocorasick/CWSTagger.h"
 #include "deeplearning/SyntaxParser.h"
 #include "ahocorasick/KeyGenerator.h"
+#include "deeplearning/keywordExpansion.h"
 
 int main(int argc, char **argv) {
 	cout << "argc = " << argc << endl;
@@ -23,7 +24,7 @@ int main(int argc, char **argv) {
 
 	if (1 < argc) {
 		workingDirectory = argv[1];
-		workingDirectory += '/';
+		append_file_separator(workingDirectory);
 		cout << "workingDirectory = " << workingDirectory << endl;
 
 		modelsDirectory() = workingDirectory + "models/";
@@ -37,11 +38,17 @@ int main(int argc, char **argv) {
 	}
 
 	//	KeyGenerator::test();
-	void testLoop();
-	testLoop();
-//	exit(0);
-	auto &lexiconSP = PairwiseVectorSP::instance();
-	cout << lexiconSP("abd", "deflkj") << endl;
+//	void testLoop();
+//	testLoop();
+
+	auto &cwsTagger = CWSTagger::instance();
+
+	cout << "segments = " << cwsTagger.segment(u"结婚的和尚未结婚的确实在场地上散步。") << endl;
+
+	cout << "segments = " << cwsTagger.segment(u"JAVAEE技术") << endl;
+
+	auto &lexiconSP = PretrainingAlbertEnglish::instance();
+	cout << lexiconSP("vector") << endl;
 
 	void test_sentencepiece_keras(const string &s = "");
 	test_sentencepiece_keras();
@@ -50,12 +57,9 @@ int main(int argc, char **argv) {
 	auto &keyword_cn = ClassifierChar::instance();
 	auto &keyword_en = ClassifierWord::instance();
 //	auto &paraphrase = Pairwise::paraphrase();
-	auto &lexicon = PairwiseVectorChar::instance();
+	auto &lexicon = PretrainingAlbertChinese::instance();
 
-	cout << "lexicon = " << lexicon(u"承运", u"挡板") << endl;
-	auto &cwsTagger = CWSTagger::instance();
-
-	cout << "segments = " << cwsTagger.predict(u"(1) 圖示所揭露之虛線之部分，為本案不主張之部分。") << endl;
+	cout << "lexicon = " << lexicon(u"承运和挡板") << endl;
 
 	cout << "keyword = " << keyword_cn.predict(u"如图所示") << endl;
 
@@ -89,9 +93,6 @@ int main(int argc, char **argv) {
 
 //	cout << "paraphrase score = " << paraphrase(u"你们公司有些什么业务", u"你们公司业务有哪些") << endl;
 //	cout << "paraphrase score = " << paraphrase(u"周末你去哪里玩", u"今天他去哪里玩？") << endl;
-
-	cout << "lexicon score = " << lexicon(u"业务", u"公司业务") << endl;
-	cout << "lexicon score = " << lexicon(u"今晚", u"今天") << endl;
 
 	cout << "zero = " << zero << endl;
 	cout << "one = " << one << endl;
