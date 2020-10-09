@@ -27,7 +27,7 @@ void JNICALL Java_org_dll_Native_initializeWorkingDirectory(JNIEnv *env,
 		workingDirectory = getenv("HOME") + workingDirectory.substr(1);
 	}
 
-	weightsDirectory() = workingDirectory + "weights";
+	weightsDirectory() = workingDirectory + "weights/";
 	cout << "after initializing workingDirectory = " << workingDirectory
 			<< endl;
 
