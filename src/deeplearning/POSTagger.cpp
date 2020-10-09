@@ -142,9 +142,9 @@ POSTagger::POSTagger(KerasReader &dis, const string &vocabFilePath,
 
 POSTagger& POSTagger::instance() {
 //	__debug(__PRETTY_FUNCTION__)
-	static string modelFile = modelsDirectory() + "cn/pos/model.h5";
-	static string vocab = modelsDirectory() + "cn/pos/vocab.txt";
-	static string posTags = modelsDirectory() + "cn/pos/pos.txt";
+	static string modelFile = weightsDirectory() + "cn/pos/model.h5";
+	static string vocab = weightsDirectory() + "cn/pos/vocab.txt";
+	static string posTags = weightsDirectory() + "cn/pos/pos.txt";
 
 	static POSTagger instance(modelFile, vocab, posTags);
 
@@ -152,9 +152,9 @@ POSTagger& POSTagger::instance() {
 }
 
 POSTagger& POSTagger::instantiate() {
-	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
-	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
-	static string posTags = modelsDirectory() + "cn/pos/pos.txt";
+	static string modelFile = weightsDirectory() + "cn/cws/model.h5";
+	static string vocab = weightsDirectory() + "cn/cws/vocab.txt";
+	static string posTags = weightsDirectory() + "cn/pos/pos.txt";
 
 	auto &instance = POSTagger::instance();
 

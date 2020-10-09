@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
 		append_file_separator(workingDirectory);
 		cout << "workingDirectory = " << workingDirectory << endl;
 
-		modelsDirectory() = workingDirectory + "models/";
-		cout << "modelsDirectory = " << modelsDirectory() << endl;
+		weightsDirectory() = workingDirectory + "models/";
+		cout << "modelsDirectory = " << weightsDirectory() << endl;
 	}
 
 	if (2 < argc) {

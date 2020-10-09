@@ -117,8 +117,8 @@ CWSTaggerLSTM::CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath) :
 }
 
 CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
-	static string modelFile = modelsDirectory() + "cn/cws/model-cnn.h5";
-	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
+	static string modelFile = weightsDirectory() + "cn/cws/model-cnn.h5";
+	static string vocab = weightsDirectory() + "cn/cws/vocab.txt";
 
 	static CWSTaggerLSTM instance(modelFile, vocab);
 	if (reinitialize) {
@@ -206,6 +206,6 @@ CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 
 CWSTagger& CWSTagger::instance_crf() {
 	__debug(__PRETTY_FUNCTION__)
-	static CWSTagger inst(modelsDirectory() + "cn/cws/model.h5", modelsDirectory() + "cn/cws/vocab.txt");
+	static CWSTagger inst(weightsDirectory() + "cn/cws/model.h5", weightsDirectory() + "cn/cws/vocab.txt");
 	return inst;
 }

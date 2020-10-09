@@ -47,7 +47,7 @@ void CWSTagger::weightAdjustment(const std::map<String, double> &map) {
 
 CWSTagger& CWSTagger::instance() {
 	__debug(__PRETTY_FUNCTION__)
-	static CWSTagger inst(modelsDirectory() + "cn/cws/vocab.csv");
+	static CWSTagger inst(weightsDirectory() + "cn/cws/vocab.csv");
 	return inst;
 }
 

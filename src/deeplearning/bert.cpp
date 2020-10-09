@@ -653,7 +653,7 @@ Json::Value readFromStream(const string &json_file);
 
 Pairwise& Pairwise::paraphrase() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/paraphrase/config.json");
+			weightsDirectory() + "cn/paraphrase/config.json");
 
 //	std::cout << config << std::endl;
 //	for (auto &key : config.getMemberNames()) {
@@ -672,8 +672,8 @@ Pairwise& Pairwise::paraphrase() {
 
 	static Pairwise inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/paraphrase/model.h5"),
-			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
+					weightsDirectory() + "cn/paraphrase/model.h5"),
+			weightsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
 	__debug(__PRETTY_FUNCTION__);
@@ -684,10 +684,10 @@ Pairwise& Pairwise::paraphrase() {
 PretrainingAlbertChinese& PretrainingAlbertChinese::instance() {
 	static PretrainingAlbertChinese inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/pretraining/model.h5"),
+					weightsDirectory() + "cn/pretraining/model.h5"),
 
 			12, //num_attention_heads = 12
-			readFromStream(modelsDirectory() + "cn/pretraining/config.json")["num_hidden_layers_for_prediction"].asInt());
+			readFromStream(weightsDirectory() + "cn/pretraining/config.json")["num_hidden_layers_for_prediction"].asInt());
 
 	return inst;
 }
@@ -697,16 +697,16 @@ PretrainingAlbertEnglish& PretrainingAlbertEnglish::instance() {
 
 	static PretrainingAlbertEnglish inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "en/pretraining/model.h5"),
+					weightsDirectory() + "en/pretraining/model.h5"),
 
-			readFromStream(modelsDirectory() + "en/pretraining/config.json")["num_hidden_layers_for_prediction"].asInt());
+			readFromStream(weightsDirectory() + "en/pretraining/config.json")["num_hidden_layers_for_prediction"].asInt());
 
 	return inst;
 }
 
 Pairwise& Pairwise::lexicon() {
 	static const auto &config = readFromStream(
-			modelsDirectory() + "cn/lexicon_pairwise/config.json");
+			weightsDirectory() + "cn/lexicon_pairwise/config.json");
 
 //	std::cout << config << std::endl;
 //	for (auto &key : config.getMemberNames()) {
@@ -726,8 +726,8 @@ Pairwise& Pairwise::lexicon() {
 
 	static Pairwise inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
-					modelsDirectory() + "cn/lexicon_pairwise/model.h5"),
-			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
+					weightsDirectory() + "cn/lexicon_pairwise/model.h5"),
+			weightsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
 //	__debug(__PRETTY_FUNCTION__);
@@ -839,12 +839,12 @@ FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 		}
 
 FullTokenizer& FullTokenizer::instance_cn() {
-	static FullTokenizer instance(modelsDirectory() + "cn/bert/vocab.txt");
+	static FullTokenizer instance(weightsDirectory() + "cn/bert/vocab.txt");
 	return instance;
 }
 
 FullTokenizer& FullTokenizer::instance_en() {
-	static FullTokenizer instance(modelsDirectory() + "en/bert/vocab.txt");
+	static FullTokenizer instance(weightsDirectory() + "en/bert/vocab.txt");
 	return instance;
 }
 

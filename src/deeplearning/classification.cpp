@@ -313,16 +313,16 @@ ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab) :
 
 Classifier& Classifier::qatype_classifier() {
 	__debug(__PRETTY_FUNCTION__)
-	static Classifier service(modelsDirectory() + "cn/qatype/model.h5",
-			modelsDirectory() + "cn/qatype/vocab.txt");
+	static Classifier service(weightsDirectory() + "cn/qatype/model.h5",
+			weightsDirectory() + "cn/qatype/vocab.txt");
 
 	return service;
 }
 
 Classifier& Classifier::phatic_classifier() {
 	__debug(__PRETTY_FUNCTION__)
-	static Classifier service(modelsDirectory() + "cn/phatic/model.h5",
-			modelsDirectory() + "cn/phatic/vocab.txt");
+	static Classifier service(weightsDirectory() + "cn/phatic/model.h5",
+			weightsDirectory() + "cn/phatic/vocab.txt");
 
 	return service;
 }
@@ -330,40 +330,16 @@ Classifier& Classifier::phatic_classifier() {
 ClassifierChar& ClassifierChar::instance() {
 	__debug(__PRETTY_FUNCTION__);
 
-//	static ClassifierChar service(modelsDirectory() + "cn/keyword/model.h5",
-//			modelsDirectory() + "cn/keyword/vocab.txt");
-
-	static ClassifierChar service([] {
-		return os_access(modelsDirectory() + "cn/keyword/model.h5") ?
-		modelsDirectory() + "cn/keyword/model.h5":
-		modelsDirectory() + "CN/keyword/model.h5";
-	}(),
-
-	[] {
-		return os_access(modelsDirectory() + "cn/keyword/vocab.txt") ?
-		modelsDirectory() + "cn/keyword/vocab.txt":
-		modelsDirectory() + "CN/keyword/vocab.txt";
-	}());
+	static ClassifierChar service(weightsDirectory() + "cn/keyword/model.h5",
+			weightsDirectory() + "cn/keyword/vocab.txt");
 
 	return service;
 }
 
 ClassifierWord& ClassifierWord::instance() {
 	__debug(__PRETTY_FUNCTION__);
-//	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5",
-//			modelsDirectory() + "en/bert/albert_base/30k-clean.vocab");
-
-	static ClassifierWord service([] {
-		return os_access(modelsDirectory() + "en/keyword/model.h5") ?
-		modelsDirectory() + "en/keyword/model.h5":
-		modelsDirectory() + "EN/keyword/model.h5";
-	}(),
-
-	[] {
-		return os_access(modelsDirectory() + "en/bert/albert_base/30k-clean.vocab") ?
-		modelsDirectory() + "en/bert/albert_base/30k-clean.vocab":
-		modelsDirectory() + "EN/bert/albert_base/30k-clean.vocab";
-	}());
+	static ClassifierWord service(weightsDirectory() + "en/keyword/model.h5",
+			weightsDirectory() + "en/bert/albert_base/30k-clean.vocab");
 
 	return service;
 }

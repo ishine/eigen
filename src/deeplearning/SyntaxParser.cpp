@@ -182,7 +182,7 @@ BiaffineDependencyParser::BiaffineDependencyParser(TorchReader &dis) :
 
 SyntaxParser& SyntaxParser::instance() {
 	__debug(__PRETTY_FUNCTION__)
-	static SyntaxParser instance(modelsDirectory() + "cn/dep/");
+	static SyntaxParser instance(weightsDirectory() + "cn/dep/");
 
 	return instance;
 }

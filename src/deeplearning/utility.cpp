@@ -8,19 +8,19 @@ using namespace std;
 string workingDirectory = "../jetty/src/main/resources/";
 string testingDirectory = "../jetty/src/test/resources/";
 
-string& modelsDirectory() {
-	static string modelsDirectory = workingDirectory + "models/";
+string& weightsDirectory() {
+	static string modelsDirectory = workingDirectory + "weights/";
 	return modelsDirectory;
 }
 
 string& nerModelsDirectory() {
-	static string nerModelsDirectory = modelsDirectory() + "cn/ner/";
+	static string nerModelsDirectory = weightsDirectory() + "cn/ner/";
 	return nerModelsDirectory;
 
 }
 
 string& serviceModelsDirectory() {
-	static string serviceModelsDirectory = modelsDirectory() + "cn/gru_data/";
+	static string serviceModelsDirectory = weightsDirectory() + "cn/gru_data/";
 	return serviceModelsDirectory;
 }
 
