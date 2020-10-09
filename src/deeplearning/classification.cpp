@@ -336,13 +336,13 @@ ClassifierChar& ClassifierChar::instance() {
 	static ClassifierChar service([] {
 		return os_access(modelsDirectory() + "cn/keyword/model.h5") ?
 		modelsDirectory() + "cn/keyword/model.h5":
-		modelsDirectory() + "gensim_cn/keyword/model.h5";
+		modelsDirectory() + "CN/keyword/model.h5";
 	}(),
 
 	[] {
 		return os_access(modelsDirectory() + "cn/keyword/vocab.txt") ?
 		modelsDirectory() + "cn/keyword/vocab.txt":
-		modelsDirectory() + "gensim_cn/keyword/vocab.txt";
+		modelsDirectory() + "CN/keyword/vocab.txt";
 	}());
 
 	return service;
@@ -356,13 +356,13 @@ ClassifierWord& ClassifierWord::instance() {
 	static ClassifierWord service([] {
 		return os_access(modelsDirectory() + "en/keyword/model.h5") ?
 		modelsDirectory() + "en/keyword/model.h5":
-		modelsDirectory() + "gensim_en/keyword/model.h5";
+		modelsDirectory() + "EN/keyword/model.h5";
 	}(),
 
 	[] {
 		return os_access(modelsDirectory() + "en/bert/albert_base/30k-clean.vocab") ?
 		modelsDirectory() + "en/bert/albert_base/30k-clean.vocab":
-		modelsDirectory() + "gensim_en/bert/albert_base/30k-clean.vocab";
+		modelsDirectory() + "EN/bert/albert_base/30k-clean.vocab";
 	}());
 
 	return service;
