@@ -231,6 +231,20 @@ std::ostream& operator <<(std::ostream &cout, const vector<_Ty> &v) {
 	return cout;
 }
 
+template<typename _Ty>
+std::ostream& operator <<(std::ostream &cout, const vector<vector<_Ty>> &v) {
+	cout << '[';
+	if (!v.empty()) {
+		cout << "\n\t" << v[0];
+		for (size_t i = 1; i < v.size(); ++i) {
+			cout << ",\n\t" << v[i];
+		}
+	}
+
+	cout << "\n]";
+	return cout;
+}
+
 #include <set>
 template<typename _Ty>
 std::ostream& operator <<(std::ostream &cout, const std::set<_Ty> &v) {
@@ -651,21 +665,21 @@ bool contains(const vector<T> &elementData, const T &o) {
 const double oo = std::numeric_limits<double>::infinity();
 
 #ifdef _DEBUG
-#define __cout(symbol) __log(symbol)
-#define assert_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_true(expr) if (expr){}else{std::cout << #expr << " is true " << std::endl; __cout(expr);}
-#define assert_false(expr) if (!expr){}else{std::cout << #expr << " is false " << std::endl; __cout(expr);}
-#define assert_not(expr) if (not expr){}else{std::cout << #expr << " is false " << std::endl; __cout(expr);}
-#define assert_or(x, y) if (x || y){}else{std::cout << #x << " || " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_and(x, y) if (x && y){}else{std::cout << #x << " && " << #y << std::endl; __cout(x);__cout(y);}
+#define __debug(symbol) __log(symbol)
+#define assert_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_true(expr) if (expr){}else{std::cout << #expr << " is true " << std::endl; __debug(expr);}
+#define assert_false(expr) if (!expr){}else{std::cout << #expr << " is false " << std::endl; __debug(expr);}
+#define assert_not(expr) if (not expr){}else{std::cout << #expr << " is false " << std::endl; __debug(expr);}
+#define assert_or(x, y) if (x || y){}else{std::cout << #x << " || " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_and(x, y) if (x && y){}else{std::cout << #x << " && " << #y << std::endl; __debug(x);__debug(y);}
 #else
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#define __cout(symbol)
+#define __debug(symbol)
 #define assert_gt(x, y)
 #define assert_lt(x, y)
 #define assert_le(x, y)
@@ -678,17 +692,17 @@ const double oo = std::numeric_limits<double>::infinity();
 #define assert_and(x, y)
 #endif
 
-#define ensure_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __cout(x);__cout(y); throw;}
-#define ensure_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __cout(x);__cout(y); throw;}
-#define ensure_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __cout(x);__cout(y); throw;}
-#define ensure_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __cout(x);__cout(y);throw;}
-#define ensure_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __cout(x);__cout(y);throw;}
-#define ensure_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __cout(x);__cout(y);throw;}
-#define ensure_true(expr) if (expr){}else{std::cout << #expr << " should be true, in " << __PRETTY_FUNCTION__ << std::endl; __cout(expr);throw;}
-#define ensure_false(expr) if (!expr){}else{std::cout << #expr << " should be false, in " << __PRETTY_FUNCTION__ << std::endl; __cout(expr);throw;}
-#define ensure_not(expr) if (not expr){}else{std::cout << #expr << " should be false, in " << __PRETTY_FUNCTION__ << std::endl; __cout(expr);throw;}
-#define ensure_or(x, y) if (x or y){}else{std::cout << #x << " || " << #y << std::endl; __cout(x);__cout(y);throw;}
-#define ensure_and(x, y) if (x and y){}else{std::cout << #x << " && " << #y << std::endl; __cout(x);__cout(y);throw;}
+#define ensure_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __debug(x);__debug(y); throw;}
+#define ensure_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __debug(x);__debug(y); throw;}
+#define ensure_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __debug(x);__debug(y); throw;}
+#define ensure_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_true(expr) if (expr){}else{std::cout << #expr << " should be true, in " << __PRETTY_FUNCTION__ << std::endl; __debug(expr);throw;}
+#define ensure_false(expr) if (!expr){}else{std::cout << #expr << " should be false, in " << __PRETTY_FUNCTION__ << std::endl; __debug(expr);throw;}
+#define ensure_not(expr) if (not expr){}else{std::cout << #expr << " should be false, in " << __PRETTY_FUNCTION__ << std::endl; __debug(expr);throw;}
+#define ensure_or(x, y) if (x or y){}else{std::cout << #x << " || " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_and(x, y) if (x and y){}else{std::cout << #x << " && " << #y << std::endl; __debug(x);__debug(y);throw;}
 
 struct Timer {
 	Timer();
@@ -1168,4 +1182,8 @@ string getcwd();
 
 string now();
 
+//#define	F_OK	0	/* Check for file existence */
+//#define	X_OK	1	/* Check for execute permission. */
+//#define	W_OK	2	/* Check for write permission */
+//#define	R_OK	4	/* Check for read permission */
 bool os_access(const std::string &name, int status = 0);

@@ -230,7 +230,7 @@ KeyGenerator::iterator KeyGenerator::end() {
 
 #include <unordered_set>
 void KeyGenerator::test() {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 	seed_rand();
 
 	KeyGenerator keyGenerator;

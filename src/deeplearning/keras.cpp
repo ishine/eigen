@@ -27,6 +27,11 @@ Matrix& CRF::viterbi_one_hot(const Matrix &X, Matrix &oneHot) {
 	return oneHot;
 }
 
+VectorI CRF::operator()(const Matrix &X) const {
+	VectorI best_paths;
+	return (*this)(X, best_paths);
+}
+
 VectorI& CRF::operator()(const Matrix &X, VectorI &best_paths) const {
 	//add a row vector to a matrix
 	Matrix x = X * kernel;
@@ -65,8 +70,55 @@ VectorI& CRF::operator()(const Matrix &X, VectorI &best_paths) const {
 	return best_paths;
 }
 
+VectorI CRF::operator()(const Matrix &X, const MatrixI &mask_pos) const {
+	__print(__PRETTY_FUNCTION__);
+
+	VectorI best_paths;
+	//add a row vector to a matrix
+	Matrix x = X * kernel;
+	add(x, bias);
+
+	x.row(0) += left_boundary;
+
+	int length = x.rows();
+	x.row(length - 1) += right_boundary;
+
+	int i = 0;
+	Vector min_energy = x.row(i++);
+
+	vector<vector<int>> argmin_tables(length);
+
+	while (i < length) {
+		Matrix energy = G;
+		add(energy, min_energy);
+
+		argmin_tables[i - 1] = argmin(
+				add(+energy, (1 - mask_pos[i - 1]) * 1e10));
+
+		min_energy = min(energy);
+		min_energy += x.row(i++);
+	}
+
+	min_energy += (1 - mask_pos[mask_pos.size() - 1]) * 1e10;
+
+	int argmin;
+	min_energy.minCoeff(&argmin);
+
+	assert(i == length);
+
+	best_paths.resize(length);
+	best_paths[--i] = argmin;
+
+	for (--i; i >= 0; --i) {
+		argmin = argmin_tables[i][argmin];
+		best_paths[i] = argmin;
+	}
+	return best_paths;
+}
+
 CRF::CRF(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	dis >> kernel;
 	dis >> G;
 	dis >> bias;
@@ -75,7 +127,8 @@ CRF::CRF(KerasReader &dis) {
 }
 
 Conv1D::Conv1D(KerasReader &dis, bool bias) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	dis >> w;
 
 	if (bias)
@@ -119,7 +172,8 @@ Matrix& Conv1D::operator()(const Matrix &x, Matrix &y, int s) const {
 }
 
 Conv1DSame::Conv1DSame(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	dis >> w;
 
 	dis >> this->bias;
@@ -190,7 +244,8 @@ Tensor& DenseLayer::operator()(Tensor &x) const {
 
 DenseLayer::DenseLayer(KerasReader &dis, Activator activation) :
 		activation( { activation }) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	dis >> weight;
 
 	dis >> bias;
@@ -200,7 +255,8 @@ DenseLayer::DenseLayer(TorchReader &dis, Activator activation) :
 		weight(dis.read_matrix().transpose()), bias(dis.read_vector()),
 
 		activation( { activation }) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 }
 
 Matrix& Embedding::operator()(const VectorI &words,
@@ -252,23 +308,26 @@ Matrix& Embedding::operator()(VectorI &word, Matrix &wordEmbedding,
 }
 
 void Embedding::initialize(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
 
 	dis >> wEmbedding;
 }
 
 void Embedding::initialize(TorchReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	dis >> wEmbedding;
 }
 
 Embedding::Embedding(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	initialize(dis);
 }
 
 Embedding::Embedding(TorchReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	initialize(dis);
 }
 
@@ -322,7 +381,8 @@ Vector& LSTM::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x, Vector &h,
 }
 
 LSTM::LSTM(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	Matrix Wx;
 	dis >> Wx;
 	Wxi.resize(Wx.rows(), Wx.cols() / 4);
@@ -476,7 +536,8 @@ BidirectionalGRU::BidirectionalGRU(KerasReader &dis, merge_mode mode) {
 
 BidirectionalLSTM::BidirectionalLSTM(KerasReader &dis, merge_mode mode) {
 	//enforce the construction order of forward and backward! never to use the member initializer list of the super class!
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 	this->forward = new LSTM(dis);
 	this->backward = new LSTM(dis);
 	this->mode = mode;
@@ -601,7 +662,7 @@ Vector& GRU::activate(const Eigen::Block<const Matrix, 1, -1, 1> &x,
 }
 
 GRU::GRU(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
 
 	Matrix Wx;
 	dis >> Wx;
@@ -650,7 +711,8 @@ Bilinear::Bilinear(TorchReader &dis, Activation activation) :
 		bias(dis.read_vector()),
 
 		activation(activation) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 }
 
 Bilinear::Bilinear(KerasReader &dis, Activation activation) :
@@ -659,17 +721,18 @@ Bilinear::Bilinear(KerasReader &dis, Activation activation) :
 		bias(dis.read_vector()),
 
 		activation(activation) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
+
 }
 
 Tensor Bilinear::operator ()(const Tensor &x, const Tensor &y) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
 
 	int z_dimension = weight.size();
 
 //	cout << "z_dimension = " << z_dimension << endl;
 
-	print_shape(bias)
+	print_shape (bias)
 //	print_tensor(x);
 //	print_tensor(y);
 //	print_tensor(weight);
@@ -682,7 +745,7 @@ Tensor Bilinear::operator ()(const Tensor &x, const Tensor &y) {
 	Tensor z = ndarray(n, m, z_dimension);
 	print_tensor(z);
 	for (int k = 0; k < z_dimension; ++k) {
-		Matrix &weight = this->weight[k];
+		Matrix & weight = this->weight[k];
 		double bias = this->bias(k);
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < m; ++j) {
@@ -696,13 +759,13 @@ Tensor Bilinear::operator ()(const Tensor &x, const Tensor &y) {
 }
 
 Matrix Bilinear::operator ()(const Matrix &x, const Matrix &y) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
 
 	int z_dimension = weight.size();
 
 //	cout << "z_dimension = " << z_dimension << endl;
 
-	print_shape(bias)
+	print_shape (bias)
 	print_tensor(weight);
 
 	int n = x.rows();
@@ -712,7 +775,7 @@ Matrix Bilinear::operator ()(const Matrix &x, const Matrix &y) {
 	Matrix z = ndarray(n, z_dimension);
 
 	for (int k = 0; k < z_dimension; ++k) {
-		Matrix &weight = this->weight[k];
+		Matrix & weight = this->weight[k];
 		double bias = this->bias(k);
 		for (int i = 0; i < n; ++i) {
 			z(i, k) = x.row(i) * weight * y.row(i).transpose() + bias;
@@ -723,18 +786,18 @@ Matrix Bilinear::operator ()(const Matrix &x, const Matrix &y) {
 }
 
 Vector Bilinear::operator ()(const Vector &x, const Vector &y) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
 
 	int z_dimension = weight.size();
 
 //	cout << "z_dimension = " << z_dimension << endl;
 
-	print_shape(bias)
+	print_shape (bias)
 	print_tensor(weight);
 
 	Vector z = ndarray(z_dimension);
 	for (int k = 0; k < z_dimension; ++k) {
-		Matrix &weight = this->weight[k];
+		Matrix & weight = this->weight[k];
 		double bias = this->bias(k);
 		z(k) = x * weight * y.transpose() + bias;
 	}

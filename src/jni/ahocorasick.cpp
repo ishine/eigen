@@ -56,7 +56,7 @@ extern "C" {
 
 jobjectArray JNICALL Java_org_dll_Native_segmentCN(JNIEnv *env, jobject obj,
 		jstring text) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	String s = JString(env, text);
 	return Object(env, CWSTagger::instance().segment(s));
 }
@@ -66,14 +66,14 @@ jobjectArray JNICALL Java_org_dll_Native_segmentCN(JNIEnv *env, jobject obj,
 
 jobjectArray JNICALL Java_org_dll_Native_segmentCNs(JNIEnv *env, jobject _,
 		jobjectArray text) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	return Object(env, CWSTagger::instance().segment(JArray<String>(env, text)));
 }
 //inputs: String [][] text;
 //ouputs: String [][][] segment;
 jobjectArray JNICALL Java_org_dll_Native_segmentCNss(JNIEnv *env, jobject _,
 		jobjectArray text) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	return Object(env,
 			CWSTagger::instance().segment(JArray<vector<String>>(env, text)));
 }

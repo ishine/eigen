@@ -36,7 +36,7 @@ vector<String> CWSTaggerLSTM::predict(const String &predict_text) {
 }
 
 VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 //	cout << "repertoire_code = " << repertoire_code << endl;
 
@@ -64,7 +64,7 @@ VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
 
 vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 		const String &predict_text, vector<vector<vector<double>>> &result) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -112,7 +112,7 @@ CWSTaggerLSTM::CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath) :
 		con1D0(Conv1D(dis)), con1D1(Conv1D(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D2(
 				Conv1D(dis)), wCRF(CRF(dis)) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Text(vocabFilePath) >> word2id;
 }
 
@@ -129,7 +129,7 @@ CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
 
 vector<String> CWSTagger::predict(const String &predict_text) {
 	VectorI seg = string2id(predict_text, this->word2id);
-	__cout(seg)
+	__debug(seg)
 	return convertToSegment(predict_text, this->predict(seg));
 }
 
@@ -162,18 +162,18 @@ vector<vector<vector<String>>> CWSTagger::predict(
 }
 
 VectorI& CWSTagger::predict(VectorI &predict_text) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 
 	Matrix lEmbedding;
 	embedding(predict_text, lEmbedding);
-	__cout(lEmbedding)
+	__debug(lEmbedding)
 	return wCRF(con1D(lEmbedding), predict_text);
 }
 
 vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 		vector<vector<vector<double>>> &result) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -205,7 +205,7 @@ CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 }
 
 CWSTagger& CWSTagger::instance_crf() {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	static CWSTagger inst(modelsDirectory() + "cn/cws/model.h5", modelsDirectory() + "cn/cws/vocab.txt");
 	return inst;
 }

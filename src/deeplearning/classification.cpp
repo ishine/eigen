@@ -119,13 +119,13 @@ Vector ClassifierWord::predict_debug(const string &predict_text) {
 	this->embedding(ids, embedding);
 
 //	print_shape(embedding)
-//	__cout(embedding);
+//	__debug(embedding);
 
 	Matrix lCNN;
 	lCNN = con1D0(embedding, lCNN);
 
 //	print_shape(lCNN)
-//	__cout(lCNN);
+//	__debug(lCNN);
 
 	lCNN = con1D1(lCNN, embedding);
 
@@ -173,7 +173,7 @@ int Classifier::predict(const String &predict_text, int &argmax) {
 }
 
 int ClassifierChar::predict(const String &predict_text, int &argmax) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	predict(predict_text).maxCoeff(&argmax);
 //	cout << "argmax = " << argmax << endl;
 	return argmax;
@@ -181,7 +181,7 @@ int ClassifierChar::predict(const String &predict_text, int &argmax) {
 
 vector<int>& ClassifierChar::predict(const vector<String> &predict_text,
 		vector<int> &argmax) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	auto size = predict_text.size();
 	argmax.resize(size);
 #pragma omp parallel for
@@ -229,7 +229,7 @@ vector<int>& ClassifierWord::predict(const vector<string> &predict_text,
 
 vector<vector<double>>& Classifier::predict(String &predict_text,
 		vector<vector<double>> &arr) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Matrix embedding;
 	this->embedding(string2id(predict_text, word2id), embedding);
 
@@ -261,7 +261,7 @@ Classifier::Classifier(const string &binaryFilePath,
 		Classifier(
 				(KerasReader&) (const KerasReader&) KerasReader(binaryFilePath),
 				vocabFilePath) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 ClassifierChar::ClassifierChar(const string &binaryFilePath,
@@ -285,7 +285,7 @@ Classifier::Classifier(KerasReader &dis) :
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
 				DenseLayer(dis, Activator::softmax)) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 Classifier::Classifier(KerasReader &dis, const string &vocab) :
@@ -294,25 +294,25 @@ Classifier::Classifier(KerasReader &dis, const string &vocab) :
 				BidirectionalLSTM(dis, Bidirectional::sum)), dense_tanh(
 				DenseLayer(dis)), dense_pred(
 				DenseLayer(dis, Activator::softmax)) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 ClassifierChar::ClassifierChar(KerasReader &dis, const string &vocab) :
 		word2id(Text(vocab).read_vocab_char()), embedding(dis), con1D0(dis), con1D1(
 				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 ClassifierWord::ClassifierWord(KerasReader &dis, const string &vocab) :
 		word2id(Text(vocab).read_vocab_cstr()), embedding(dis), con1D0(dis), con1D1(
 				dis), gru(dis, Bidirectional::sum), dense_pred(dis,
 				Activator::softmax), tokenizer(&en_tokenizer()) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 Classifier& Classifier::qatype_classifier() {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	static Classifier service(modelsDirectory() + "cn/qatype/model.h5",
 			modelsDirectory() + "cn/qatype/vocab.txt");
 
@@ -320,24 +320,50 @@ Classifier& Classifier::qatype_classifier() {
 }
 
 Classifier& Classifier::phatic_classifier() {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	static Classifier service(modelsDirectory() + "cn/phatic/model.h5",
 			modelsDirectory() + "cn/phatic/vocab.txt");
 
 	return service;
 }
 
-
 ClassifierChar& ClassifierChar::instance() {
-	__cout(__PRETTY_FUNCTION__)
-	static ClassifierChar service(modelsDirectory() + "cn/keyword/model.h5", modelsDirectory() + "cn/keyword/vocab.txt");
+	__debug(__PRETTY_FUNCTION__);
+
+//	static ClassifierChar service(modelsDirectory() + "cn/keyword/model.h5",
+//			modelsDirectory() + "cn/keyword/vocab.txt");
+
+	static ClassifierChar service([] {
+		return os_access(modelsDirectory() + "cn/keyword/model.h5") ?
+		modelsDirectory() + "cn/keyword/model.h5":
+		modelsDirectory() + "gensim_cn/keyword/model.h5";
+	}(),
+
+	[] {
+		return os_access(modelsDirectory() + "cn/keyword/vocab.txt") ?
+		modelsDirectory() + "cn/keyword/vocab.txt":
+		modelsDirectory() + "gensim_cn/keyword/vocab.txt";
+	}());
 
 	return service;
 }
 
 ClassifierWord& ClassifierWord::instance() {
-	__cout(__PRETTY_FUNCTION__)
-	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5", modelsDirectory() + "en/bert/albert_base/30k-clean.vocab");
+	__debug(__PRETTY_FUNCTION__);
+//	static ClassifierWord service(modelsDirectory() + "en/keyword/model.h5",
+//			modelsDirectory() + "en/bert/albert_base/30k-clean.vocab");
+
+	static ClassifierWord service([] {
+		return os_access(modelsDirectory() + "en/keyword/model.h5") ?
+		modelsDirectory() + "en/keyword/model.h5":
+		modelsDirectory() + "gensim_en/keyword/model.h5";
+	}(),
+
+	[] {
+		return os_access(modelsDirectory() + "en/bert/albert_base/30k-clean.vocab") ?
+		modelsDirectory() + "en/bert/albert_base/30k-clean.vocab":
+		modelsDirectory() + "gensim_en/bert/albert_base/30k-clean.vocab";
+	}());
 
 	return service;
 }

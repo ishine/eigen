@@ -126,7 +126,7 @@ MapGradient::~MapGradient() {
 std::map<string, std::map<string, double>>& operator +=(
 		std::map<string, std::map<string, double>> &lhs,
 		const MapGradient &rhs) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 	for (auto &tuple : rhs.map) {
 		lhs[tuple.first] += *tuple.second;
 	}
@@ -136,7 +136,7 @@ std::map<string, std::map<string, double>>& operator +=(
 std::map<string, std::map<string, double>>& operator -=(
 		std::map<string, std::map<string, double>> &lhs,
 		const MapGradient &rhs) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 	for (auto &tuple : rhs.map) {
 		lhs[tuple.first] -= *tuple.second;
 	}

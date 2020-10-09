@@ -447,7 +447,7 @@ struct AhoCorasickDoubleArrayTrie {
 		}
 
 		int try_base() {
-//			__cout(self->used);
+//			__debug(self->used);
 			for (int begin : self->used) {
 				assert_false(self->used.isRregistered(begin));
 				if (try_update_base(begin)) {
@@ -710,7 +710,7 @@ struct AhoCorasickDoubleArrayTrie {
 				int index = map[char_length];
 				map.erase(char_length);
 				emit() = toArray(map);
-//				__cout(emit());
+//				__debug(emit());
 				return index;
 			}
 			return -1;
@@ -767,10 +767,10 @@ struct AhoCorasickDoubleArrayTrie {
 							break;
 						}
 					}
-//					__cout(unicode);
+//					__debug(unicode);
 					father->success.erase(unicode);
 					parent.pop();
-//					__cout(father->success);
+//					__debug(father->success);
 
 					if (father->is_null_terminator()) {
 						orphan = father;
@@ -903,9 +903,9 @@ struct AhoCorasickDoubleArrayTrie {
 		void insert() {
 			if (is_null_terminator())
 				return;
-//			__cout(__PRETTY_FUNCTION__);
+//			__debug(__PRETTY_FUNCTION__);
 			int begin = try_base_with_optimal_start_point();
-//			__cout(begin);
+//			__debug(begin);
 			self->occupy(begin);
 			self->node[index].base = begin;
 
@@ -921,7 +921,7 @@ struct AhoCorasickDoubleArrayTrie {
 						int emit = -state->index - 1;
 						state->index = index;
 						state->emit() = vector<int> { emit };
-//						__cout(state->emit());
+//						__debug(state->emit());
 					} else {
 						state->index = index;
 					}
@@ -1472,7 +1472,7 @@ struct AhoCorasickDoubleArrayTrie {
 				deleteFailureStates((_CharT) character, keyword, numOfDeletion);
 			}
 			emit.pop_back();
-//			__cout(emit);
+//			__debug(emit);
 		}
 	}
 

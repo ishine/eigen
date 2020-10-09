@@ -1,6 +1,9 @@
 #include <math.h>
 #include "matrix.h"
 #include "../std/lagacy.h"
+const Matrix& operator +(Matrix &x) {
+	return x;
+}
 
 Vector& aggregate(const Matrix &x, Vector &v, vector<int> &arg,
 		double (Matrix::ConstRowXpr::*aggregate)(int*) const) {
@@ -244,8 +247,8 @@ Tensor& gelu(Tensor &x) {
 }
 
 //Matrix& log_softmax(Matrix &x) {
-//	__cout(__PRETTY_FUNCTION__)
-////	__cout(x);
+//	__debug(__PRETTY_FUNCTION__)
+////	__debug(x);
 //	print_shape(x);
 //
 //	for (int i = 0, size = x.rows(); i < size; ++i) {
@@ -264,8 +267,8 @@ Tensor& gelu(Tensor &x) {
 //}
 
 Matrix& log_softmax(Matrix &x) {
-	__cout(__PRETTY_FUNCTION__)
-//	__cout(x);
+	__debug(__PRETTY_FUNCTION__)
+//	__debug(x);
 //	print_shape(x);
 
 	for (int i = 0, size = x.rows(); i < size; ++i) {
@@ -282,7 +285,7 @@ Matrix& log_softmax(Matrix &x) {
 }
 
 Tensor& log_softmax(Tensor &x) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	for (int i = 0, size = x.size(); i < size; ++i) {
 		log_softmax(x[i]);
 	}
@@ -733,7 +736,7 @@ vector<Vector>& batch_dot(vector<Vector> &x, const Tensor &y, bool transpose) {
 }
 
 vector<Vector>& extract(const Tensor &x, int index) {
-	vector < Vector > out;
+	vector<Vector> out;
 	return extract(x, index, out);
 }
 
@@ -800,6 +803,11 @@ Matrix& add(Matrix &x, const Vector &y) {
 	return x;
 }
 
+Matrix add(const Matrix &_x, const Vector &y) {
+	auto x = _x;
+	return add(x, y);
+}
+
 Matrix dot(const Tensor &x, const Tensor &y) {
 	Matrix z;
 	int n = x.size();
@@ -852,14 +860,14 @@ Tensor transpose<0, 2, 1>(const Tensor &x) {
 
 template<>
 Tensor transpose<2, 0, 1>(const Tensor &x) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	int n = x.size();
 	int m = x[0].rows();
 	int z_dimension = x[0].cols();
 
-//	__cout(n)
-//	__cout(m)
-//	__cout(z_dimension)
+//	__debug(n)
+//	__debug(m)
+//	__debug(z_dimension)
 	Tensor y = ndarray(z_dimension, n, m);
 	for (int z = 0; z < z_dimension; ++z) {
 		for (int i = 0; i < n; ++i) {
@@ -927,4 +935,86 @@ vector<double> compress(const double *begin, const double *end,
 	}
 	return newV;
 
+}
+
+MatrixI argmax(const Tensor &energy, int dim) {
+	Matrix scores;
+	return argmax(energy, scores, dim);
+}
+
+MatrixI argmax(const Tensor &energy, Matrix &scores, int dim) {
+	__debug(__PRETTY_FUNCTION__);
+	if (dim == 0) {
+		int dep_tag_num = energy.size();
+		int seq_len = energy[0].cols();
+		scores.resize(seq_len, seq_len);
+		MatrixI argmax = Zero(seq_len, seq_len);
+		for (int j = 0; j < seq_len; ++j) {
+			for (int i = 0; i < seq_len; ++i) {
+				double m = -oo;
+				int index = -1;
+				for (int k = 0; k < dep_tag_num; ++k) {
+					auto _m = energy[k](i, j);
+					if (_m > m) {
+						m = _m;
+						index = k;
+					}
+				}
+
+				scores(i, j) = m;
+				argmax[i][j] = index;
+			}
+		}
+		return argmax;
+	}
+
+	throw std::runtime_error("unimplemented");
+}
+
+VectorI argmin(const Matrix &energy, int dim) {
+	__debug(__PRETTY_FUNCTION__);
+	if (dim == 1 || dim == -1) {
+		int seq_len = energy.rows();
+
+		int cols = energy.cols();
+
+		VectorI argmin(seq_len);
+
+		for (int i = 0; i < seq_len; ++i) {
+			double m = oo;
+			int index = -1;
+			for (int j = 0; j < cols; ++j) {
+				auto _m = energy(i, j);
+				if (_m < m) {
+					m = _m;
+					index = j;
+				}
+			}
+
+			argmin[i] = index;
+		}
+
+		return argmin;
+	}
+
+	throw std::runtime_error("unimplemented");
+}
+
+VectorI& operator +=(VectorI &x, int y) {
+	for (auto &e : x) {
+		e += y;
+	}
+	return x;
+}
+
+Vector operator *(const VectorI &x, double y) {
+	Vector out;
+	int size = x.size();
+	out.resize(size);
+
+	for (int i = 0; i < size; ++i) {
+		out[i] = x[i] * y;
+	}
+
+	return out;
 }

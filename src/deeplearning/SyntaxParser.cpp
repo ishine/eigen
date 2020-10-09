@@ -2,45 +2,82 @@
 #include "utility.h"
 #include "../std/utility.h"
 
-vector<String> SyntaxParser::convertToDEPtags(const vector<int> &ids) {
+vector<String> SyntaxParser::convertToDEPtags(const VectorI &ids) {
 	int n = ids.size();
 	vector<String> dep(n);
-//	__cout(ids);
-//	__cout(depTags);
+//	__debug(ids);
+//	__debug(depTags);
 	for (int i = 0; i < n; ++i) {
 		dep[i] = depTags[ids[i]];
 	}
 	return dep;
 }
 
-vector<int> SyntaxParser::predict(const vector<String> &seg,
+VectorI SyntaxParser::predict(const vector<String> &seg,
 		const vector<String> &pos, vector<String> &dep) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 
-	__cout(seg)
-	__cout(pos)
+	__debug(seg)
+	__debug(pos)
 	cout << "vocab.size() = " << vocab.size() << endl;
 	cout << "posTags.size() = " << posTags.size() << endl;
 
 	auto seg_ids = string2id(seg, this->vocab);
 	auto pos_ids = string2id(pos, this->posTags);
-	vector<int> dep_ids;
+	VectorI dep_ids;
 	cout << "seg_ids = " << seg_ids << endl;
 	cout << "pos_ids = " << pos_ids << endl;
-	auto head = this->model.predict(seg_ids, pos_ids, dep_ids);
+	VectorI heads;
+	heads = this->model.predict(seg_ids, pos_ids, dep_ids, heads);
 
-	for (auto &id : head) {
+	for (auto &id : heads) {
 		--id;
 	}
 
 	dep = this->convertToDEPtags(dep_ids);
-	return head;
+	return heads;
 }
 
-vector<int> BiaffineDependencyParser::predict(const VectorI &seg,
-		const VectorI &pos, vector<int> &predicted_head_tags) {
-	__cout(__PRETTY_FUNCTION__)
-//	cout << "predict_text = " << predict_text.size() << endl;
+VectorI& SyntaxParser::predict(const vector<String> &seg,
+		const vector<String> &pos, vector<String> &dep, VectorI &heads) {
+	__debug(__PRETTY_FUNCTION__);
+
+	__debug(seg);
+	__debug(pos);
+	__debug(heads);
+	__debug(vocab.size());
+	__debug(posTags.size());
+
+	auto seg_ids = string2id(seg, this->vocab);
+	auto pos_ids = string2id(pos, this->posTags);
+	VectorI dep_ids;
+
+	__debug(seg_ids);
+	__debug(pos_ids);
+
+	for (auto &id : heads) {
+		++id;
+	}
+
+	__debug(heads);
+
+	heads = this->model.predict(seg_ids, pos_ids, dep_ids, heads);
+
+	__debug(heads);
+	for (auto &id : heads) {
+		--id;
+	}
+	__debug(heads);
+
+	dep = this->convertToDEPtags(dep_ids);
+	return heads;
+}
+
+VectorI& BiaffineDependencyParser::predict(const VectorI &seg,
+		const VectorI &pos, VectorI &predicted_head_tags,
+		VectorI &predicted_heads) {
+	__debug(__PRETTY_FUNCTION__);
+
 	int seq_len = seg.size();
 	auto segEmbedding = text_field_embedder(seg);
 	auto posEmbedding = _pos_tag_embedding(pos);
@@ -50,16 +87,17 @@ vector<int> BiaffineDependencyParser::predict(const VectorI &seg,
 			segEmbedding.cols() + posEmbedding.cols());
 	embedded_text_input << segEmbedding, posEmbedding;
 
-//	print_shape(embedded_text_input);
+	print_shape(embedded_text_input);
+	__debug(embedded_text_input)
 
-//	__cout(embedded_text_input)
 	auto &_encoded_text = encoder(embedded_text_input);
 	Matrix encoded_text;
 	encoded_text.resize(seq_len + 1, _encoded_text.cols());
 
 //	print_shape(_head_sentinel);
-//	__cout(_head_sentinel)
-//	__cout(_encoded_text);
+	__debug(_head_sentinel)
+	__debug(_encoded_text);
+
 	encoded_text << _head_sentinel, _encoded_text;
 
 //	print_shape(encoded_text);
@@ -67,31 +105,39 @@ vector<int> BiaffineDependencyParser::predict(const VectorI &seg,
 	Matrix head_arc_representation, child_arc_representation,
 			head_tag_representation, child_tag_representation;
 
-//	__cout(encoded_text)
+//	__debug(encoded_text)
 	head_arc_feedforward(encoded_text, head_arc_representation);
 //	print_shape(head_arc_representation);
 
 	child_arc_feedforward(encoded_text, child_arc_representation);
 //	print_shape(child_arc_representation);
-//	__cout(head_arc_representation)
-//	__cout(child_arc_representation)
+//	__debug(head_arc_representation)
+//	__debug(child_arc_representation)
 	auto attended_arcs = arc_attention(head_arc_representation,
 			child_arc_representation);
 
 	head_tag_feedforward(encoded_text, head_tag_representation);
 	child_tag_feedforward(encoded_text, child_tag_representation);
 
-//	__cout(attended_arcs)
-	auto predicted_heads = _mst_decode(head_tag_representation,
-			child_tag_representation, attended_arcs, predicted_head_tags);
+	__debug(attended_arcs)
+	if (predicted_heads.empty())
+		predicted_heads = _mst_decode(head_tag_representation,
+				child_tag_representation, attended_arcs, predicted_head_tags);
 
-//	__cout(predicted_heads)
-//	__cout(predicted_head_tags)
+	else {
+		predicted_heads.insert(predicted_heads.begin(), 0);
+		predicted_heads = _structure_decode(head_tag_representation,
+				child_tag_representation, attended_arcs, predicted_head_tags,
+				predicted_heads);
+	}
+
+//	__debug(predicted_heads)
+//	__debug(predicted_head_tags)
 	predicted_heads.erase(predicted_heads.begin());
 	predicted_head_tags.erase(predicted_head_tags.begin());
 
-//	__cout(predicted_heads)
-//	__cout(predicted_head_tags)
+//	__debug(predicted_heads)
+//	__debug(predicted_head_tags)
 
 	return predicted_heads;
 }
@@ -131,11 +177,11 @@ BiaffineDependencyParser::BiaffineDependencyParser(TorchReader &dis) :
 		tag_bilinear(dis),
 
 		_pos_tag_embedding(dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 SyntaxParser& SyntaxParser::instance() {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	static SyntaxParser instance(modelsDirectory() + "cn/dep/");
 
 	return instance;
@@ -154,7 +200,7 @@ AugmentedLstm::AugmentedLstm(TorchReader &dis) :
 				Activator::linear),
 
 		hidden_size(input_linearity.cols() / 6) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 StackedBidirectionalLstm::StackedBidirectionalLstm(TorchReader &dis) :
@@ -163,12 +209,12 @@ StackedBidirectionalLstm::StackedBidirectionalLstm(TorchReader &dis) :
 		forward_layer_1(dis), backward_layer_1(dis),
 
 		forward_layer_2(dis), backward_layer_2(dis) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 Matrix& AugmentedLstm::operator ()(const Matrix &sequence_tensor,
 		Matrix &output_accumulator) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	int total_timesteps = sequence_tensor.rows();
 
 //	cout << "total_timesteps = " << total_timesteps << endl;
@@ -196,7 +242,7 @@ Vector& AugmentedLstm::activate(
 //	print_shape(timestep_input);
 
 	auto projected_input = timestep_input * input_linearity;
-//	__cout(projected_input)
+//	__debug(projected_input)
 //	print_shape(projected_input);
 
 //	print_shape(previous_state);
@@ -204,28 +250,28 @@ Vector& AugmentedLstm::activate(
 //	print_shape(state_linearity.weight);
 
 	auto projected_state = state_linearity(previous_state);
-//	__cout(projected_state)
+//	__debug(projected_state)
 	Vector input_gate = projected_input.leftCols(hidden_size)
 			+ projected_state.leftCols(hidden_size);
 	input_gate = sigmoid(input_gate);
 
-//	__cout(input_gate)
+//	__debug(input_gate)
 	Vector forget_gate = projected_input.middleCols(hidden_size, hidden_size)
 			+ projected_state.middleCols(hidden_size, hidden_size);
 	forget_gate = sigmoid(forget_gate);
-//	__cout(forget_gate)
+//	__debug(forget_gate)
 
 	Vector memory_init = projected_input.middleCols(2 * hidden_size,
 			hidden_size)
 			+ projected_state.middleCols(2 * hidden_size, hidden_size);
 	memory_init = tanh(memory_init);
-//	__cout(memory_init)
+//	__debug(memory_init)
 
 	Vector output_gate = projected_input.middleCols(3 * hidden_size,
 			hidden_size)
 			+ projected_state.middleCols(3 * hidden_size, hidden_size);
 	output_gate = sigmoid(output_gate);
-//	__cout(output_gate)
+//	__debug(output_gate)
 
 	Vector memory = input_gate.cwiseProduct(memory_init)
 			+ forget_gate.cwiseProduct(previous_memory);
@@ -233,7 +279,7 @@ Vector& AugmentedLstm::activate(
 	previous_memory = memory;
 //error: memory is mutated after this operation! so save it before changing it!
 	Vector timestep_output = output_gate.cwiseProduct(tanh(memory));
-//	__cout(timestep_output)
+//	__debug(timestep_output)
 
 	Vector highway_gate = projected_input.middleCols(4 * hidden_size,
 			hidden_size)
@@ -257,7 +303,7 @@ Matrix& AugmentedLstm::operator ()(const Matrix &sequence_tensor,
 	if (go_forward)
 		return (*this)(sequence_tensor, output_accumulator);
 
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	int total_timesteps = sequence_tensor.rows();
 	output_accumulator.resize(total_timesteps, hidden_size);
 
@@ -273,15 +319,15 @@ Matrix& AugmentedLstm::operator ()(const Matrix &sequence_tensor,
 }
 
 Matrix& StackedBidirectionalLstm::operator ()(Matrix &output_sequence) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 
 	Matrix forward_output, backward_output;
 
 	forward_layer_0(output_sequence, forward_output);
 	backward_layer_0(output_sequence, backward_output, false);
 
-//	__cout(forward_output)
-//	__cout(backward_output)
+//	__debug(forward_output)
+//	__debug(backward_output)
 
 	output_sequence.resize(output_sequence.rows(),
 			forward_output.cols() + backward_output.cols());
@@ -311,12 +357,12 @@ Matrix& StackedBidirectionalLstm::operator ()(Matrix &output_sequence) {
 
 BilinearMatrixAttention::BilinearMatrixAttention(TorchReader &dis) :
 		_weight_matrix(dis.read_matrix()), _bias(dis.read_double()) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 }
 
 Matrix BilinearMatrixAttention::operator ()(const Matrix &_matrix_1,
 		const Matrix &_matrix_2) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 
 	auto bias1 = Matrix::Ones(_matrix_1.rows(), 1);
 	auto bias2 = Matrix::Ones(_matrix_2.rows(), 1);
@@ -340,15 +386,14 @@ Matrix BilinearMatrixAttention::operator ()(const Matrix &_matrix_1,
 	return final += _bias;
 }
 
-vector<int> BiaffineDependencyParser::_mst_decode(const Matrix &head_tag,
-		const Matrix &child_tag, Matrix &attended_arcs,
-		vector<int> &predicted_head_tags) {
-//	__cout(head_tag)
-//	__cout(child_tag)
+Tensor BiaffineDependencyParser::energy(const Matrix &head_tag,
+		const Matrix &child_tag, Matrix &attended_arcs) {
+//	__debug(head_tag)
+//	__debug(child_tag)
 //	print_shape(head_tag);
 //	print_shape(child_tag);
 //	print_shape(attended_arcs);
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	int sequence_length = head_tag.rows();
 	Tensor head_tag_representation(sequence_length);
 	for (int i = 0; i < sequence_length; ++i) {
@@ -361,8 +406,8 @@ vector<int> BiaffineDependencyParser::_mst_decode(const Matrix &head_tag,
 		child_tag_representation[i] = child_tag;
 	}
 
-//	__cout(head_tag_representation)
-//	__cout(child_tag_representation)
+//	__debug(head_tag_representation)
+//	__debug(child_tag_representation)
 	auto pairwise_head_logits = tag_bilinear(head_tag_representation,
 			child_tag_representation);
 
@@ -376,21 +421,53 @@ vector<int> BiaffineDependencyParser::_mst_decode(const Matrix &head_tag,
 
 	print_shape(attended_arcs);
 	log_softmax(attended_arcs).transposeInPlace();
-//	__cout(predicted_head_tags)
-//	__cout(pairwise_head_logits)
-//	__cout(attended_arcs)
+//	__debug(predicted_head_tags)
+//	__debug(pairwise_head_logits)
+//	__debug(attended_arcs)
 
-	return _run_mst_decoding(exp(pairwise_head_logits += attended_arcs),
+	return exp(pairwise_head_logits += attended_arcs);
+}
+
+VectorI BiaffineDependencyParser::_mst_decode(const Matrix &head_tag,
+		const Matrix &child_tag, Matrix &attended_arcs,
+		VectorI &predicted_head_tags) {
+	return _run_mst_decoding(energy(head_tag, child_tag, attended_arcs),
 			predicted_head_tags);
 }
 
-bool _find_cycle(vector<int> &parents, int length, vector<bool> &current_nodes,
-		vector<int> &ret) {
-	__cout(__PRETTY_FUNCTION__)
+VectorI& BiaffineDependencyParser::_structure_decode(const Matrix &head_tag,
+		const Matrix &child_tag, Matrix &attended_arcs,
+		VectorI &instance_head_tags, VectorI &instance_heads) {
+	__debug(__PRETTY_FUNCTION__);
+
+	auto energy = this->energy(head_tag, child_tag, attended_arcs);
+
+	MatrixI tag_ids = argmax(energy, 0);
+
+	int seq_len = instance_heads.size();
+	instance_head_tags.resize(seq_len);
+//	# Find the labels which correspond to the edges in the max spanning tree.
+	for (int child = 0; child < seq_len; ++child) {
+		int parent = instance_heads[child];
+		instance_head_tags[child] = tag_ids[parent][child];
+	}
+
+//	# We don't care what the head or tag is for the root token, but by default it's;
+//	# not necesarily the same in the bat;ched vs unbatched case, which is annoying.;
+//	# Here we'll just set them to zero.;
+	instance_heads[0] = 0;
+	instance_head_tags[0] = 0;
+
+	return instance_heads;
+}
+
+bool _find_cycle(VectorI &parents, int length, vector<bool> &current_nodes,
+		VectorI &ret) {
+	__debug(__PRETTY_FUNCTION__)
 	vector<bool> added(length);
 
 	added[0] = true;
-//	__cout(added)
+//	__debug(added)
 
 	std::set<int> cycle;
 	auto has_cycle = false;
@@ -440,7 +517,7 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 		vector<bool> &current_nodes, dict<int, int> &final_edges,
 		MatrixI &old_input, MatrixI &old_output,
 		vector<std::set<int>> &representatives) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	/*
 	 Applies the chu-liu-edmonds algorithm recursively
 	 to a graph with edge weights defined by score_matrix.
@@ -474,7 +551,7 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 	 Nothing - all variables are modified in place.
 
 	 */
-	vector<int> parents = { -1 };
+	VectorI parents = { -1 };
 	for (int node1 = 1; node1 < length; ++node1) {
 		parents.push_back(0);
 		if (current_nodes[node1]) {
@@ -493,12 +570,12 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 	}
 
 //# Check if this solution has a cycle.
-	vector<int> cycle;
-//	__cout(parents)
-//	__cout(current_nodes)
+	VectorI cycle;
+//	__debug(parents)
+//	__debug(current_nodes)
 	auto has_cycle = _find_cycle(parents, length, current_nodes, cycle);
 //    # If there are no cycles, find all edges and return.
-//	__cout(cycle)
+//	__debug(cycle)
 	if (!has_cycle) {
 		final_edges[0] = -1;
 		for (int node = 1; node < length; ++node) {
@@ -584,13 +661,13 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 		}
 	}
 
-//	__cout(length)
-//	__cout(score_matrix)
-//	__cout(current_nodes)
-//	__cout(final_edges)
-//	__cout(old_input)
-//	__cout(old_output)
-//	__cout(representatives)
+//	__debug(length)
+//	__debug(score_matrix)
+//	__debug(current_nodes)
+//	__debug(final_edges)
+//	__debug(old_input)
+//	__debug(old_output)
+//	__debug(representatives)
 	chu_liu_edmonds(length, score_matrix, current_nodes, final_edges, old_input,
 			old_output, representatives);
 
@@ -621,8 +698,8 @@ void chu_liu_edmonds(int length, Matrix &score_matrix,
 	}
 }
 
-vector<int> decode_mst(Matrix &scores) {
-//	__cout(__PRETTY_FUNCTION__)
+VectorI decode_mst(Matrix &scores) {
+//	__debug(__PRETTY_FUNCTION__)
 //	int max_length = scores.rows();
 	int length = scores.rows();
 	auto &original_score_matrix = scores;
@@ -648,17 +725,17 @@ vector<int> decode_mst(Matrix &scores) {
 
 	dict<int, int> final_edges;
 
-//	__cout(length)
-//	__cout(score_matrix)
-//	__cout(current_nodes)
-//	__cout(final_edges)
-//	__cout(old_input)
-//	__cout(old_output)
-//	__cout(representatives)
+//	__debug(length)
+//	__debug(score_matrix)
+//	__debug(current_nodes)
+//	__debug(final_edges)
+//	__debug(old_input)
+//	__debug(old_output)
+//	__debug(representatives)
 	chu_liu_edmonds(length, score_matrix, current_nodes, final_edges, old_input,
 			old_output, representatives);
 
-	vector<int> heads(length);
+	VectorI heads(length);
 
 	for (auto &p : final_edges) {
 		auto child = p.first;
@@ -669,29 +746,14 @@ vector<int> decode_mst(Matrix &scores) {
 	return heads;
 }
 
-vector<int> BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
-		vector<int> &instance_head_tags) {
-	__cout(__PRETTY_FUNCTION__)
-	int dep_tag_num = energy.size();
-	int seq_len = energy[0].cols();
+VectorI BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
+		VectorI &instance_head_tags) {
+	__debug(__PRETTY_FUNCTION__);
 	Matrix scores;
-	scores.resize(seq_len, seq_len);
-	MatrixI tag_ids = Zero(seq_len, seq_len);
-	for (int j = 0; j < seq_len; ++j) {
-		for (int i = 0; i < seq_len; ++i) {
-			double m = -oo;
-			int index = -1;
-			for (int k = 0; k < dep_tag_num; ++k) {
-				auto _m = energy[k](i, j);
-				if (_m > m) {
-					m = _m;
-					index = k;
-				}
-			}
+	MatrixI tag_ids = argmax(energy, scores, 0);
 
-			scores(i, j) = m;
-			tag_ids[i][j] = index;
-		}
+	int seq_len = tag_ids.size();
+	for (int j = 0; j < seq_len; ++j) {
 		//    # Although we need to include the root node so that the MST includes it,
 		//    # we do not want any word to be the parent of the root node.
 		//    # Here, we enforce this by setting the scores for all word -> ROOT edges
@@ -699,15 +761,15 @@ vector<int> BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
 		scores(0, j) = 0;
 	}
 
-//	__cout(scores)
-//	__cout(tag_ids)
+//	__debug(scores)
+//	__debug(tag_ids)
 //    # Decode the heads. Because we modify the scores to prevent
 //    # adding in word -> ROOT edges, we need to find the labels ourselves.
 	auto instance_heads = decode_mst(scores);
 
 //    # Find the labels which correspond to the edges in the max spanning tree.
 	instance_head_tags.resize(seq_len);
-//	__cout(instance_head_tags)
+//	__debug(instance_head_tags)
 
 	for (int child = 0; child < seq_len; ++child) {
 		int parent = instance_heads[child];
@@ -721,7 +783,7 @@ vector<int> BiaffineDependencyParser::_run_mst_decoding(const Tensor &energy,
 //    # Here we'll just set them to zero.
 	instance_heads[0] = 0;
 	instance_head_tags[0] = 0;
-//	__cout(instance_head_tags)
+//	__debug(instance_head_tags)
 	return instance_heads;
 }
 

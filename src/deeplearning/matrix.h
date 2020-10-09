@@ -1,8 +1,16 @@
 #pragma once
 #include "utility.h"
 
+const Matrix &operator + (Matrix&x);
+
 Vector& min(const Matrix &x, Vector &m, vector<int> &argmin);
 Vector& max(const Matrix &x, Vector &m, vector<int> &argmax);
+
+VectorI argmin(const Matrix &x, int dim = -1);
+MatrixI argmin(const Tensor &x, int dim = -1);
+
+MatrixI argmax(const Tensor &x, int dim = -1);
+MatrixI argmax(const Tensor &energy, Matrix &scores, int dim = -1);
 
 Vector min(const Matrix &x);
 Vector max(const Matrix &x);
@@ -147,6 +155,23 @@ vector<_Tx> operator -(const vector<_Tx> &x, const _Ty &y) {
 }
 
 template<typename _Tx, typename _Ty>
+vector<_Ty> operator -(const _Tx &x, const vector<_Ty> &y) {
+	vector<_Ty> out;
+	out = -y;
+	return out += x;
+}
+
+template<typename _Ty>
+vector<_Ty> operator -(const vector<_Ty> &y) {
+	int size = y.size();
+	vector<_Ty> out(size);
+	for (int i = 0; i < size; ++i) {
+		out[i] = -y[i];
+	}
+	return out;
+}
+
+template<typename _Tx, typename _Ty>
 vector<_Tx>& operator *(vector<_Tx> &x, const _Ty &y) {
 	return x *= y;
 }
@@ -176,6 +201,8 @@ Tensor& operator +=(Tensor &x, double y);
 Tensor& operator +=(Tensor &x, const Tensor &y);
 vector<Vector>& operator +=(vector<Vector> &x, double y);
 vector<double>& operator +=(vector<double> &x, double y);
+VectorI& operator +=(VectorI &x, int y);
+
 Tensor& operator +=(Tensor &x, const Vector &y);
 Tensor& operator +=(Tensor &x, const Matrix &y);
 vector<Vector>& operator +=(vector<Vector> &x, const Vector &y);
@@ -204,6 +231,7 @@ vector<Vector>& operator *=(vector<Vector> &x, const Matrix &y);
 MatrixI& operator *=(MatrixI &x, int y);
 VectorI& operator *=(VectorI &x, int y);
 vector<double>& operator *=(vector<double> &x, double y);
+
 Matrix operator *(const MatrixI &x, double y);
 Vector operator *(const VectorI &x, double y);
 
@@ -219,6 +247,8 @@ vector<Vector>& batch_dot(vector<Vector> &x, const Tensor &y, bool transpose =
 		false);
 
 Matrix& add(Matrix &x, const Vector &y);
+Matrix add(const Matrix &x, const Vector &y);
+
 Matrix& sub(Matrix &x, const Vector &y);
 Matrix& div(Matrix &x, const Vector &y);
 Matrix& mul(Matrix &x, const Vector &y);

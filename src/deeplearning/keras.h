@@ -16,7 +16,11 @@ struct CRF {
 
 	Matrix& viterbi_one_hot(const Matrix &X, Matrix &oneHot);
 
-	VectorI& operator ()(const Matrix &X, VectorI &best_paths) const;
+	VectorI operator ()(const Matrix &X) const;
+
+	VectorI &operator ()(const Matrix &X, VectorI &best_path) const;
+
+	VectorI operator ()(const Matrix &X, const MatrixI &mask_pos) const;
 	CRF(KerasReader &dis);
 };
 

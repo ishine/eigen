@@ -36,7 +36,7 @@ KerasReader::KerasReader(const string &s_FilePath) :
 		group(hdf5.openGroup(layer_names[layer_index])),
 
 		weight_index(-1) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 
 //	cout << "weight_index = " << weight_index << endl;
 
@@ -56,7 +56,7 @@ Matrix KerasReader::read_matrix() {
 }
 
 KerasReader& KerasReader::operator >>(Vector &arr) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;
@@ -80,7 +80,7 @@ KerasReader& KerasReader::operator >>(Vector &arr) {
 //http://web.mit.edu/fwtools_v3.1.0/www/cpplus_RM/files.html
 
 KerasReader& KerasReader::operator >>(Matrix &arr) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;
@@ -370,7 +370,7 @@ TorchModule::TorchModule(const H5::Group &group, TorchModule *parent,
 		children[index++] = new TorchModule(group.openGroup(module), this,
 				module);
 	}
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 
 }
 
@@ -417,7 +417,7 @@ double TorchReader::read_double() {
 }
 
 TorchReader& TorchReader::operator >>(Vector &arr) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;
@@ -437,7 +437,7 @@ TorchReader& TorchReader::operator >>(Vector &arr) {
 }
 
 TorchReader& TorchReader::operator >>(double &a) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 //	auto &shape = tuple.first;
@@ -456,7 +456,7 @@ TorchReader& TorchReader::operator >>(double &a) {
 //http://web.mit.edu/fwtools_v3.1.0/www/cpplus_RM/files.html
 
 TorchReader& TorchReader::operator >>(Matrix &arr) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	std::pair<vector<int>, vector<double>> tuple;
 	*this >> tuple;
 	auto &shape = tuple.first;

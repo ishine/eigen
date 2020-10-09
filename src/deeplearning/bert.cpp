@@ -99,7 +99,7 @@ Tensor& LayerNormalization::operator ()(Tensor &x) {
 }
 
 Matrix& LayerNormalization::operator ()(Matrix &x) {
-	__cout(x);
+	__debug(x);
 	print_shape(x)
 	x = subt(x, mean(x));
 
@@ -142,7 +142,7 @@ LayerNormalization::LayerNormalization() {
 }
 
 LayerNormalization::LayerNormalization(KerasReader &dis) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 	dis >> gamma;
 	dis >> beta;
@@ -180,7 +180,7 @@ int MidIndex::operator()(const VectorI &input_ids) {
 
 MidIndex::MidIndex(int SEP) {
 	this->SEP = SEP;
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 }
 
@@ -241,8 +241,8 @@ Tensor& MultiHeadAttention::scaled_dot_product_attention(Tensor &query,
 
 vector<Vector>& MultiHeadAttention::scaled_dot_product_attention(
 		vector<Vector> &query, const Tensor &key, const Tensor &value) {
-	__cout(query.size());
-	__cout(query[0].size());
+	__debug(query.size());
+	__debug(query[0].size());
 	print_tensor(key);
 	print_tensor(value);
 	vector<Vector> &e = batch_dot(query, key, true);
@@ -355,7 +355,7 @@ vector<Vector>& MultiHeadAttention::reshape_from_batches(vector<Vector> &x) {
 MultiHeadAttention::MultiHeadAttention(KerasReader &dis,
 		int num_attention_heads) :
 		num_attention_heads(num_attention_heads) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 	dis >> Wq;
 	dis >> bq;
@@ -467,7 +467,7 @@ BertEmbedding::BertEmbedding(KerasReader &dis, int num_attention_heads) :
 		layerNormalization(dis),
 
 		embeddingMapping(dis, Activator::linear) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 	embed_dim = wordEmbedding.wEmbedding.cols();
 	hidden_size = embeddingMapping.weight.cols();
@@ -569,14 +569,14 @@ AlbertTransformer::AlbertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads, Activation hidden_act) :
 		num_hidden_layers(num_hidden_layers), encoder(dis, num_attention_heads,
 				hidden_act) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 }
 
 BertTransformer::BertTransformer(KerasReader &dis, int num_hidden_layers,
 		int num_attention_heads, Activation hidden_act) :
 		num_hidden_layers(num_hidden_layers), encoder(num_hidden_layers) {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 	for (int i = 0; i < num_hidden_layers; ++i) {
 		encoder[i] = Encoder(dis, num_attention_heads, hidden_act);
@@ -590,7 +590,7 @@ Encoder& BertTransformer::operator [](int i) {
 Vector& AlbertTransformer::operator ()(Matrix &input_layer, Vector &y) {
 	auto &last_layer = input_layer;
 	for (int i = 0; i < num_hidden_layers; ++i) {
-//		__cout(last_layer);
+//		__debug(last_layer);
 		if (i == num_hidden_layers - 1) {
 			y = encoder(last_layer, y);
 		} else
@@ -619,7 +619,7 @@ Pairwise::Pairwise(KerasReader &dis, const string &vocab,
 		dis, num_attention_heads), transformer(
 		dis, num_hidden_layers,
 		num_attention_heads, {Activator::gelu}), poolerDense(dis), similarityDense(dis, Activator::sigmoid) {
-			__cout(__PRETTY_FUNCTION__);
+			__debug(__PRETTY_FUNCTION__);
 		}
 
 //bool cross_layer_parameter_sharing = true;
@@ -676,7 +676,7 @@ Pairwise& Pairwise::paraphrase() {
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 	return inst;
 }
@@ -693,7 +693,7 @@ PretrainingAlbertChinese& PretrainingAlbertChinese::instance() {
 }
 
 PretrainingAlbertEnglish& PretrainingAlbertEnglish::instance() {
-	__cout(__PRETTY_FUNCTION__);
+	__debug(__PRETTY_FUNCTION__);
 
 	static PretrainingAlbertEnglish inst(
 			(KerasReader&) (const KerasReader&) KerasReader(
@@ -730,7 +730,7 @@ Pairwise& Pairwise::lexicon() {
 			modelsDirectory() + "cn/bert/vocab.txt", num_attention_heads,
 //			cross_layer_parameter_sharing,
 			symmetric_position_embedding, num_hidden_layers);
-//	__cout(__PRETTY_FUNCTION__);
+//	__debug(__PRETTY_FUNCTION__);
 	return inst;
 }
 
@@ -758,7 +758,7 @@ Vector PretrainingAlbert::operator ()(const VectorI &input_ids) {
 
 	auto embed_layer = bertEmbedding(input_ids);
 
-//	__cout(embed_layer);
+//	__debug(embed_layer);
 
 	Vector clsEmbedding;
 	transformer(embed_layer, clsEmbedding);
@@ -835,7 +835,7 @@ vector<String> whitespace_tokenize(String &text) {
 FullTokenizer::FullTokenizer(const string &vocab_file, bool do_lower_case) :
 		vocab(Text(vocab_file).read_vocab(0)), unk_token(u"[UNK]"),
 		max_input_chars_per_word(200), do_lower_case(do_lower_case) {
-			__cout(__PRETTY_FUNCTION__);
+			__debug(__PRETTY_FUNCTION__);
 		}
 
 FullTokenizer& FullTokenizer::instance_cn() {
@@ -1072,7 +1072,7 @@ struct ClusteringAlgorithm {
 		double *priority_of_cluster;
 		less(double *priority_of_cluster = nullptr) :
 				priority_of_cluster(priority_of_cluster) {
-			__cout(__PRETTY_FUNCTION__);
+			__debug(__PRETTY_FUNCTION__);
 		}
 
 		bool operator ()(int x, int y) {
@@ -1107,7 +1107,7 @@ struct ClusteringAlgorithm {
 			++num_of_children[parent];
 			priority_of_cluster[parent] += scores(parent, child);
 		}
-		__cout(num_of_children);
+		__debug(num_of_children);
 
 		double max_frequency = frequency[0];
 		for (int parent = 0; parent < n; ++parent) {
@@ -1146,15 +1146,15 @@ struct ClusteringAlgorithm {
 		while (!pq.empty()) {
 			int parent = pq.pop();
 
-			__cout(parent);
-			__cout(num_of_children);
-			__cout(priority_of_cluster);
+			__debug(parent);
+			__debug(num_of_children);
+			__debug(priority_of_cluster);
 			if (parent < 0)
 				continue;
 
 			int numOfChildren = num_of_children[parent];
-			__cout(numOfChildren);
-			__cout(priority_of_cluster[parent]);
+			__debug(numOfChildren);
+			__debug(priority_of_cluster[parent]);
 
 			if (!numOfChildren) {
 //				cout << "leaf node detected, with priority = " << priority_of_cluster[parent] << endl;

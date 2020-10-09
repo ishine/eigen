@@ -544,7 +544,7 @@ const char *FindClass<vector<_Ty>>::name = [](const char *name) -> const char* {
 
 template<typename _Ty>
 jobjectArray Object(JNIEnv *env, const vector<_Ty> &arr) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	int sz = arr.size();
 
 //	cout << "vector size = " << sz << endl;

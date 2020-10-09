@@ -30,8 +30,10 @@ struct BilinearMatrixAttention {
 
 struct BiaffineDependencyParser {
 	BiaffineDependencyParser(TorchReader &dis);
-	vector<int> predict(const VectorI &seg, const VectorI &pos,
-			vector<int> &dep);
+
+	VectorI& predict(const VectorI &seg, const VectorI &pos, VectorI &dep,
+			VectorI &heads);
+
 	Vector _head_sentinel;
 	Embedding text_field_embedder;
 
@@ -47,12 +49,19 @@ struct BiaffineDependencyParser {
 
 	Embedding _pos_tag_embedding;
 
-	vector<int> _mst_decode(const Matrix &head_tag_representation,
+	VectorI _mst_decode(const Matrix &head_tag_representation,
 			const Matrix &child_tag_representation, Matrix &attended_arcs,
-			vector<int> &predicted_head_tags);
+			VectorI &predicted_head_tags);
 
-	vector<int> _run_mst_decoding(const Tensor &batch_energy,
-			vector<int> &predicted_head_tags);
+	Tensor energy(const Matrix &head_tag_representation,
+			const Matrix &child_tag_representation, Matrix &attended_arcs);
+
+	VectorI& _structure_decode(const Matrix &head_tag_representation,
+			const Matrix &child_tag_representation, Matrix &attended_arcs,
+			VectorI &predicted_head_tags, VectorI &heads);
+
+	VectorI _run_mst_decoding(const Tensor &batch_energy,
+			VectorI &predicted_head_tags);
 };
 
 struct SyntaxParser {
@@ -63,10 +72,13 @@ struct SyntaxParser {
 
 	BiaffineDependencyParser model;
 
-	vector<String> convertToDEPtags(const vector<int> &ids);
+	vector<String> convertToDEPtags(const VectorI &ids);
 
-	vector<int> predict(const vector<String> &seg, const vector<String> &pos,
+	VectorI predict(const vector<String> &seg, const vector<String> &pos,
 			vector<String> &dep);
+
+	VectorI& predict(const vector<String> &seg, const vector<String> &pos,
+			vector<String> &dep, VectorI &heads);
 
 	SyntaxParser(const string &modelFolder);
 
