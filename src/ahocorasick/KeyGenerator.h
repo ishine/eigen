@@ -1,3 +1,4 @@
+#pragma once
 #include "../std/utility.h"
 
 struct KeyGenerator {

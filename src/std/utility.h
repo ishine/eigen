@@ -2,13 +2,20 @@
 //gcc -Werror=return-local-addr
 #pragma GCC diagnostic error "-Wreturn-local-addr"
 #pragma GCC diagnostic error "-Wreturn-type"
+#pragma GCC diagnostic error "-Wmultichar"
+#pragma GCC diagnostic ignored "-Wsign-compare"
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
+#include<iomanip>
 using std::vector;
 #include <iterator>
 #include <regex>
+#include <algorithm>
+#define __log(symbol) std::cout << #symbol << " = \n" << (symbol) << std::endl;
+#define __print(symbol) std::cout << #symbol << " = " << (symbol) << std::endl;
 
 using qword = unsigned long long;
 using byte = unsigned char;
@@ -186,6 +193,9 @@ struct object: color_ptr<_Ty> {
 };
 
 using std::ifstream;
+using std::ostringstream;
+using std::istringstream;
+using std::stringstream;
 using std::ofstream;
 using std::ios;
 
@@ -221,12 +231,26 @@ std::ostream& operator <<(std::ostream &cout, const vector<_Ty> &v) {
 	return cout;
 }
 
+template<typename _Ty>
+std::ostream& operator <<(std::ostream &cout, const vector<vector<_Ty>> &v) {
+	cout << '[';
+	if (!v.empty()) {
+		cout << "\n\t" << v[0];
+		for (size_t i = 1; i < v.size(); ++i) {
+			cout << ",\n\t" << v[i];
+		}
+	}
+
+	cout << "\n]";
+	return cout;
+}
+
 #include <set>
 template<typename _Ty>
 std::ostream& operator <<(std::ostream &cout, const std::set<_Ty> &v) {
 	cout << '{';
 	bool initial = true;
-	for (const auto &e : v) {
+	for (auto &e : v) {
 		if (initial) {
 			cout << e;
 			initial = false;
@@ -244,7 +268,7 @@ std::ostream& operator <<(std::ostream &cout,
 		const std::unordered_set<_Ty> &v) {
 	cout << '{';
 	bool initial = true;
-	for (const auto &e : v) {
+	for (auto &e : v) {
 		if (initial) {
 			cout << e;
 			initial = false;
@@ -260,7 +284,7 @@ template<typename _Key, typename _Ty>
 std::ostream& operator <<(std::ostream &cout, const dict<_Key, _Ty> &map) {
 	cout << '{';
 	bool initial = true;
-	for (const auto &p : map) {
+	for (auto &p : map) {
 		if (initial) {
 			initial = false;
 		} else
@@ -276,7 +300,7 @@ template<typename _Key, typename _Ty>
 std::ostream& operator <<(std::ostream &cout, const std::map<_Key, _Ty> &map) {
 	cout << '{';
 	bool initial = true;
-	for (const auto &p : map) {
+	for (auto &p : map) {
 		if (initial) {
 			initial = false;
 		} else
@@ -307,7 +331,7 @@ struct Text {
 	};
 
 	String line;
-	int unicode2jchar(int unicode);
+	static int unicode2jchar(int unicode);
 
 	iterator begin();
 	iterator end();
@@ -318,8 +342,6 @@ struct Text {
 	vector<String> readlines();
 	Text& operator >>(int &unicode);
 	Text& operator >>(String &v);
-	Text& operator >>(string &v);
-
 	Text& operator >>(vector<String> &v);
 	Text& operator >>(dict<String, int> &word2id);
 	Text& operator >>(dict<char16_t, int> &word2id);
@@ -333,8 +355,8 @@ struct Text {
 	String toString();
 	operator bool();
 
-	static int utf2unicode(const char *pText);
-
+	static int utf2unicode(const char *pText, int length);
+	static String& append_unicode(String &s, int unicode);
 	static const char* unicode2utf(word wc, char *pText);
 	static string unicode2utf(const String &wstr);
 	static string unicode2gbk(const String &wstr);
@@ -345,9 +367,137 @@ struct Text {
 	static void test_utf_unicode_conversion();
 };
 
+enum class ByteOrder : int {
+	native, little_endian, big_endian,
+};
+
+struct BinaryFile {
+	BinaryFile(const string &file, ByteOrder byteorder =
+			ByteOrder::little_endian);
+
+	int getsize();
+
+	static void swap_byte_order(char *buffer, int length);
+
+	template<typename Ty>
+	static void swap_byte_order(vector<Ty> &value) {
+		for (Ty &v : value) {
+			swap_byte_order((char*) &v, sizeof(Ty));
+		}
+	}
+
+	ByteOrder byteorder;
+	std::fstream file;
+
+	template<typename Ty>
+	BinaryFile& operator >>(vector<Ty> &value) {
+		file.read((char*) &value[0], sizeof(Ty) * value.size());
+
+		if (this->byteorder == ByteOrder::big_endian) {
+			swap_byte_order(value);
+		}
+
+		return *this;
+	}
+
+	template<typename Ty>
+	BinaryFile& operator <<(const vector<Ty> &value) {
+		switch (this->byteorder) {
+		case ByteOrder::big_endian: {
+			auto _value = value;
+			swap_byte_order(_value);
+			file.write((const char*) &_value[0], sizeof(Ty) * value.size());
+		}
+			break;
+		case ByteOrder::native:
+		case ByteOrder::little_endian:
+			file.write((const char*) &value[0], sizeof(Ty) * value.size());
+			break;
+		default:
+			__log(__PRETTY_FUNCTION__)
+			;
+			throw;
+		}
+
+		return *this;
+	}
+
+	template<typename Ty>
+	BinaryFile& operator >>(Ty &value) {
+		file.read((char*) &value, sizeof(Ty));
+		if (this->byteorder == ByteOrder::big_endian) {
+			swap_byte_order((char*) &value, sizeof(Ty));
+		}
+		return *this;
+	}
+
+	template<typename Ty>
+	BinaryFile& operator <<(const Ty &value) {
+		switch (this->byteorder) {
+		case ByteOrder::big_endian: {
+			auto _value = value;
+			auto buffer = (char*) &_value;
+			swap_byte_order(buffer, sizeof(Ty));
+			file.write(buffer, sizeof(Ty));
+		}
+			break;
+		case ByteOrder::native:
+		case ByteOrder::little_endian:
+			file.write((const char*) &value, sizeof(Ty));
+			break;
+		default:
+			__log(__PRETTY_FUNCTION__)
+			;
+			throw;
+		}
+
+		return *this;
+	}
+};
+
 std::ostream& operator <<(std::ostream &cout, const String &v);
 
 vector<String> split(const String &in);
+vector<string> split(const string &in);
+vector<string> split(const string &in, char separator);
+
+template<typename _CharT>
+std::basic_string<_CharT> join(const std::basic_string<_CharT> &delim,
+		const vector<std::basic_string<_CharT>> &val) {
+	std::basic_string<_CharT> str;
+	for (auto &e : val) {
+		if (!str.empty())
+			str += delim;
+
+		str += e;
+	}
+	return str;
+}
+
+template<typename _CharT>
+std::basic_string<_CharT> join(const std::basic_string<_CharT> &delim,
+		const std::set<std::basic_string<_CharT>> &val) {
+	std::basic_string<_CharT> str;
+	for (auto &e : val) {
+		if (!str.empty())
+			str += delim;
+
+		str += e;
+	}
+	return str;
+}
+
+template<typename _CharT>
+std::basic_string<_CharT> join(const _CharT *delim,
+		const vector<std::basic_string<_CharT>> &val) {
+	return join(std::basic_string<_CharT>(delim), val);
+}
+
+template<typename _CharT>
+std::basic_string<_CharT> join(const _CharT *delim,
+		const std::set<std::basic_string<_CharT>> &val) {
+	return join(std::basic_string<_CharT>(delim), val);
+}
 
 template<class _CharT>
 bool startsWith(const std::basic_string<_CharT> &str,
@@ -406,21 +556,15 @@ String& tolower(String &s);
 string& tolower(string &s);
 
 template<class _Ty>
-vector<_Ty>& operator <<(vector<_Ty> &out, const vector<_Ty> &in) {
+vector<_Ty>& operator +=(vector<_Ty> &out, const vector<_Ty> &in) {
 	out.insert(out.end(), in.begin(), in.end());
 	return out;
 }
 
 template<class _Ty>
-vector<_Ty>& operator <<(vector<_Ty> &out, const _Ty &in) {
-	out.insert(out.end(), in);
+vector<_Ty>& operator +=(vector<_Ty> &out, std::initializer_list<_Ty> in) {
+	out.insert(out.end(), in.begin(), in.end());
 	return out;
-}
-
-template<class _Ty>
-vector<std::basic_string<_Ty>>& operator <<(vector<std::basic_string<_Ty>> &out,
-		const _Ty *in) {
-	return out << std::basic_string<_Ty>(in);
 }
 
 template<class _Ty>
@@ -438,6 +582,7 @@ int strlen(const String &value);
 
 String toString(int);
 String toString(const string &s);
+string to_string(const String &s);
 
 template<typename _Ty>
 vector<_Ty> sample(vector<_Ty> v, int size) {
@@ -449,6 +594,27 @@ vector<_Ty> sample(vector<_Ty> v, int size) {
 	v.resize(size);
 	return v;
 }
+
+template<typename _Ty>
+_Ty max(const vector<_Ty> &v) {
+	_Ty max = std::numeric_limits<_Ty>::min();
+	for (auto &x : v) {
+		if (x > max)
+			max = x;
+	}
+	return max;
+}
+
+template<typename _Ty>
+_Ty min(const vector<_Ty> &v) {
+	_Ty min = std::numeric_limits<_Ty>::max();
+	for (auto &x : v) {
+		if (x < min)
+			min = x;
+	}
+	return min;
+}
+
 }
 
 #include <queue>
@@ -498,22 +664,22 @@ bool contains(const vector<T> &elementData, const T &o) {
 
 const double oo = std::numeric_limits<double>::infinity();
 
-#define __log(symbol) {std::cout << #symbol << " = \n" << (symbol) << std::endl;}
-
 #ifdef _DEBUG
-#define __cout(symbol) __log(symbol)
-#define assert_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_true(expr) if (expr){}else{std::cout << #expr << " is true " << std::endl; __cout(expr);}
-#define assert_false(expr) if (!expr){}else{std::cout << #expr << " is false " << std::endl; __cout(expr);}
-#define assert_or(x, y) if (x || y){}else{std::cout << #x << " || " << #y << std::endl; __cout(x);__cout(y);}
-#define assert_and(x, y) if (x && y){}else{std::cout << #x << " && " << #y << std::endl; __cout(x);__cout(y);}
+#define __debug(symbol) __log(symbol)
+#define assert_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_true(expr) if (expr){}else{std::cout << #expr << " is true " << std::endl; __debug(expr);}
+#define assert_false(expr) if (!expr){}else{std::cout << #expr << " is false " << std::endl; __debug(expr);}
+#define assert_not(expr) if (not expr){}else{std::cout << #expr << " is false " << std::endl; __debug(expr);}
+#define assert_or(x, y) if (x || y){}else{std::cout << #x << " || " << #y << std::endl; __debug(x);__debug(y);}
+#define assert_and(x, y) if (x && y){}else{std::cout << #x << " && " << #y << std::endl; __debug(x);__debug(y);}
 #else
-#define __cout(symbol)
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#define __debug(symbol)
 #define assert_gt(x, y)
 #define assert_lt(x, y)
 #define assert_le(x, y)
@@ -525,6 +691,18 @@ const double oo = std::numeric_limits<double>::infinity();
 #define assert_or(x, y)
 #define assert_and(x, y)
 #endif
+
+#define ensure_gt(x, y) if (x > y){}else{std::cout << #x << " > " << #y << std::endl; __debug(x);__debug(y); throw;}
+#define ensure_lt(x, y) if (x < y){}else{std::cout << #x << " < " << #y << std::endl; __debug(x);__debug(y); throw;}
+#define ensure_le(x, y) if (x <= y){}else{std::cout << #x << " <= " << #y << std::endl; __debug(x);__debug(y); throw;}
+#define ensure_ge(x, y) if (x >= y){}else{std::cout << #x << " >= " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_eq(x, y) if (x == y){}else{std::cout << #x << " == " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_neq(x, y) if (x != y){}else{std::cout << #x << " != " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_true(expr) if (expr){}else{std::cout << #expr << " should be true, in " << __PRETTY_FUNCTION__ << std::endl; __debug(expr);throw;}
+#define ensure_false(expr) if (!expr){}else{std::cout << #expr << " should be false, in " << __PRETTY_FUNCTION__ << std::endl; __debug(expr);throw;}
+#define ensure_not(expr) if (not expr){}else{std::cout << #expr << " should be false, in " << __PRETTY_FUNCTION__ << std::endl; __debug(expr);throw;}
+#define ensure_or(x, y) if (x or y){}else{std::cout << #x << " || " << #y << std::endl; __debug(x);__debug(y);throw;}
+#define ensure_and(x, y) if (x and y){}else{std::cout << #x << " && " << #y << std::endl; __debug(x);__debug(y);throw;}
 
 struct Timer {
 	Timer();
@@ -729,6 +907,7 @@ int nextInt(int max);
 template<typename _Ty>
 struct SubList {
 	_Ty *_begin, *_end;
+
 	struct iterator {
 		_Ty *ptr;
 
@@ -746,27 +925,83 @@ struct SubList {
 		}
 	};
 
-	struct const_iterator {
-		_Ty *ptr;
-
-		const_iterator& operator++();
-		bool operator!=(const const_iterator &other) const;
-		const _Ty& operator*();
-	};
-
 	iterator begin() {
 		return {_begin};
 	}
+
 	iterator end() {
 		return {_end};
 	}
-	const_iterator begin() const;
-	const_iterator end() const;
+
+	_Ty& operator [](int i) {
+		return _begin[i];
+	}
+
+	const _Ty& operator [](int i) const {
+		return _begin[i];
+	}
+
+	int size() const {
+		return _end - _begin;
+	}
 };
 
 template<typename _Ty>
-SubList<_Ty> subList(vector<_Ty> &list, int start, int end) {
+struct ConstSubList {
+	const _Ty *_begin, *_end;
+
+	struct iterator {
+		const _Ty *ptr;
+
+		iterator& operator++() {
+			++ptr;
+			return *this;
+		}
+
+		bool operator!=(const iterator &other) const {
+			return ptr != other.ptr;
+		}
+
+		const _Ty& operator*() const {
+			return *ptr;
+		}
+	};
+
+	iterator begin() const {
+		return {_begin};
+	}
+
+	iterator end() const {
+		return {_end};
+	}
+
+	const _Ty& operator [](int i) const {
+		return _begin[i];
+	}
+
+	int size() const {
+		return _end - _begin;
+	}
+};
+
+template<typename _Ty>
+SubList<_Ty> subList(vector<_Ty> &list, int start) {
+	int end = list.size();
 	return SubList<_Ty> { list.data() + start, list.data() + end };
+}
+
+template<typename _Ty>
+SubList<_Ty> subList(vector<_Ty> &list, int start, int end) {
+	if (end > list.size())
+		end = list.size();
+	return SubList<_Ty> { list.data() + start, list.data() + end };
+}
+
+template<typename _Ty>
+ConstSubList<_Ty> subList(const vector<_Ty> &list, int start, int end) {
+	if (end > list.size())
+		end = list.size();
+	return ConstSubList<_Ty> { list.data() + start, list.data() + end };
 }
 
 template<typename _Ty>
@@ -808,3 +1043,147 @@ bool operator ==(const std::map<Key, Value*> &lhs,
 	}
 	return true;
 }
+
+#include <random> // std::default_random_engine
+
+template<typename _Ty>
+void shuffle(vector<_Ty> &v) {
+	seed_rand();
+	shuffle(v.begin(), v.end(), std::default_random_engine(rand()));
+}
+
+template<typename _Key, typename _Tp>
+std::set<_Key> keys(const std::map<_Key, _Tp> &dict) {
+	std::set<_Key> s;
+	for (auto &entry : dict) {
+		s.insert(entry.first);
+	}
+	return s;
+}
+
+template<typename _Key, typename _Tp>
+vector<_Tp> values(const std::map<_Key, _Tp> &dict) {
+	vector<_Tp> v;
+	v.reserve(dict.size());
+	for (auto &entry : dict) {
+		v.push_back(entry.second);
+	}
+	return v;
+}
+
+template<typename _Key, typename _Tp>
+vector<std::pair<_Key, _Tp>> items(const std::map<_Key, _Tp> &dict) {
+	return vector<std::pair<_Key, _Tp>>(dict.begin(), dict.end());
+}
+
+template<typename _Ty>
+_Ty sum(const vector<_Ty> &v) {
+	_Ty sum = 0;
+	for (auto &x : v) {
+		sum += x;
+	}
+	return sum;
+}
+
+template<typename _Ty>
+_Ty sum(const _Ty *begin, const _Ty *end) {
+	_Ty sum = 0;
+
+	for (auto p = begin; p != end; ++p) {
+		sum += *p;
+	}
+	return sum;
+}
+
+template<typename _Ty>
+_Ty product(const vector<_Ty> &v) {
+	_Ty sum = 1;
+	for (auto &x : v) {
+		sum *= x;
+	}
+	return sum;
+}
+
+void append_file_separator(string &file);
+
+template<typename _Ty>
+std::set<_Ty> operator -(const std::set<_Ty> &lhs, const std::set<_Ty> &rhs) {
+	std::set<_Ty> result;
+	std::set_difference(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
+			std::inserter(result, result.begin()));
+	return result;
+}
+
+template<typename _Ty>
+std::set<_Ty> operator |(const std::set<_Ty> &lhs, const std::set<_Ty> &rhs) {
+	std::set<_Ty> result;
+	std::set_union(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
+			std::inserter(result, result.begin()));
+	return result;
+}
+
+template<typename _Ty>
+std::set<_Ty> operator &(const std::set<_Ty> &lhs, const std::set<_Ty> &rhs) {
+	std::set<_Ty> result;
+	std::set_intersection(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
+			std::inserter(result, result.begin()));
+	return result;
+}
+
+#define __timer_begin() double __timer_start = clock();
+#define __timer_end() std::cout << "time cost in " << __PRETTY_FUNCTION__ << " : " << (clock() - __timer_start) / CLOCKS_PER_SEC << std::endl;
+
+template<typename _Ty, typename _Compare>
+void sort(vector<_Ty> &v, _Compare __comp) {
+	std::stable_sort(v.begin(), v.end(), __comp);
+}
+
+template<typename _Ty>
+std::set<_Ty> to_set(const vector<_Ty> &v) {
+	return std::set<_Ty>(v.begin(), v.end());
+}
+
+template<typename _Ty>
+std::set<_Ty> to_set(const ConstSubList<_Ty> &v) {
+	return std::set<_Ty>(v.begin(), v.end());
+}
+
+template<typename _Ty>
+std::set<_Ty> to_set(const SubList<_Ty> &v) {
+	return std::set<_Ty>(v.begin(), v.end());
+}
+
+template<typename _Ty>
+void del(vector<_Ty*> &v) {
+	for (auto p : v) {
+		delete p;
+	}
+}
+
+template<typename _Key, typename _Tp>
+std::map<_Key, _Tp>& operator +=(std::map<_Key, _Tp> &lhs,
+		const std::map<_Key, _Tp> &rhs) {
+	for (auto &tuple : rhs) {
+		lhs[tuple.first] += tuple.second;
+	}
+	return lhs;
+}
+
+template<typename _Key, typename _Tp>
+std::map<_Key, _Tp>& operator -=(std::map<_Key, _Tp> &lhs,
+		const std::map<_Key, _Tp> &rhs) {
+	for (auto &tuple : rhs) {
+		lhs[tuple.first] -= tuple.second;
+	}
+	return lhs;
+}
+
+string getcwd();
+
+string now();
+
+//#define	F_OK	0	/* Check for file existence */
+//#define	X_OK	1	/* Check for execute permission. */
+//#define	W_OK	2	/* Check for write permission */
+//#define	R_OK	4	/* Check for read permission */
+bool os_access(const std::string &name, int status = 0);

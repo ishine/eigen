@@ -2,6 +2,27 @@
 #include "utility.h"
 #include "../std/utility.h"
 
+MatrixI POSTagger::pos_mask(const vector<String> &pos) {
+	int size = pos.size();
+	MatrixI mask(size);
+
+	int dimension = posTags.size();
+
+	__debug(dimension);
+
+	for (int i = 0; i < size; ++i) {
+
+		int index = indexOf(posTags, pos[i]);
+		if (index >= 0) {
+			mask[i].resize(dimension);
+			mask[i][index] = 1;
+		} else {
+			mask[i].assign(dimension, 1);
+		}
+	}
+	return mask;
+}
+
 vector<String> POSTagger::convertToPOStags(const VectorI &ids) {
 	int n = ids.size();
 	vector<String> pos(n);
@@ -12,10 +33,23 @@ vector<String> POSTagger::convertToPOStags(const VectorI &ids) {
 }
 
 vector<String> POSTagger::predict(const vector<String> &predict_text) {
-//	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__);
 	auto ids = string2id(predict_text, this->word2id);
-//	cout << "ids = " << ids << endl;
+	__debug(ids);
 	return convertToPOStags(this->predict(ids));
+}
+
+vector<String> &POSTagger::predict(const vector<String> &predict_text, vector<String> &pos) {
+	__print(__PRETTY_FUNCTION__);
+	auto ids = string2id(predict_text, this->word2id);
+
+	__print(ids);
+
+	auto mask_pos = this->pos_mask(pos);
+	__print(mask_pos);
+
+	pos = convertToPOStags(this->predict(ids, mask_pos));
+	return pos;
 }
 
 vector<vector<String>> POSTagger::predict(
@@ -33,9 +67,8 @@ vector<vector<String>> POSTagger::predict(
 	return texts;
 }
 
-VectorI POSTagger::predict(const vector<VectorI> &predict_text) {
-//	__cout(__PRETTY_FUNCTION__)
-//	cout << "predict_text = " << predict_text.size() << endl;
+VectorI POSTagger::predict(const MatrixI &predict_text) {
+	__debug(__PRETTY_FUNCTION__)
 
 	Tensor lEmbedding;
 	embedding(predict_text, lEmbedding);
@@ -58,10 +91,37 @@ VectorI POSTagger::predict(const vector<VectorI> &predict_text) {
 	lstm2(wordEmbedding, ret);
 //	cout << "ret.rows() = " << ret.rows() << endl;
 
-	VectorI ids;
-	wCRF(ret, ids);
-//	cout << "ids.size() = " << ids.size() << endl;
-	return ids;
+	return wCRF(ret);
+}
+
+VectorI POSTagger::predict(const MatrixI &predict_text, const MatrixI &mask_pos) {
+	__print(__PRETTY_FUNCTION__);
+
+	Tensor lEmbedding;
+	embedding(predict_text, lEmbedding);
+	int n = predict_text.size();
+	Matrix wordEmbedding;
+	wordEmbedding.resize(n, this->embedding.wEmbedding.cols());
+
+	for (int i = 0; i < n; ++i) {
+		Vector v;
+		this->gru(lEmbedding[i], v);
+		wordEmbedding.row(i) = v;
+	}
+	Matrix ret;
+	lstm0(wordEmbedding, ret);
+
+	__print(ret.rows());
+
+	lstm1(ret, wordEmbedding);
+
+	__print(wordEmbedding.rows());
+
+	lstm2(wordEmbedding, ret);
+
+	__print(ret.rows());
+
+	return wCRF(ret, mask_pos);
 }
 
 POSTagger::POSTagger(const string &h5FilePath, const string &vocabFilePath,
@@ -81,10 +141,10 @@ POSTagger::POSTagger(KerasReader &dis, const string &vocabFilePath,
 }
 
 POSTagger& POSTagger::instance() {
-//	__cout(__PRETTY_FUNCTION__)
-	static string modelFile = modelsDirectory() + "cn/pos/model.h5";
-	static string vocab = modelsDirectory() + "cn/pos/vocab.txt";
-	static string posTags = modelsDirectory() + "cn/pos/pos.txt";
+//	__debug(__PRETTY_FUNCTION__)
+	static string modelFile = weightsDirectory() + "cn/pos/model.h5";
+	static string vocab = weightsDirectory() + "cn/pos/vocab.txt";
+	static string posTags = weightsDirectory() + "cn/pos/pos.txt";
 
 	static POSTagger instance(modelFile, vocab, posTags);
 
@@ -92,9 +152,9 @@ POSTagger& POSTagger::instance() {
 }
 
 POSTagger& POSTagger::instantiate() {
-	static string modelFile = modelsDirectory() + "cn/cws/model.h5";
-	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
-	static string posTags = modelsDirectory() + "cn/pos/pos.txt";
+	static string modelFile = weightsDirectory() + "cn/cws/model.h5";
+	static string vocab = weightsDirectory() + "cn/cws/vocab.txt";
+	static string posTags = weightsDirectory() + "cn/pos/pos.txt";
 
 	auto &instance = POSTagger::instance();
 

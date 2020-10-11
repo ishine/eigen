@@ -1,5 +1,4 @@
 #include "AhoCorasickDoubleArrayTrie.h"
-#include <random> // std::default_random_engine
 #include "../deeplearning/utility.h"
 
 void testLoop() {
@@ -21,10 +20,7 @@ void testLoop() {
 			Text(testingDirectory + "ahocorasick/dictionary.txt").toString()
 					+ Text(testingDirectory + "ahocorasick/text.txt").toString();
 
-	seed_rand();
-	shuffle(dictionary.begin(), dictionary.end(),
-			std::default_random_engine(rand()));
-
+	shuffle(dictionary);
 	cout << "dictionary.size() = " << dictionary.size() << endl;
 
 //	if (debug) {
@@ -33,9 +29,9 @@ void testLoop() {
 //		}
 //	}
 
-	long start = clock();
+	__timer_begin();
 	AhoCorasickDoubleArrayTrie<char16_t, String> dat(dictionaryMap);
-	cout << "time cost = " << (clock() - start) / CLOCKS_PER_SEC << endl;
+	__timer_end();
 	cout << "space cost = " << dat.node.size() << endl;
 
 	if (debug) {
@@ -44,9 +40,9 @@ void testLoop() {
 
 	dat.checkValidity();
 	vector<AhoCorasickDoubleArrayTrie<char16_t, String>::Hit> arr = dat.parseText(text);
-	start = clock();
+
 	AhoCorasickDoubleArrayTrie<char16_t, String> _dat(dictionaryMap);
-	cout << "time cost = " << (clock() - start) / CLOCKS_PER_SEC << endl;
+
 	cout << "space cost = " << _dat.node.size() << endl;
 
 	_dat.checkValidity();

@@ -95,7 +95,7 @@ vector<VectorI> string2ids(const vector<String> &s,
 //forward declaration to prevent runtime linking error.
 extern string workingDirectory;
 extern string testingDirectory;
-string& modelsDirectory();
+string& weightsDirectory();
 
 #ifdef _DEBUG
 #define print_shape(matrix) {std::cout << #matrix << ".shape = (" << matrix.rows() << ", " << matrix.cols() << ")" << std::endl;}

@@ -2,7 +2,7 @@
 
 VectorI& NERTagger::predict(const VectorI &predict_text,
 		VectorI &repertoire_code) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 //	cout << "repertoire_code = " << repertoire_code << endl;
 
@@ -31,7 +31,7 @@ VectorI& NERTagger::predict(const VectorI &predict_text,
 
 vector<vector<vector<double>>>& NERTagger::_predict(const String &predict_text,
 		VectorI &repertoire_code, vector<vector<vector<double>>> &result) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Matrix lEmbedding;
 	embedding(string2id(predict_text, this->word2id), lEmbedding);
 	result.push_back(convert2vector(lEmbedding)); // i = 0
@@ -73,13 +73,13 @@ NERTagger::NERTagger(KerasReader &dis) :
 		embedding(Embedding(dis)), repertoire_embedding(Embedding(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D0(Conv1D(dis)), con1D1(
 				Conv1D(dis)), con1D2(Conv1D(dis)), wCRF(CRF(dis)) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 //	dis.close();
 }
 
 NERTagger::object& NERTaggerDict::getTagger(const string &service) {
 	if (!dict.count(service)) {
-		__cout(__PRETTY_FUNCTION__)
+		__debug(__PRETTY_FUNCTION__)
 		KerasReader dis(service);
 		dict[service] = new NERTagger(dis);
 	}
@@ -96,7 +96,7 @@ vector<int> NERTaggerDict::get_repertoire_code(const string &service,
 
 VectorI& NERTaggerDict::predict(const string &service, const String &text,
 		VectorI &repertoire_code) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	auto &ptr = getTagger(service);
 	return ptr->predict(string2id(text, ptr->word2id), repertoire_code);
 }
@@ -104,7 +104,7 @@ VectorI& NERTaggerDict::predict(const string &service, const String &text,
 vector<vector<vector<double>>>& NERTaggerDict::_predict(const string &service,
 		const String &text, VectorI &repertoire_code,
 		vector<vector<vector<double>>> &arr) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	return getTagger(service)->_predict(text, repertoire_code, arr);
 }
 

@@ -1,6 +1,5 @@
 #include "CWSTagger.h"
 #include "utility.h"
-#include "../std/utility.h"
 
 vector<String> convertToSegment(const String &predict_text,
 		const VectorI &argmax) {
@@ -20,13 +19,13 @@ vector<String> convertToSegment(const String &predict_text,
 //			if (arr.size()) {
 //				sstr = u" " + sstr;
 //			}
-			arr << sstr;
+			arr.push_back(sstr);
 			sstr.clear();
 		}
 	}
 
 	if (sstr.size())
-		arr << sstr;
+		arr.push_back(sstr);
 	return arr;
 }
 
@@ -37,7 +36,7 @@ vector<String> CWSTaggerLSTM::predict(const String &predict_text) {
 }
 
 VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 //	cout << "repertoire_code = " << repertoire_code << endl;
 
@@ -65,7 +64,7 @@ VectorI& CWSTaggerLSTM::predict(VectorI &predict_text) {
 
 vector<vector<vector<double>>>& CWSTaggerLSTM::_predict(
 		const String &predict_text, vector<vector<vector<double>>> &result) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -113,13 +112,13 @@ CWSTaggerLSTM::CWSTaggerLSTM(KerasReader &dis, const string &vocabFilePath) :
 		con1D0(Conv1D(dis)), con1D1(Conv1D(dis)), lstm(
 				BidirectionalLSTM(dis, Bidirectional::sum)), con1D2(
 				Conv1D(dis)), wCRF(CRF(dis)) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Text(vocabFilePath) >> word2id;
 }
 
 CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
-	static string modelFile = modelsDirectory() + "cn/cws/model-cnn.h5";
-	static string vocab = modelsDirectory() + "cn/cws/vocab.txt";
+	static string modelFile = weightsDirectory() + "cn/cws/model-cnn.h5";
+	static string vocab = weightsDirectory() + "cn/cws/vocab.txt";
 
 	static CWSTaggerLSTM instance(modelFile, vocab);
 	if (reinitialize) {
@@ -130,7 +129,7 @@ CWSTaggerLSTM& CWSTaggerLSTM::instance(bool reinitialize) {
 
 vector<String> CWSTagger::predict(const String &predict_text) {
 	VectorI seg = string2id(predict_text, this->word2id);
-	__cout(seg)
+	__debug(seg)
 	return convertToSegment(predict_text, this->predict(seg));
 }
 
@@ -163,18 +162,18 @@ vector<vector<vector<String>>> CWSTagger::predict(
 }
 
 VectorI& CWSTagger::predict(VectorI &predict_text) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 //	cout << "predict_text = " << predict_text.size() << endl;
 
 	Matrix lEmbedding;
 	embedding(predict_text, lEmbedding);
-	__cout(lEmbedding)
+	__debug(lEmbedding)
 	return wCRF(con1D(lEmbedding), predict_text);
 }
 
 vector<vector<vector<double>>>& CWSTagger::_predict(const String &predict_text,
 		vector<vector<vector<double>>> &result) {
-	__cout(__PRETTY_FUNCTION__)
+	__debug(__PRETTY_FUNCTION__)
 	Matrix x;
 	embedding(string2id(predict_text, this->word2id), x);
 	result.push_back(convert2vector(x)); // i = 0
@@ -205,8 +204,8 @@ CWSTagger::CWSTagger(KerasReader &dis, const string &vocabFilePath) :
 	__log(__PRETTY_FUNCTION__)
 }
 
-CWSTagger& CWSTagger::instance() {
-	__cout(__PRETTY_FUNCTION__)
-	static CWSTagger inst(modelsDirectory() + "cn/cws/model.h5", modelsDirectory() + "cn/cws/vocab.txt");
+CWSTagger& CWSTagger::instance_crf() {
+	__debug(__PRETTY_FUNCTION__)
+	static CWSTagger inst(weightsDirectory() + "cn/cws/model.h5", weightsDirectory() + "cn/cws/vocab.txt");
 	return inst;
 }

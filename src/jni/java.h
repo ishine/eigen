@@ -538,15 +538,13 @@ const char *FindClass<vector<_Ty>>::name = [](const char *name) -> const char* {
 		//[Ljava/lang/String;
 		array_name = left_bracket + 'L' + name + ';';
 	}
-	cout << "array type for " << name << " = " << array_name << endl;
-//	pool.push_back(array_name);
-//	cout << "pool = " << pool << endl;
+//	cout << "array type for " << name << " = " << array_name << endl;
 	return array_name.c_str();
 }(FindClass<_Ty>::name);
 
 template<typename _Ty>
 jobjectArray Object(JNIEnv *env, const vector<_Ty> &arr) {
-//	__cout(__PRETTY_FUNCTION__)
+//	__debug(__PRETTY_FUNCTION__)
 	int sz = arr.size();
 
 //	cout << "vector size = " << sz << endl;

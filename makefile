@@ -4,24 +4,19 @@ cpu_count =$(shell cat /proc/cpuinfo | grep processor | wc -l)
 
 $(info cpu_count = $(cpu_count))
 
-ifneq ($(shell echo $(cpu_count) | awk '{if($$1 >= "1") {print $$1;}}'), $(nullstring))
-	paralleled :=-j$(cpu_count)
-endif
-	paralleled :=
+make_j :=$(shell echo $(cpu_count) | awk '{if($$1 >= "1") {print "make -j"$$1;} else {print "make";}}')
 
-$(info paralleled = $(paralleled))
-
-all: 
-	make $(paralleled) -C Linux 
+compile: 
+	$(make_j) -C Linux 
 
 clean:
 	make -C Linux clean
 	
-test:
+test: compile
 	make -C Linux test
 
 rebuild: clean all
 	
-install:
+install: compile
 	make -C Linux install
 	@echo "finish installing libeigen.so"
